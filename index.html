@@ -642,13 +642,20 @@
   const $ = (id) => document.getElementById(id);
 
   // ---------- SETTINGS (persisted) ----------
+  // Hardcoded to this app's Make webhooks so the app works out of the box
+  // with no manual setup. Settings still lets these be overridden (e.g. if
+  // the Make scenarios ever move to a new account) — anything saved there
+  // takes precedence over these defaults.
+  const DEFAULT_ADD_ENTRY_URL = 'https://hook.us2.make.com/pmrsweyiswbqrox3sj5ibmkj83bhuhz9';
+  const DEFAULT_LIST_ROWS_URL = 'https://hook.us2.make.com/unqqsltxzci7itcfdlln241cdgsu9go8';
+
   function loadSettings(){
     try{
       return {
-        addEntryUrl: localStorage.getItem('ledger_add_entry_url') || '',
-        listRowsUrl: localStorage.getItem('ledger_list_rows_url') || ''
+        addEntryUrl: localStorage.getItem('ledger_add_entry_url') || DEFAULT_ADD_ENTRY_URL,
+        listRowsUrl: localStorage.getItem('ledger_list_rows_url') || DEFAULT_LIST_ROWS_URL
       };
-    }catch(e){ return {addEntryUrl:'', listRowsUrl:''}; }
+    }catch(e){ return {addEntryUrl: DEFAULT_ADD_ENTRY_URL, listRowsUrl: DEFAULT_LIST_ROWS_URL}; }
   }
   function saveSettings(addEntryUrl, listRowsUrl){
     try{
@@ -658,16 +665,13 @@
   }
 
   function updateSettingsStatus(){
-    const s = loadSettings();
+    const usingDefaultAdd = !localStorage.getItem('ledger_add_entry_url');
+    const usingDefaultList = !localStorage.getItem('ledger_list_rows_url');
     const el = $('settingsStatus');
-    if(!s.addEntryUrl && !s.listRowsUrl){
-      el.textContent = 'No webhook URLs set yet — entries will not save.';
-    } else if(!s.addEntryUrl){
-      el.textContent = 'Add-entry URL is missing — entries will not save.';
-    } else if(!s.listRowsUrl){
-      el.textContent = 'List-rows URL is missing — open IDs won\u2019t load.';
+    if(usingDefaultAdd && usingDefaultList){
+      el.textContent = 'Using the built-in webhooks — nothing else to set up.';
     } else {
-      el.textContent = 'Both URLs are set.';
+      el.textContent = 'Using a custom webhook URL below. Clear a field and save to revert to the built-in one.';
     }
   }
 
