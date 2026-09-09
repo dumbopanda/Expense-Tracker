@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ledger — Add Payment</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#121614">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas-light:#F4F1EA;
+    --canvas-dark:#121614;
+    --green:#0E7955;
+    --lime:#CCF244;
+    --mint:#DDF3E4;
+    --amber:#FFDE73;
+    --white:#FFFFFF;
+    --red:#E04848;
+    --text-dark:#181C1A;
+    --text-muted:#78756E;
+    --border:#E5E3DB;
+    --radius-card:22px;
+    --radius-input:14px;
+    --radius-pill:9999px;
+    --font:'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:var(--font);
+    background:var(--canvas-light);
+    color:var(--text-dark);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding-bottom:88px;
+  }
+  /* HEADER */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 20px 8px;
+  }
+  .topbar h1{
+    font-size:22px;
+    font-weight:800;
+    margin:0;
+    letter-spacing:-0.3px;
+  }
+  .topbar .sub{
+    font-size:13px;
+    color:var(--text-muted);
+    margin-top:2px;
+    font-weight:500;
+  }
+  .gear-btn{
+    width:42px;height:42px;
+    border-radius:var(--radius-pill);
+    background:var(--white);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .gear-btn svg{width:20px;height:20px;stroke:var(--text-dark);}
+
+  /* FORM */
+  form{padding:14px 20px 20px;display:flex;flex-direction:column;gap:18px;}
+  .field{display:flex;flex-direction:column;gap:8px;}
+  .field label{font-size:13px;font-weight:600;color:var(--text-muted);}
+  .field-hint{font-size:12px;color:var(--text-muted);font-weight:500;margin-top:-2px;}
+
+  input[type="text"], input[type="date"], select{
+    width:100%;
+    padding:14px 16px;
+    border-radius:var(--radius-input);
+    border:1px solid var(--border);
+    background:var(--white);
+    font-family:var(--font);
+    font-size:16px;
+    font-weight:500;
+    color:var(--text-dark);
+    outline:none;
+    appearance:none;
+  }
+  input:focus, select:focus{border-color:var(--green);}
+  select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2378756E' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 16px center;
+    padding-right:38px;
+  }
+
+  /* row of two */
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  /* txn type + frequency wrapper */
+  #txnTypeSection{display:flex;flex-direction:column;gap:18px;}
+
+  /* DATE FIELD */
+  .date-input-wrap{position:relative;}
+  .date-box-input{
+    width:100%;
+    padding:14px 16px;
+    border-radius:var(--radius-input);
+    border:1px solid var(--border);
+    background:var(--white);
+    font-family:var(--font);
+    font-size:16px;font-weight:600;
+    color:var(--text-dark);
+    outline:none;
+  }
+  .date-box-input::placeholder{color:var(--text-muted);font-weight:500;}
+  .date-box-input:focus{border-color:var(--green);}
+  .hidden-date-input{
+    display:none;
+    width:100%;
+    padding:14px 16px;
+    border-radius:var(--radius-input);
+    border:1px solid var(--green);
+    background:var(--white);
+    font-family:var(--font);
+    font-size:16px;font-weight:600;
+    color:var(--text-dark);
+    outline:none;
+  }
+  .quick-date-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
+  .quick-date-btn{
+    padding:10px 0;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
+    background:var(--white);
+    font-family:var(--font);font-size:13px;font-weight:700;
+    color:var(--text-dark);
+    cursor:pointer;
+  }
+  .quick-date-btn.active{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);font-style:normal;}
+  .quick-date-custom{font-style:italic;background:#EDEAE0;}
+
+  /* toggle switch (self-transfer) */
+  .switch-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-input);
+    padding:14px 16px;
+  }
+  .switch-row .label-block{display:flex;flex-direction:column;gap:2px;}
+  .switch-row .label-block .title{font-size:15px;font-weight:600;color:var(--text-dark);}
+  .switch-row .label-block .desc{font-size:12px;color:var(--text-muted);font-weight:500;}
+  .switch{position:relative;width:46px;height:28px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;inset:0;
+    background:#D8D5CB;
+    border-radius:var(--radius-pill);
+    cursor:pointer;
+    transition:.2s;
+  }
+  .slider::before{
+    content:"";position:absolute;
+    width:22px;height:22px;left:3px;top:3px;
+    background:var(--white);border-radius:50%;
+    transition:.2s;
+    box-shadow:0 1px 3px rgba(0,0,0,.2);
+  }
+  .switch input:checked + .slider{background:var(--green);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}
+
+  /* segmented control (Y/N id kind) */
+  .segmented{
+    display:flex;
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill);
+    padding:4px;
+    gap:4px;
+    flex-shrink:0;
+  }
+  .segmented button{
+    width:44px;
+    border:none;background:transparent;
+    padding:10px 0;
+    border-radius:var(--radius-pill);
+    font-family:var(--font);font-size:14px;font-weight:700;
+    color:var(--text-muted);
+    cursor:pointer;
+  }
+  .segmented button.active-seg{background:var(--text-dark);color:var(--lime);}
+
+  .id-row{display:flex;align-items:center;gap:8px;}
+  .id-box{
+    flex:1;
+    padding:14px 16px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
+    background:var(--white);
+    font-size:14px;font-weight:700;
+    color:var(--text-dark);
+    letter-spacing:0.3px;
+  }
+  select.id-box{
+    cursor:pointer;
+    padding-right:34px;
+  }
+  .reuse-btn{
+    width:44px;height:44px;
+    flex-shrink:0;
+    border-radius:50%;
+    background:var(--white);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .reuse-btn svg{width:19px;height:19px;stroke:var(--text-dark);transition:transform .3s;}
+  .reuse-btn:active svg{transform:rotate(180deg);}
+
+  /* account / from-to chips */
+  .chip-group{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip-group.vertical{flex-direction:column;flex-wrap:nowrap;}
+  .chip-group.vertical .chip{width:100%;text-align:center;}
+  .chip{
+    padding:10px 16px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
+    background:var(--white);
+    font-family:var(--font);font-size:14px;font-weight:600;
+    color:var(--text-dark);
+    cursor:pointer;
+  }
+  .chip.selected{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
+
+  /* amount card */
+  .amount-card{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    padding:22px 20px;
+    display:flex;flex-direction:column;gap:18px;
+    align-items:center;
+  }
+  .amount-card .amt-label{
+    display:flex;justify-content:space-between;align-items:center;
+    width:100%;
+    font-size:12px;font-weight:700;color:var(--text-muted);
+    letter-spacing:0.4px;
+  }
+  .amt-label .pill-inr{
+    background:var(--canvas-light);
+    padding:4px 10px;
+    border-radius:var(--radius-pill);
+    font-weight:700;color:var(--text-dark);
+  }
+  .amt-display-wrap{
+    position:relative;
+    display:flex;align-items:baseline;justify-content:center;
+    width:100%;
+    padding:6px 0;
+  }
+  .amt-display-wrap .rupee{font-size:30px;font-weight:800;color:var(--green);margin-right:4px;}
+  .amt-display-wrap .amt-whole{font-size:42px;font-weight:800;color:var(--text-dark);line-height:1;}
+  .amt-display-wrap .amt-dec{font-size:22px;font-weight:600;color:var(--text-muted);line-height:1;}
+  #amountInput{
+    position:absolute;
+    inset:0;
+    width:100%;height:100%;
+    border:none;background:transparent;
+    color:transparent;
+    caret-color:var(--text-dark);
+    font-size:42px;font-weight:800;
+    text-align:center;
+    padding:0;
+    -moz-appearance:textfield;
+  }
+  #amountInput::-webkit-outer-spin-button,
+  #amountInput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  #amountInput:focus{outline:none;}
+
+  .kind-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+  .kind-btn{
+    padding:14px 0;
+    border-radius:var(--radius-input);
+    border:1.5px solid var(--border);
+    background:var(--white);
+    font-family:var(--font);font-size:15px;font-weight:700;
+    cursor:pointer;
+  }
+  .kind-btn.debit{color:var(--red);}
+  .kind-btn.debit.on{background:var(--red);border-color:var(--red);color:var(--white);}
+  .kind-btn.credit{color:var(--green);}
+  .kind-btn.credit.on{background:var(--green);border-color:var(--green);color:var(--white);}
+  .kind-btn.locked{opacity:0.85;cursor:default;}
+
+  /* CTA save button */
+  .cta-save{
+    width:100%;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:var(--green);
+    color:var(--white);
+    border:none;
+    border-radius:var(--radius-pill);
+    padding:18px 0;
+    font-family:var(--font);font-size:17px;font-weight:700;
+    cursor:pointer;
+  }
+  .cta-save:disabled{opacity:0.7;}
+  .cta-dot{width:22px;height:22px;border-radius:50%;background:var(--lime);flex-shrink:0;}
+  .cta-caption{
+    text-align:center;
+    font-size:13px;font-weight:500;
+    color:var(--text-muted);
+    margin-top:-8px;
+  }
+
+  /* bottom nav */
+  .bottomnav{
+    position:fixed;bottom:0;left:0;right:0;
+    display:flex;justify-content:center;
+    background:transparent;
+    padding:16px 20px calc(16px + env(safe-area-inset-bottom));
+    pointer-events:none;
+  }
+  .bottomnav .inner{
+    pointer-events:all;
+    max-width:480px;width:100%;
+    background:var(--canvas-dark);
+    border-radius:var(--radius-pill);
+    display:flex;
+    padding:6px;
+    box-shadow:0 10px 30px rgba(0,0,0,.18);
+  }
+  .navbtn{
+    flex:1;
+    text-align:center;
+    padding:12px 0;
+    border-radius:var(--radius-pill);
+    font-size:13px;font-weight:700;
+    color:#9EAD9C;
+    cursor:pointer;
+  }
+  .navbtn.active{background:var(--lime);color:var(--text-dark);}
+
+  /* stats placeholder */
+  .stats-placeholder{
+    padding:60px 30px;text-align:center;color:var(--text-muted);
+  }
+  .stats-placeholder .icon{font-size:38px;margin-bottom:12px;}
+  .stats-placeholder h2{font-size:18px;color:var(--text-dark);margin:0 0 6px;}
+  .stats-placeholder p{font-size:14px;margin:0;font-weight:500;}
+
+  /* modal */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(18,22,20,.5);
+    display:none;align-items:flex-end;justify-content:center;
+    z-index:50;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--canvas-light);
+    width:100%;max-width:480px;
+    border-radius:24px 24px 0 0;
+    padding:24px 20px calc(24px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:14px;
+    max-height:85vh;overflow-y:auto;
+  }
+  .modal h2{margin:0 0 4px;font-size:18px;}
+  .modal .close{align-self:flex-end;font-size:13px;color:var(--text-muted);font-weight:700;cursor:pointer;}
+  .btn{
+    padding:16px 0;
+    border-radius:var(--radius-pill);
+    border:none;
+    font-family:var(--font);font-size:16px;font-weight:700;
+    cursor:pointer;
+  }
+  .btn-save{background:var(--green);color:var(--white);}
+  .toast{
+    position:fixed;bottom:110px;left:50%;transform:translateX(-50%);
+    background:var(--text-dark);color:var(--white);
+    padding:12px 20px;border-radius:var(--radius-pill);
+    font-size:14px;font-weight:600;
+    opacity:0;transition:opacity .25s;
+    z-index:60;pointer-events:none;
+    max-width:min(90vw, 420px);
+    text-align:center;
+    white-space:normal;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div>
+      <h1>Add Payment</h1>
+      <div class="sub" id="dateSub">—</div>
+    </div>
+    <div class="gear-btn" id="openSettings">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ADD PAYMENT SCREEN -->
+  <form id="entryForm">
+
+    <div class="field">
+      <label>Date</label>
+      <div class="date-input-wrap">
+        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 08/09/2026" inputmode="numeric" autocomplete="off">
+        <input type="date" id="customDateInput" class="hidden-date-input" tabindex="-1">
+      </div>
+      <div class="quick-date-row">
+        <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
+        <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
+        <button type="button" class="quick-date-btn quick-date-custom" id="customBtn">Custom</button>
+      </div>
+    </div>
+
+    <div class="switch-row">
+      <div class="label-block">
+        <div class="title">Self transfer</div>
+        <div class="desc">Moving money between your own accounts</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="selfTransferToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Normal account field -->
+    <div class="field" id="singleAccountField">
+      <label>Account</label>
+      <div class="chip-group" id="accountChips">
+        <div class="chip" data-val="Domestic">Domestic</div>
+        <div class="chip" data-val="International">International</div>
+        <div class="chip" data-val="Cash">Cash</div>
+      </div>
+    </div>
+
+    <!-- Self-transfer From/To fields (stacked chip columns) -->
+    <div class="row-2" id="transferAccountFields" style="display:none;">
+      <div class="field">
+        <label>From account</label>
+        <div class="chip-group vertical" id="fromChips">
+          <div class="chip" data-val="Domestic">Domestic</div>
+          <div class="chip" data-val="International">International</div>
+          <div class="chip" data-val="Cash">Cash</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>To account</label>
+        <div class="chip-group vertical" id="toChips">
+          <div class="chip" data-val="Domestic">Domestic</div>
+          <div class="chip" data-val="International">International</div>
+          <div class="chip" data-val="Cash">Cash</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Transaction ID</label>
+      <div class="id-row">
+        <div class="segmented" id="idSegment">
+          <button type="button" data-kind="Y" id="btnY">Y</button>
+          <button type="button" data-kind="N" id="btnN">N</button>
+        </div>
+        <div class="id-box" id="idBoxDisplay">N9f8s3d</div>
+        <select class="id-box" id="idBoxSelect" style="display:none;"></select>
+        <div class="reuse-btn" id="regenBtn" title="Generate new ID">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </div>
+      </div>
+      <div class="field-hint" id="idHint">N = one-way payment, auto-generates a new ID</div>
+    </div>
+
+    <div class="field">
+      <label for="expenseName">Expense name</label>
+      <input type="text" id="expenseName" placeholder="e.g. Zomato, Rent, Amazon" required>
+    </div>
+
+    <div class="field">
+      <label for="moreInfo">More info <span style="font-weight:500;">(optional)</span></label>
+      <input type="text" id="moreInfo" placeholder="Notes">
+    </div>
+
+    <div id="txnTypeSection">
+      <!-- single mode (default) -->
+      <div class="field" id="singleTypeField">
+        <label for="txnType">Transaction type</label>
+        <select id="txnType">
+          <option>Payment</option>
+          <option>Refund</option>
+          <option>Cashback</option>
+          <option>Salary</option>
+          <option>Sent Transfer</option>
+          <option>Received Transfer</option>
+          <option value="Custom" style="font-style:italic;">Custom…</option>
+        </select>
+      </div>
+      <div class="field" id="customTypeField" style="display:none;">
+        <label for="customTypeInput">Custom transaction type</label>
+        <input type="text" id="customTypeInput" placeholder="Type your own">
+      </div>
+
+      <!-- self-transfer mode: type splits into the two legs -->
+      <div class="row-2" id="splitTypeFields" style="display:none;">
+        <div class="field">
+          <label for="txnTypeFrom">Sent leg type</label>
+          <select id="txnTypeFrom">
+            <option>Payment</option>
+            <option>Refund</option>
+            <option>Cashback</option>
+            <option>Salary</option>
+            <option>Sent Transfer</option>
+            <option>Received Transfer</option>
+            <option value="Custom" style="font-style:italic;">Custom…</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="txnTypeTo">Received leg type</label>
+          <select id="txnTypeTo">
+            <option>Payment</option>
+            <option>Refund</option>
+            <option>Cashback</option>
+            <option>Salary</option>
+            <option>Sent Transfer</option>
+            <option>Received Transfer</option>
+            <option value="Custom" style="font-style:italic;">Custom…</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-2" id="splitCustomFields" style="display:none;">
+        <div class="field" id="customFromField" style="display:none;">
+          <label for="customTypeFromInput">Custom (sent)</label>
+          <input type="text" id="customTypeFromInput" placeholder="Type your own">
+        </div>
+        <div class="field" id="customToField" style="display:none;">
+          <label for="customTypeToInput">Custom (received)</label>
+          <input type="text" id="customTypeToInput" placeholder="Type your own">
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="txnFreq">Frequency</label>
+      <select id="txnFreq">
+        <option>One Off</option>
+        <option selected>Monthly</option>
+      </select>
+    </div>
+
+    <div class="amount-card">
+      <div class="amt-label"><span>Amount</span><span class="pill-inr">₹ INR</span></div>
+      <div class="amt-display-wrap">
+        <span class="rupee">₹</span><span class="amt-whole" id="amtWhole">0</span><span class="amt-dec" id="amtDec">.00</span>
+        <input type="number" id="amountInput" inputmode="decimal" step="0.01" required>
+      </div>
+      <div class="kind-toggle">
+        <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
+        <button type="button" class="kind-btn credit" id="creditBtn">Credit</button>
+      </div>
+    </div>
+
+    <button type="submit" class="cta-save" id="saveBtn">
+      <span class="cta-dot"></span>
+      <span id="ctaMainText">Add Entry</span>
+    </button>
+    <div class="cta-caption" id="ctaCaption">Fill in the details above</div>
+  </form>
+
+  <!-- STATS PLACEHOLDER -->
+  <div class="stats-placeholder" id="statsScreen" style="display:none;">
+    <div class="icon">📊</div>
+    <h2>Stats are coming soon</h2>
+    <p>This tab will show spending trends once entries start rolling in.</p>
+  </div>
+
+  <div class="bottomnav">
+    <div class="inner">
+      <div class="navbtn active" data-tab="add">Add Payment</div>
+      <div class="navbtn" data-tab="stats">Stats</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <div class="close" id="closeSettings">Close</div>
+    <h2>Settings</h2>
+    <div class="field">
+      <label for="addEntryUrl">Add-entry webhook URL</label>
+      <input type="text" id="addEntryUrl" placeholder="https://hook.us2.make.com/...">
+    </div>
+    <div class="field">
+      <label for="listRowsUrl">List-rows webhook URL</label>
+      <input type="text" id="listRowsUrl" placeholder="https://hook.us2.make.com/...">
+    </div>
+    <button type="button" class="btn btn-save" id="saveSettingsBtn">Save settings</button>
+    <div class="field-hint" id="settingsStatus"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---------- STATE ----------
+  const state = {
+    kind: 'N',
+    isSelfTransfer: false,
+    account: 'Domestic',
+    fromAccount: 'Domestic',
+    toAccount: 'International',
+    debit: true,
+    credit: false,
+    openYIds: [],
+    selectedDateISO: null
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- SETTINGS (persisted) ----------
+  function loadSettings(){
+    try{
+      return {
+        addEntryUrl: localStorage.getItem('ledger_add_entry_url') || '',
+        listRowsUrl: localStorage.getItem('ledger_list_rows_url') || ''
+      };
+    }catch(e){ return {addEntryUrl:'', listRowsUrl:''}; }
+  }
+  function saveSettings(addEntryUrl, listRowsUrl){
+    try{
+      localStorage.setItem('ledger_add_entry_url', addEntryUrl);
+      localStorage.setItem('ledger_list_rows_url', listRowsUrl);
+    }catch(e){}
+  }
+
+  function updateSettingsStatus(){
+    const s = loadSettings();
+    const el = $('settingsStatus');
+    if(!s.addEntryUrl && !s.listRowsUrl){
+      el.textContent = 'No webhook URLs set yet — entries will not save.';
+    } else if(!s.addEntryUrl){
+      el.textContent = 'Add-entry URL is missing — entries will not save.';
+    } else if(!s.listRowsUrl){
+      el.textContent = 'List-rows URL is missing — open IDs won\u2019t load.';
+    } else {
+      el.textContent = 'Both URLs are set.';
+    }
+  }
+
+  $('openSettings').addEventListener('click', () => {
+    const s = loadSettings();
+    $('addEntryUrl').value = s.addEntryUrl;
+    $('listRowsUrl').value = s.listRowsUrl;
+    updateSettingsStatus();
+    $('settingsOverlay').classList.add('open');
+  });
+  $('closeSettings').addEventListener('click', () => $('settingsOverlay').classList.remove('open'));
+  $('saveSettingsBtn').addEventListener('click', () => {
+    saveSettings($('addEntryUrl').value.trim(), $('listRowsUrl').value.trim());
+    updateSettingsStatus();
+    showToast('Settings saved');
+    refreshOpenYIds();
+  });
+
+  // ---------- HEADER DATE (static, real today's date — not tied to the form) ----------
+  function initHeaderDate(){
+    const now = new Date();
+    $('dateSub').textContent = now.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  }
+  initHeaderDate();
+
+  // ---------- FORM DATE ----------
+  function isoToday(offsetDays=0){
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().slice(0,10);
+  }
+  function formatDateForExcel(iso){
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  function formatDisplayDate(iso){
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  }
+  function parseTypedDate(str){
+    const m = str.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(!m) return null;
+    const d = parseInt(m[1],10), mo = parseInt(m[2],10), y = parseInt(m[3],10);
+    if(mo<1||mo>12||d<1||d>31) return null;
+    const iso = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dt = new Date(iso+'T00:00:00');
+    if(dt.getFullYear()!==y || dt.getMonth()+1!==mo || dt.getDate()!==d) return null;
+    return iso;
+  }
+
+  // set placeholder to today's actual date as a live format example
+  $('dateTextInput').placeholder = `e.g. ${formatDateForExcel(isoToday(0))}`;
+
+  function setDate(iso, mode){
+    state.selectedDateISO = iso;
+    $('dateTextInput').value = formatDateForExcel(iso);
+    document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
+    if(mode === 'today') $('todayBtn').classList.add('active');
+    if(mode === 'yesterday') $('yesterdayBtn').classList.add('active');
+    if(mode === 'custom') $('customBtn').classList.add('active');
+    updateCTA();
+  }
+  $('todayBtn').addEventListener('click', () => setDate(isoToday(0), 'today'));
+  $('yesterdayBtn').addEventListener('click', () => setDate(isoToday(-1), 'yesterday'));
+  $('customBtn').addEventListener('click', () => {
+    // Swap the typable text box out for a real native date input the person
+    // taps directly — a scripted focus()/showPicker() call on a hidden field
+    // isn't a reliable enough user gesture in every browser (and is blocked
+    // outright inside a cross-origin iframe preview), so we show a genuine,
+    // visible date field instead and let its own calendar affordance do the work.
+    $('dateTextInput').style.display = 'none';
+    const picker = $('customDateInput');
+    picker.style.display = 'block';
+    picker.focus();
+    if(picker.showPicker){ try{ picker.showPicker(); }catch(err){} }
+    document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
+    $('customBtn').classList.add('active');
+  });
+  $('customDateInput').addEventListener('change', (e) => {
+    if(e.target.value) setDate(e.target.value, 'custom');
+    $('customDateInput').style.display = 'none';
+    $('dateTextInput').style.display = 'block';
+  });
+  $('customDateInput').addEventListener('blur', () => {
+    // If they open the picker and dismiss it without choosing a date, revert
+    // to the typable box rather than leaving an empty date field showing.
+    setTimeout(() => {
+      if($('customDateInput').style.display !== 'none' && !$('customDateInput').value){
+        $('customDateInput').style.display = 'none';
+        $('dateTextInput').style.display = 'block';
+      }
+    }, 150);
+  });
+  $('dateTextInput').addEventListener('blur', (e) => {
+    const val = e.target.value.trim();
+    if(!val) return;
+    const iso = parseTypedDate(val);
+    if(iso){ setDate(iso, 'typed'); }
+    else { showToast('Use DD/MM/YYYY format'); }
+  });
+
+  // ---------- SELF TRANSFER TOGGLE ----------
+  const selfTransferToggle = $('selfTransferToggle');
+  selfTransferToggle.addEventListener('change', () => {
+    state.isSelfTransfer = selfTransferToggle.checked;
+    applySelfTransferMode();
+  });
+
+  function applySelfTransferMode(){
+    const on = state.isSelfTransfer;
+    $('singleAccountField').style.display = on ? 'none' : 'flex';
+    $('transferAccountFields').style.display = on ? 'grid' : 'none';
+
+    $('singleTypeField').style.display = on ? 'none' : 'flex';
+    $('customTypeField').style.display = 'none';
+    $('splitTypeFields').style.display = on ? 'grid' : 'none';
+
+    if(on){
+      $('idSegment').style.pointerEvents = 'none';
+      $('idSegment').style.opacity = '0.6';
+      setIdKind('Y');
+
+      $('expenseName').value = 'Self Transfer';
+      $('txnFreq').value = 'One Off';
+      $('txnTypeFrom').value = 'Sent Transfer';
+      $('txnTypeTo').value = 'Received Transfer';
+      updateSplitCustomVisibility();
+
+      state.debit = true; state.credit = true;
+      renderKindButtons(true);
+      $('debitBtn').classList.add('locked');
+      $('creditBtn').classList.add('locked');
+    } else {
+      $('idSegment').style.pointerEvents = 'auto';
+      $('idSegment').style.opacity = '1';
+      $('debitBtn').classList.remove('locked');
+      $('creditBtn').classList.remove('locked');
+      state.credit = false; state.debit = true;
+      renderKindButtons(false);
+      if($('expenseName').value === 'Self Transfer') $('expenseName').value = '';
+      $('txnFreq').value = 'Monthly';
+      setIdKind('N');
+      $('splitCustomFields').style.display = 'none';
+    }
+    updateCTA();
+  }
+
+  // ---------- ACCOUNT CHIPS (single + from/to) ----------
+  function wireChipGroup(groupId, onSelect, defaultIndex=0){
+    const chips = document.querySelectorAll(`#${groupId} .chip`);
+    chips.forEach((chip, i) => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        onSelect(chip.dataset.val);
+        updateCTA();
+      });
+      if(i === defaultIndex) chip.classList.add('selected');
+    });
+  }
+  wireChipGroup('accountChips', (v) => state.account = v, 0);
+  wireChipGroup('fromChips', (v) => state.fromAccount = v, 0);
+  wireChipGroup('toChips', (v) => state.toAccount = v, 1);
+
+  // ---------- ID Y/N SEGMENTED CONTROL ----------
+  function setIdKind(kind){
+    state.kind = kind;
+    $('btnY').classList.toggle('active-seg', kind === 'Y');
+    $('btnN').classList.toggle('active-seg', kind === 'N');
+
+    const interactiveY = (kind === 'Y' && !state.isSelfTransfer);
+    $('idBoxDisplay').style.display = interactiveY ? 'none' : 'block';
+    $('idBoxSelect').style.display = interactiveY ? 'block' : 'none';
+
+    if(kind === 'N'){
+      $('idHint').textContent = 'N = one-way payment, auto-generates a new ID';
+    } else {
+      $('idHint').textContent = 'Bidirectional Payment, can auto-generate or close a previous entry';
+    }
+    regenerateId();
+    updateCTA();
+  }
+  $('btnY').addEventListener('click', () => setIdKind('Y'));
+  $('btnN').addEventListener('click', () => setIdKind('N'));
+  $('regenBtn').addEventListener('click', () => regenerateId());
+
+  function regenerateId(){
+    const newId = generateId(state.kind);
+    const interactiveY = (state.kind === 'Y' && !state.isSelfTransfer);
+    if(!interactiveY){
+      $('idBoxDisplay').textContent = newId;
+    } else {
+      const sel = $('idBoxSelect');
+      sel.innerHTML = '';
+      const optNew = document.createElement('option');
+      optNew.value = newId; optNew.textContent = newId;
+      sel.appendChild(optNew);
+      state.openYIds.forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id; opt.textContent = id;
+        sel.appendChild(opt);
+      });
+      sel.value = newId;
+    }
+  }
+
+  // ---------- ID GENERATION ----------
+  function randomSuffix(len=6){
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let out = '';
+    for(let i=0;i<len;i++) out += chars[Math.floor(Math.random()*chars.length)];
+    return out;
+  }
+  function generateId(kind){
+    return kind === 'Y' ? `Y${randomSuffix()}` : `N${randomSuffix()}`;
+  }
+
+  // ---------- OPEN Y-IDS (via List Rows webhook) ----------
+  async function refreshOpenYIds(){
+    const { listRowsUrl } = loadSettings();
+    if(!listRowsUrl){ state.openYIds = []; return; }
+    try{
+      const res = await fetch(listRowsUrl);
+      const data = await res.json();
+      const rows = data.value || data || [];
+      const counts = {};
+      rows.forEach(r => {
+        const id = r.ID || r.id;
+        if(id && id.startsWith('Y')) counts[id] = (counts[id]||0) + 1;
+      });
+      state.openYIds = Object.keys(counts).filter(id => counts[id] === 1);
+      if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
+    }catch(e){
+      console.warn('Could not load open IDs', e);
+    }
+  }
+  refreshOpenYIds();
+
+  // ---------- AMOUNT DISPLAY ----------
+  const amountInput = $('amountInput');
+  function updateAmountDisplay(){
+    const raw = amountInput.value;
+    if(raw === ''){
+      $('amtWhole').textContent = '0';
+      $('amtDec').textContent = '.00';
+    } else {
+      const num = parseFloat(raw);
+      if(!isNaN(num)){
+        const [whole, dec=''] = num.toFixed(2).split('.');
+        $('amtWhole').textContent = Number(whole).toLocaleString('en-IN');
+        $('amtDec').textContent = '.' + dec;
+      }
+    }
+    updateCTA();
+  }
+  amountInput.addEventListener('input', updateAmountDisplay);
+  updateAmountDisplay();
+
+  // ---------- DEBIT/CREDIT ----------
+  function renderKindButtons(bothOn){
+    $('debitBtn').classList.toggle('on', state.debit);
+    $('creditBtn').classList.toggle('on', state.credit || bothOn);
+  }
+  $('debitBtn').addEventListener('click', () => {
+    if(state.isSelfTransfer) return;
+    state.debit = true; state.credit = false;
+    renderKindButtons(false);
+    updateCTA();
+  });
+  $('creditBtn').addEventListener('click', () => {
+    if(state.isSelfTransfer) return;
+    state.debit = false; state.credit = true;
+    renderKindButtons(false);
+    updateCTA();
+  });
+  renderKindButtons(false);
+
+  // ---------- TRANSACTION TYPE (single mode: Custom lives inside the dropdown) ----------
+  $('txnType').addEventListener('change', (e) => {
+    $('customTypeField').style.display = e.target.value === 'Custom' ? 'flex' : 'none';
+  });
+
+  // ---------- TRANSACTION TYPE (self-transfer split mode) ----------
+  function updateSplitCustomVisibility(){
+    const fromCustom = $('txnTypeFrom').value === 'Custom';
+    const toCustom = $('txnTypeTo').value === 'Custom';
+    $('customFromField').style.display = fromCustom ? 'flex' : 'none';
+    $('customToField').style.display = toCustom ? 'flex' : 'none';
+    $('splitCustomFields').style.display = (fromCustom || toCustom) ? 'grid' : 'none';
+  }
+  $('txnTypeFrom').addEventListener('change', updateSplitCustomVisibility);
+  $('txnTypeTo').addEventListener('change', updateSplitCustomVisibility);
+
+  // ---------- CTA (single Save button + live caption) ----------
+  function formattedAmount(){
+    const num = parseFloat(amountInput.value);
+    return isNaN(num) ? '0.00' : num.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function updateCTA(){
+    const amt = formattedAmount();
+    if(state.isSelfTransfer){
+      $('ctaMainText').textContent = `Add Entry • ₹${amt} Transfer`;
+      const from = state.fromAccount, to = state.toAccount;
+      const dateLabel = state.selectedDateISO ? formatDisplayDate(state.selectedDateISO) : 'no date yet';
+      $('ctaCaption').textContent = `Moves ${from} → ${to} • ${dateLabel} • self transfer`;
+    } else {
+      const dir = state.debit ? 'Out' : 'In';
+      $('ctaMainText').textContent = `Add Entry • ₹${amt} ${dir}`;
+      const dateLabel = state.selectedDateISO ? formatDisplayDate(state.selectedDateISO) : 'no date yet';
+      const status = state.kind === 'Y' ? 'marked to be returned' : 'one-way payment';
+      $('ctaCaption').textContent = `Saves to ${state.account} • ${dateLabel} • ${status}`;
+    }
+  }
+
+  // ---------- TOAST ----------
+  let toastTimer;
+  function showToast(msg, duration=2200){
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+  }
+
+  // ---------- RESET (runs automatically after a successful save) ----------
+  function fullReset(){
+    $('entryForm').reset();
+    state.selectedDateISO = null;
+    $('dateTextInput').value = '';
+    $('customDateInput').value = '';
+    $('customDateInput').style.display = 'none';
+    $('dateTextInput').style.display = 'block';
+    document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
+    selfTransferToggle.checked = false;
+    state.isSelfTransfer = false;
+    applySelfTransferMode();
+    setIdKind('N');
+    document.querySelectorAll('#accountChips .chip').forEach((c,i) => c.classList.toggle('selected', i===0));
+    state.account = 'Domestic';
+    $('customTypeField').style.display = 'none';
+    $('splitCustomFields').style.display = 'none';
+    updateAmountDisplay();
+    updateCTA();
+  }
+
+  // ---------- SUBMIT ----------
+  function currentId(){
+    if(state.kind === 'Y' && !state.isSelfTransfer) return $('idBoxSelect').value;
+    return $('idBoxDisplay').textContent;
+  }
+
+  async function postRow(payload){
+    const { addEntryUrl } = loadSettings();
+    if(!addEntryUrl){
+      console.log('No Add-entry URL configured. Payload:', payload);
+      return { ok:false, reason:'no-url' };
+    }
+    // Sent as a form-encoded body (not JSON) on purpose: a JSON Content-Type
+    // forces the browser to send a CORS preflight (OPTIONS) request first,
+    // and Make/most webhook receivers don't answer that preflight the way
+    // fetch() needs — so the browser silently blocks the real POST before it
+    // ever leaves the device. Form-encoding with no explicit Content-Type
+    // header is a "simple request" and skips preflight entirely. Make (and
+    // Power Automate) both parse this into the same flat key/value fields.
+    const body = new URLSearchParams();
+    Object.entries(payload).forEach(([k, v]) => body.append(k, v == null ? '' : String(v)));
+
+    try{
+      const res = await fetch(addEntryUrl, {
+        method:'POST',
+        body
+      });
+      if(!res.ok){
+        console.error('Webhook responded with an error status:', res.status);
+        return { ok:false, reason:'http-' + res.status };
+      }
+      return { ok:true };
+    }catch(e){
+      // A network-level failure (offline, DNS, CORS block, wrong URL). This
+      // is the case that used to be swallowed silently.
+      console.error('Webhook request failed:', e);
+      return { ok:false, reason:'network', error:e };
+    }
+  }
+
+  $('entryForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if(!state.selectedDateISO){ showToast('Pick a date first'); return; }
+
+    const dateStr = formatDateForExcel(state.selectedDateISO);
+    const expenseName = $('expenseName').value.trim();
+    const moreInfo = $('moreInfo').value.trim();
+    const txnFreq = $('txnFreq').value;
+    const amount = parseFloat(amountInput.value);
+
+    if(!expenseName || !amount || amount <= 0){
+      showToast('Fill in expense name and amount');
+      return;
+    }
+
+    $('saveBtn').disabled = true;
+    $('ctaMainText').textContent = 'Saving…';
+
+    let allOk = false;
+    let lastFail = null;
+    let savedId = null;
+
+    if(state.isSelfTransfer){
+      const id = currentId();
+      savedId = id;
+      const typeFrom = $('txnTypeFrom').value === 'Custom' ? ($('customTypeFromInput').value.trim() || 'Custom') : $('txnTypeFrom').value;
+      const typeTo = $('txnTypeTo').value === 'Custom' ? ($('customTypeToInput').value.trim() || 'Custom') : $('txnTypeTo').value;
+      const legFrom = {
+        DATE: dateStr, RELEVANT_ACCOUNT: state.fromAccount, EXPENSE_NAME: expenseName,
+        MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeFrom, TRANSACTION_KIND: txnFreq,
+        DEBIT_AMOUNT: amount, CREDIT_AMOUNT: '', ID: id
+      };
+      const legTo = {
+        DATE: dateStr, RELEVANT_ACCOUNT: state.toAccount, EXPENSE_NAME: expenseName,
+        MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeTo, TRANSACTION_KIND: txnFreq,
+        DEBIT_AMOUNT: '', CREDIT_AMOUNT: amount, ID: id
+      };
+      const r1 = await postRow(legFrom);
+      const r2 = await postRow(legTo);
+      allOk = r1.ok && r2.ok;
+      lastFail = !r1.ok ? r1 : r2;
+    } else {
+      const txnType = $('txnType').value === 'Custom' ? ($('customTypeInput').value.trim() || 'Custom') : $('txnType').value;
+      const id = currentId();
+      savedId = id;
+      const row = {
+        DATE: dateStr, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
+        MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: txnType, TRANSACTION_KIND: txnFreq,
+        DEBIT_AMOUNT: state.debit ? amount : '', CREDIT_AMOUNT: state.credit ? amount : '', ID: id
+      };
+      const r = await postRow(row);
+      allOk = r.ok;
+      lastFail = r;
+    }
+
+    $('saveBtn').disabled = false;
+
+    if(allOk){
+      showToast(state.isSelfTransfer ? `Transfer saved · ${savedId}` : `Saved · ${savedId}`);
+      fullReset();
+      refreshOpenYIds();
+    } else {
+      // Leave the form filled in so nothing typed is lost, and say plainly
+      // that it did not save — no more false "Saved" toasts.
+      const reasonText = lastFail && lastFail.reason === 'no-url'
+        ? 'No webhook URL set — open Settings first'
+        : lastFail && lastFail.reason && lastFail.reason.startsWith('http-')
+          ? `Webhook error (${lastFail.reason.replace('http-','status ')})`
+          : 'Could not reach the webhook — check your connection';
+      showToast(reasonText, 3800);
+      $('ctaMainText').textContent = 'Retry Save';
+    }
+  });
+
+  // ---------- BOTTOM NAV ----------
+  document.querySelectorAll('.navbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const isAdd = btn.dataset.tab === 'add';
+      $('entryForm').style.display = isAdd ? 'flex' : 'none';
+      $('statsScreen').style.display = isAdd ? 'none' : 'block';
+      document.querySelector('.topbar h1').textContent = isAdd ? 'Add Payment' : 'Stats';
+    });
+  });
+
+  // ---------- INIT ----------
+  setIdKind('N');
+  updateCTA();
+
+  // ---------- SERVICE WORKER (required by Chrome/Android for installability) ----------
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.warn('Service worker registration failed:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
