@@ -631,7 +631,12 @@
     debit: true,
     credit: false,
     openYIds: [],
-    selectedDateISO: null
+    selectedDateISO: null,
+    // Cached rows from the List Rows webhook, each as {index, isoDate}.
+    // Used to find where to insert a backdated entry — right after the last
+    // existing row that shares its date — instead of always appending at
+    // the very end of the table.
+    allRows: []
   };
 
   const $ = (id) => document.getElementById(id);
@@ -697,6 +702,17 @@
   function formatDateForExcel(iso){
     const [y,m,d] = iso.split('-');
     return `${d}/${m}/${y}`;
+  }
+  // Excel's internal date system counts days since 1899-12-30 (the extra day
+  // vs 1900-01-01 accounts for Excel's intentional leap-year bug). Sending
+  // this number instead of a "DD/MM/YYYY" string makes Excel store a real
+  // date value — sortable, filterable, usable in SUMIFS date ranges — rather
+  // than text that merely looks like a date.
+  function toExcelSerial(iso){
+    const [y, m, d] = iso.split('-').map(Number);
+    const utcDate = Date.UTC(y, m - 1, d);
+    const excelEpoch = Date.UTC(1899, 11, 30);
+    return Math.round((utcDate - excelEpoch) / 86400000);
   }
   function formatDisplayDate(iso){
     const d = new Date(iso + 'T00:00:00');
@@ -880,23 +896,81 @@
     return kind === 'Y' ? `Y${randomSuffix()}` : `N${randomSuffix()}`;
   }
 
-  // ---------- OPEN Y-IDS (via List Rows webhook) ----------
+  // ---------- ROW DATE PARSING ----------
+  // The sheet has rows written three different ways over its history: a raw
+  // Excel serial number (what this app now sends), an ISO date-time string
+  // (possible depending on how Graph serializes a real date value), or plain
+  // "DD/MM/YYYY" text (older rows, or any manually-typed entry). This parses
+  // whichever one comes back into a comparable ISO "YYYY-MM-DD" string, so
+  // the date-match lookup below works regardless of which format a given
+  // row happens to be in.
+  function parseSheetDateToISO(raw){
+    if(raw == null) return null;
+    const s = String(raw).trim();
+    if(!s) return null;
+
+    // Pure integer -> Excel serial number (days since 1899-12-30).
+    if(/^\d+$/.test(s)){
+      const serial = parseInt(s, 10);
+      const ms = (serial - 25569) * 86400000; // 25569 = days between 1899-12-30 and 1970-01-01
+      const d = new Date(ms);
+      if(isNaN(d.getTime())) return null;
+      return d.toISOString().slice(0,10);
+    }
+
+    // ISO date or date-time, e.g. "2026-09-09" or "2026-09-09T00:00:00.000Z".
+    const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+    // "D/M/YYYY" or "DD/MM/YYYY" text, with or without leading zeros.
+    const dmyMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(dmyMatch){
+      const d = dmyMatch[1].padStart(2,'0'), m = dmyMatch[2].padStart(2,'0'), y = dmyMatch[3];
+      return `${y}-${m}-${d}`;
+    }
+
+    return null; // unrecognized — treated as "no date" by callers
+  }
+
+  // Finds the table index to insert a new row at so it lands right after
+  // the last existing row sharing the same date, keeping same-day entries
+  // grouped together instead of always appending to the physical end of
+  // the table. Returns null when no row shares that date (falls back to a
+  // normal append, which is correct for same-day/forward-dated entries).
+  function findInsertionIndex(targetISO){
+    if(!targetISO || !state.allRows.length) return null;
+    let lastMatch = null;
+    for(const row of state.allRows){
+      if(row.isoDate === targetISO){
+        if(lastMatch === null || row.index > lastMatch) lastMatch = row.index;
+      }
+    }
+    return lastMatch === null ? null : lastMatch + 1;
+  }
+
+  // ---------- OPEN Y-IDS + ROW CACHE (via List Rows webhook) ----------
   async function refreshOpenYIds(){
     const { listRowsUrl } = loadSettings();
-    if(!listRowsUrl){ state.openYIds = []; return; }
+    if(!listRowsUrl){ state.openYIds = []; state.allRows = []; return; }
     try{
       const res = await fetch(listRowsUrl);
       const data = await res.json();
       const rows = data.value || data || [];
       const counts = {};
+      state.allRows = [];
       rows.forEach(r => {
         const id = r.ID || r.id;
         if(id && id.startsWith('Y')) counts[id] = (counts[id]||0) + 1;
+
+        const rawIndex = r.INDEX != null ? r.INDEX : r.index;
+        const idx = parseInt(rawIndex, 10);
+        const isoDate = parseSheetDateToISO(r.DATE != null ? r.DATE : r.date);
+        if(!isNaN(idx) && isoDate) state.allRows.push({ index: idx, isoDate });
       });
       state.openYIds = Object.keys(counts).filter(id => counts[id] === 1);
       if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
     }catch(e){
-      console.warn('Could not load open IDs', e);
+      console.warn('Could not load open IDs / rows', e);
     }
   }
   refreshOpenYIds();
@@ -1053,7 +1127,10 @@
 
     if(!state.selectedDateISO){ showToast('Pick a date first'); return; }
 
-    const dateStr = formatDateForExcel(state.selectedDateISO);
+    // Sent to the webhook as an Excel serial number (see toExcelSerial), not
+    // the "DD/MM/YYYY" display string — that's what makes Excel store a real
+    // date instead of text.
+    const dateForSheet = toExcelSerial(state.selectedDateISO);
     const expenseName = $('expenseName').value.trim();
     const moreInfo = $('moreInfo').value.trim();
     const txnFreq = $('txnFreq').value;
@@ -1067,6 +1144,12 @@
     $('saveBtn').disabled = true;
     $('ctaMainText').textContent = 'Saving…';
 
+    // Pull the current row list fresh right before deciding where this entry
+    // goes — using a stale cache here could compute an insertion point that
+    // no longer matches the table's actual current shape.
+    await refreshOpenYIds();
+    const insertIndex = findInsertionIndex(state.selectedDateISO);
+
     let allOk = false;
     let lastFail = null;
     let savedId = null;
@@ -1077,15 +1160,19 @@
       const typeFrom = $('txnTypeFrom').value === 'Custom' ? ($('customTypeFromInput').value.trim() || 'Custom') : $('txnTypeFrom').value;
       const typeTo = $('txnTypeTo').value === 'Custom' ? ($('customTypeToInput').value.trim() || 'Custom') : $('txnTypeTo').value;
       const legFrom = {
-        DATE: dateStr, RELEVANT_ACCOUNT: state.fromAccount, EXPENSE_NAME: expenseName,
+        DATE: dateForSheet, RELEVANT_ACCOUNT: state.fromAccount, EXPENSE_NAME: expenseName,
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeFrom, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: amount, CREDIT_AMOUNT: '', ID: id
       };
       const legTo = {
-        DATE: dateStr, RELEVANT_ACCOUNT: state.toAccount, EXPENSE_NAME: expenseName,
+        DATE: dateForSheet, RELEVANT_ACCOUNT: state.toAccount, EXPENSE_NAME: expenseName,
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeTo, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: '', CREDIT_AMOUNT: amount, ID: id
       };
+      // Both legs share a date, so both need an explicit position — leaving
+      // it off for the second leg would make it fall back to a plain
+      // append instead of landing right after the first leg.
+      if(insertIndex != null){ legFrom.INDEX = insertIndex; legTo.INDEX = insertIndex + 1; }
       const r1 = await postRow(legFrom);
       const r2 = await postRow(legTo);
       allOk = r1.ok && r2.ok;
@@ -1095,10 +1182,11 @@
       const id = currentId();
       savedId = id;
       const row = {
-        DATE: dateStr, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
+        DATE: dateForSheet, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: txnType, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: state.debit ? amount : '', CREDIT_AMOUNT: state.credit ? amount : '', ID: id
       };
+      if(insertIndex != null) row.INDEX = insertIndex;
       const r = await postRow(row);
       allOk = r.ok;
       lastFail = r;
