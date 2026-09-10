@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Ledger — Add Payment</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#121614">
+<meta name="theme-color" content="#F4F1EA">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -43,20 +43,20 @@
     min-height:100vh;
     display:flex;
     flex-direction:column;
-    padding-bottom:88px;
   }
   /* HEADER */
   .topbar{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:22px 20px 8px;
+    padding:22px 20px 14px;
   }
   .topbar h1{
     font-size:22px;
     font-weight:800;
     margin:0;
     letter-spacing:-0.3px;
+    color:var(--text-dark);
   }
   .topbar .sub{
     font-size:13px;
@@ -67,13 +67,40 @@
   .gear-btn{
     width:42px;height:42px;
     border-radius:var(--radius-pill);
-    background:var(--white);
-    border:1px solid var(--border);
+    background:var(--text-dark);
+    border:none;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
     flex-shrink:0;
   }
-  .gear-btn svg{width:20px;height:20px;stroke:var(--text-dark);}
+  .gear-btn svg{width:20px;height:20px;stroke:var(--lime);}
+
+  /* TOP TABS (page switcher) */
+  .top-tabs-wrap{
+    padding:4px 20px 4px;
+  }
+  .top-tabs{
+    display:flex;
+    background:var(--canvas-dark);
+    border-radius:var(--radius-pill);
+    padding:6px;
+    gap:6px;
+  }
+  .top-tab{
+    flex:1;
+    text-align:center;
+    padding:13px 0;
+    border-radius:var(--radius-pill);
+    border:2px solid var(--lime);
+    color:#9EAD9C;
+    font-size:14px;font-weight:700;
+    cursor:pointer;
+  }
+  .top-tab.active{
+    background:var(--lime);
+    border-color:var(--lime);
+    color:var(--text-dark);
+  }
 
   /* FORM */
   form{padding:14px 20px 20px;display:flex;flex-direction:column;gap:18px;}
@@ -102,6 +129,30 @@
     padding-right:38px;
   }
 
+  /* Transaction type combo: a real <select> normally (identical to every
+     other dropdown in the app), which shrinks down to an invisible strip
+     over just the arrow once Custom is chosen — the visible custom text
+     input takes over underneath it. Tapping that strip still opens the
+     browser's real native picker (not a fake popup), because it's a
+     genuine, un-modified <select> receiving a direct tap the whole time. */
+  .combo-wrap{position:relative;}
+  .combo-wrap select#txnType{width:100%;}
+  .combo-wrap.custom-mode select#txnType{
+    position:absolute;
+    top:0; right:0;
+    width:44px; height:100%;
+    opacity:0;
+    padding:0;
+    border:none;
+    cursor:pointer;
+  }
+  input.combo-custom-input{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2378756E' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 16px center;
+    padding-right:38px;
+  }
+
   /* row of two */
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
@@ -123,19 +174,7 @@
   }
   .date-box-input::placeholder{color:var(--text-muted);font-weight:500;}
   .date-box-input:focus{border-color:var(--green);}
-  .hidden-date-input{
-    display:none;
-    width:100%;
-    padding:14px 16px;
-    border-radius:var(--radius-input);
-    border:1px solid var(--green);
-    background:var(--white);
-    font-family:var(--font);
-    font-size:16px;font-weight:600;
-    color:var(--text-dark);
-    outline:none;
-  }
-  .quick-date-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
+  .quick-date-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .quick-date-btn{
     padding:10px 0;
     border-radius:var(--radius-pill);
@@ -146,7 +185,6 @@
     cursor:pointer;
   }
   .quick-date-btn.active{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);font-style:normal;}
-  .quick-date-custom{font-style:italic;background:#EDEAE0;}
 
   /* toggle switch (self-transfer) */
   .switch-row{
@@ -268,24 +306,20 @@
     width:100%;
     padding:6px 0;
   }
-  .amt-display-wrap .rupee{font-size:30px;font-weight:800;color:var(--green);margin-right:4px;}
-  .amt-display-wrap .amt-whole{font-size:42px;font-weight:800;color:var(--text-dark);line-height:1;}
-  .amt-display-wrap .amt-dec{font-size:22px;font-weight:600;color:var(--text-muted);line-height:1;}
+  .amt-display-wrap .rupee{font-size:42px;font-weight:600;color:var(--green);margin-right:4px;}
   #amountInput{
-    position:absolute;
-    inset:0;
-    width:100%;height:100%;
+    flex:0 1 auto;
+    min-width:0;
+    max-width:100%;
     border:none;background:transparent;
-    color:transparent;
-    caret-color:var(--text-dark);
-    font-size:42px;font-weight:800;
-    text-align:center;
+    outline:none;
+    font-family:var(--font);
+    font-size:42px;font-weight:600;
+    color:var(--text-dark);
+    text-align:left;
     padding:0;
-    -moz-appearance:textfield;
   }
-  #amountInput::-webkit-outer-spin-button,
-  #amountInput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  #amountInput:focus{outline:none;}
+  #amountInput::placeholder{color:var(--text-muted);font-weight:600;opacity:1;}
 
   .kind-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
   .kind-btn{
@@ -296,10 +330,10 @@
     font-family:var(--font);font-size:15px;font-weight:700;
     cursor:pointer;
   }
-  .kind-btn.debit{color:var(--red);}
-  .kind-btn.debit.on{background:var(--red);border-color:var(--red);color:var(--white);}
-  .kind-btn.credit{color:var(--green);}
-  .kind-btn.credit.on{background:var(--green);border-color:var(--green);color:var(--white);}
+  .kind-btn.debit{color:var(--text-muted);}
+  .kind-btn.debit.on{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
+  .kind-btn.credit{color:var(--text-muted);}
+  .kind-btn.credit.on{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
   .kind-btn.locked{opacity:0.85;cursor:default;}
 
   /* CTA save button */
@@ -324,33 +358,6 @@
   }
 
   /* bottom nav */
-  .bottomnav{
-    position:fixed;bottom:0;left:0;right:0;
-    display:flex;justify-content:center;
-    background:transparent;
-    padding:16px 20px calc(16px + env(safe-area-inset-bottom));
-    pointer-events:none;
-  }
-  .bottomnav .inner{
-    pointer-events:all;
-    max-width:480px;width:100%;
-    background:var(--canvas-dark);
-    border-radius:var(--radius-pill);
-    display:flex;
-    padding:6px;
-    box-shadow:0 10px 30px rgba(0,0,0,.18);
-  }
-  .navbtn{
-    flex:1;
-    text-align:center;
-    padding:12px 0;
-    border-radius:var(--radius-pill);
-    font-size:13px;font-weight:700;
-    color:#9EAD9C;
-    cursor:pointer;
-  }
-  .navbtn.active{background:var(--lime);color:var(--text-dark);}
-
   /* stats placeholder */
   .stats-placeholder{
     padding:60px 30px;text-align:center;color:var(--text-muted);
@@ -403,14 +410,21 @@
 
   <div class="topbar">
     <div>
-      <h1>Add Payment</h1>
+      <h1>Ledger</h1>
       <div class="sub" id="dateSub">—</div>
     </div>
     <div class="gear-btn" id="openSettings">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
       </svg>
+    </div>
+  </div>
+
+  <div class="top-tabs-wrap">
+    <div class="top-tabs">
+      <div class="top-tab active" data-tab="add">Add Payment</div>
+      <div class="top-tab" data-tab="stats">Stats</div>
     </div>
   </div>
 
@@ -421,12 +435,10 @@
       <label>Date</label>
       <div class="date-input-wrap">
         <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 08/09/2026" inputmode="numeric" autocomplete="off">
-        <input type="date" id="customDateInput" class="hidden-date-input" tabindex="-1">
       </div>
       <div class="quick-date-row">
         <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
         <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
-        <button type="button" class="quick-date-btn quick-date-custom" id="customBtn">Custom</button>
       </div>
     </div>
 
@@ -441,27 +453,17 @@
       </label>
     </div>
 
-    <!-- Normal account field -->
-    <div class="field" id="singleAccountField">
-      <label>Account</label>
-      <div class="chip-group" id="accountChips">
-        <div class="chip" data-val="Domestic">Domestic</div>
-        <div class="chip" data-val="International">International</div>
-        <div class="chip" data-val="Cash">Cash</div>
-      </div>
-    </div>
-
-    <!-- Self-transfer From/To fields (stacked chip columns) -->
-    <div class="row-2" id="transferAccountFields" style="display:none;">
-      <div class="field">
-        <label>From account</label>
-        <div class="chip-group vertical" id="fromChips">
+    <!-- Account field (left) + To account (right, revealed for self-transfer) -->
+    <div class="row-2" id="accountRow">
+      <div class="field" id="singleAccountField">
+        <label>Account</label>
+        <div class="chip-group vertical" id="accountChips">
           <div class="chip" data-val="Domestic">Domestic</div>
           <div class="chip" data-val="International">International</div>
           <div class="chip" data-val="Cash">Cash</div>
         </div>
       </div>
-      <div class="field">
+      <div class="field" id="toAccountField" style="display:none;">
         <label>To account</label>
         <div class="chip-group vertical" id="toChips">
           <div class="chip" data-val="Domestic">Domestic</div>
@@ -492,7 +494,7 @@
 
     <div class="field">
       <label for="expenseName">Expense name</label>
-      <input type="text" id="expenseName" placeholder="e.g. Zomato, Rent, Amazon" required>
+      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc" required>
     </div>
 
     <div class="field">
@@ -504,19 +506,18 @@
       <!-- single mode (default) -->
       <div class="field" id="singleTypeField">
         <label for="txnType">Transaction type</label>
-        <select id="txnType">
-          <option>Payment</option>
-          <option>Refund</option>
-          <option>Cashback</option>
-          <option>Salary</option>
-          <option>Sent Transfer</option>
-          <option>Received Transfer</option>
-          <option value="Custom" style="font-style:italic;">Custom…</option>
-        </select>
-      </div>
-      <div class="field" id="customTypeField" style="display:none;">
-        <label for="customTypeInput">Custom transaction type</label>
-        <input type="text" id="customTypeInput" placeholder="Type your own">
+        <div class="combo-wrap" id="txnTypeWrap">
+          <select id="txnType">
+            <option>Payment</option>
+            <option>Refund</option>
+            <option>Cashback</option>
+            <option>Salary</option>
+            <option>Sent Transfer</option>
+            <option>Received Transfer</option>
+            <option value="Custom" style="font-style:italic;">Custom…</option>
+          </select>
+          <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter Custom Transaction Type" autocomplete="off">
+        </div>
       </div>
 
       <!-- self-transfer mode: type splits into the two legs -->
@@ -569,8 +570,8 @@
     <div class="amount-card">
       <div class="amt-label"><span>Amount</span><span class="pill-inr">₹ INR</span></div>
       <div class="amt-display-wrap">
-        <span class="rupee">₹</span><span class="amt-whole" id="amtWhole">0</span><span class="amt-dec" id="amtDec">.00</span>
-        <input type="number" id="amountInput" inputmode="decimal" step="0.01" required>
+        <span class="rupee" id="rupeeSymbol">₹</span>
+        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00" required>
       </div>
       <div class="kind-toggle">
         <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
@@ -592,29 +593,11 @@
     <p>This tab will show spending trends once entries start rolling in.</p>
   </div>
 
-  <div class="bottomnav">
-    <div class="inner">
-      <div class="navbtn active" data-tab="add">Add Payment</div>
-      <div class="navbtn" data-tab="stats">Stats</div>
-    </div>
-  </div>
-</div>
-
-<!-- SETTINGS MODAL -->
-<div class="modal-overlay" id="settingsOverlay">
-  <div class="modal">
-    <div class="close" id="closeSettings">Close</div>
-    <h2>Settings</h2>
-    <div class="field">
-      <label for="addEntryUrl">Add-entry webhook URL</label>
-      <input type="text" id="addEntryUrl" placeholder="https://hook.us2.make.com/...">
-    </div>
-    <div class="field">
-      <label for="listRowsUrl">List-rows webhook URL</label>
-      <input type="text" id="listRowsUrl" placeholder="https://hook.us2.make.com/...">
-    </div>
-    <button type="button" class="btn btn-save" id="saveSettingsBtn">Save settings</button>
-    <div class="field-hint" id="settingsStatus"></div>
+  <!-- ACCOUNT PLACEHOLDER -->
+  <div class="stats-placeholder" id="accountScreen" style="display:none;">
+    <div class="icon">👤</div>
+    <h2>Account is coming soon</h2>
+    <p>Profile and account settings will live here.</p>
   </div>
 </div>
 
@@ -626,7 +609,6 @@
     kind: 'N',
     isSelfTransfer: false,
     account: 'Domestic',
-    fromAccount: 'Domestic',
     toAccount: 'International',
     debit: true,
     credit: false,
@@ -641,54 +623,9 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // ---------- SETTINGS (persisted) ----------
-  // Hardcoded to this app's Make webhooks so the app works out of the box
-  // with no manual setup. Settings still lets these be overridden (e.g. if
-  // the Make scenarios ever move to a new account) — anything saved there
-  // takes precedence over these defaults.
-  const DEFAULT_ADD_ENTRY_URL = 'https://hook.us2.make.com/pmrsweyiswbqrox3sj5ibmkj83bhuhz9';
-  const DEFAULT_LIST_ROWS_URL = 'https://hook.us2.make.com/unqqsltxzci7itcfdlln241cdgsu9go8';
-
-  function loadSettings(){
-    try{
-      return {
-        addEntryUrl: localStorage.getItem('ledger_add_entry_url') || DEFAULT_ADD_ENTRY_URL,
-        listRowsUrl: localStorage.getItem('ledger_list_rows_url') || DEFAULT_LIST_ROWS_URL
-      };
-    }catch(e){ return {addEntryUrl: DEFAULT_ADD_ENTRY_URL, listRowsUrl: DEFAULT_LIST_ROWS_URL}; }
-  }
-  function saveSettings(addEntryUrl, listRowsUrl){
-    try{
-      localStorage.setItem('ledger_add_entry_url', addEntryUrl);
-      localStorage.setItem('ledger_list_rows_url', listRowsUrl);
-    }catch(e){}
-  }
-
-  function updateSettingsStatus(){
-    const usingDefaultAdd = !localStorage.getItem('ledger_add_entry_url');
-    const usingDefaultList = !localStorage.getItem('ledger_list_rows_url');
-    const el = $('settingsStatus');
-    if(usingDefaultAdd && usingDefaultList){
-      el.textContent = 'Using the built-in webhooks — nothing else to set up.';
-    } else {
-      el.textContent = 'Using a custom webhook URL below. Clear a field and save to revert to the built-in one.';
-    }
-  }
-
-  $('openSettings').addEventListener('click', () => {
-    const s = loadSettings();
-    $('addEntryUrl').value = s.addEntryUrl;
-    $('listRowsUrl').value = s.listRowsUrl;
-    updateSettingsStatus();
-    $('settingsOverlay').classList.add('open');
-  });
-  $('closeSettings').addEventListener('click', () => $('settingsOverlay').classList.remove('open'));
-  $('saveSettingsBtn').addEventListener('click', () => {
-    saveSettings($('addEntryUrl').value.trim(), $('listRowsUrl').value.trim());
-    updateSettingsStatus();
-    showToast('Settings saved');
-    refreshOpenYIds();
-  });
+  // ---------- WEBHOOK URLS (hardcoded, no user-facing settings) ----------
+  const ADD_ENTRY_URL = 'https://hook.us2.make.com/pmrsweyiswbqrox3sj5ibmkj83bhuhz9';
+  const LIST_ROWS_URL = 'https://hook.us2.make.com/unqqsltxzci7itcfdlln241cdgsu9go8';
 
   // ---------- HEADER DATE (static, real today's date — not tied to the form) ----------
   function initHeaderDate(){
@@ -723,7 +660,12 @@
     return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
   }
   function parseTypedDate(str){
-    const m = str.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    let s = str.trim();
+    // "26" as a full year is shorthand for "2026" — expand before validating.
+    const shortYear = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+    if(shortYear) s = `${shortYear[1]}/${shortYear[2]}/20${shortYear[3]}`;
+
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if(!m) return null;
     const d = parseInt(m[1],10), mo = parseInt(m[2],10), y = parseInt(m[3],10);
     if(mo<1||mo>12||d<1||d>31) return null;
@@ -736,52 +678,120 @@
   // set placeholder to today's actual date as a live format example
   $('dateTextInput').placeholder = `e.g. ${formatDateForExcel(isoToday(0))}`;
 
+  // Splits a raw digit string into day/month/year, advancing to the next
+  // segment the moment the current one can no longer become a double-digit
+  // value — a day can only start with 0/1/2/3 (nothing starting 4-9 can be
+  // a valid day up to 31), so typing "5" alone is unambiguously day 05 and
+  // the next digit belongs to month. Same idea for month: only a leading
+  // "0" or "1" leaves room for a second digit (months 01-12); anything else
+  // completes immediately as a single-digit month.
+  function splitDateDigits(rawDigits){
+    let i = 0;
+    let day = '', dayPartial = false;
+    if(i < rawDigits.length){
+      const d1 = rawDigits[i];
+      if('456789'.includes(d1)){
+        day = '0' + d1; i += 1;
+      } else if(i + 1 < rawDigits.length){
+        const dayNum = parseInt(d1 + rawDigits[i+1], 10);
+        day = dayNum === 0 ? '01' : dayNum > 31 ? '31' : d1 + rawDigits[i+1];
+        i += 2;
+      } else {
+        day = d1; dayPartial = true; i += 1;
+      }
+    }
+
+    let month = '', monthPartial = false;
+    if(!dayPartial && day.length === 2 && i < rawDigits.length){
+      const m1 = rawDigits[i];
+      if('23456789'.includes(m1)){
+        month = '0' + m1; i += 1;
+      } else if(i + 1 < rawDigits.length){
+        const monthNum = parseInt(m1 + rawDigits[i+1], 10);
+        month = monthNum === 0 ? '01' : monthNum > 12 ? '12' : m1 + rawDigits[i+1];
+        i += 2;
+      } else {
+        month = m1; monthPartial = true; i += 1;
+      }
+    }
+
+    let year = '';
+    if(!monthPartial && month.length === 2 && i < rawDigits.length){
+      year = rawDigits.slice(i, i + 4);
+    }
+
+    return { day, month, year };
+  }
+
+  // Mask input as the person types: strip anything that isn't a digit and
+  // auto-insert slashes using splitDateDigits above — this is what blocks
+  // "kkndnfk" and clamps impossible values like "99/99/9999" before they
+  // can ever be typed. The "/" is never protected as a special character —
+  // it's just drawn from however many digits currently exist. The cursor
+  // always lands at the end of the rebuilt value — no attempt to preserve
+  // a mid-string position, which is what caused it to jump around before.
+  // Full calendar correctness (e.g. 30 Feb, which needs the finished year
+  // to check leap years) and the future-date check both happen at blur.
+  function renderDateDigits(rawDigits){
+    const { day, month, year } = splitDateDigits(rawDigits);
+    let formatted = day;
+    if(day.length === 2){
+      formatted += '/' + month;
+      if(month.length === 2) formatted += '/' + year;
+    }
+    return formatted;
+  }
+
+  $('dateTextInput').addEventListener('input', (e) => {
+    const rawDigits = e.target.value.replace(/\D/g, '').slice(0, 8);
+    const formatted = renderDateDigits(rawDigits);
+    e.target.value = formatted;
+    e.target.setSelectionRange(formatted.length, formatted.length);
+    // Once they're editing by hand, the value no longer necessarily matches
+    // whichever quick-pick was last tapped, so drop that highlight.
+    document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
+  });
+
+  // Backspace/Delete just remove the literal last character of what's
+  // displayed — a digit or a slash, whichever is actually last — with no
+  // re-derivation through the mask. This guarantees exactly one visible
+  // character disappears per press. (Re-running the smart day/month mask
+  // on delete was the earlier bug: shrinking a completed 2-digit segment
+  // back to partial also drops its trailing slash, so one press could
+  // remove two visible characters at once — e.g. "05/09/" jumping straight
+  // to "05/0".) Typing forward afterwards still goes through the normal
+  // mask via the 'input' handler above, which correctly re-derives the
+  // right segments regardless of the string's current in-between shape.
+  $('dateTextInput').addEventListener('keydown', (e) => {
+    if(e.key !== 'Backspace' && e.key !== 'Delete') return;
+    e.preventDefault();
+    const trimmed = e.target.value.slice(0, -1);
+    e.target.value = trimmed;
+    e.target.setSelectionRange(trimmed.length, trimmed.length);
+    document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
+  });
+
   function setDate(iso, mode){
     state.selectedDateISO = iso;
     $('dateTextInput').value = formatDateForExcel(iso);
     document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
     if(mode === 'today') $('todayBtn').classList.add('active');
     if(mode === 'yesterday') $('yesterdayBtn').classList.add('active');
-    if(mode === 'custom') $('customBtn').classList.add('active');
     updateCTA();
   }
   $('todayBtn').addEventListener('click', () => setDate(isoToday(0), 'today'));
   $('yesterdayBtn').addEventListener('click', () => setDate(isoToday(-1), 'yesterday'));
-  $('customBtn').addEventListener('click', () => {
-    // Swap the typable text box out for a real native date input the person
-    // taps directly — a scripted focus()/showPicker() call on a hidden field
-    // isn't a reliable enough user gesture in every browser (and is blocked
-    // outright inside a cross-origin iframe preview), so we show a genuine,
-    // visible date field instead and let its own calendar affordance do the work.
-    $('dateTextInput').style.display = 'none';
-    const picker = $('customDateInput');
-    picker.style.display = 'block';
-    picker.focus();
-    if(picker.showPicker){ try{ picker.showPicker(); }catch(err){} }
-    document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
-    $('customBtn').classList.add('active');
-  });
-  $('customDateInput').addEventListener('change', (e) => {
-    if(e.target.value) setDate(e.target.value, 'custom');
-    $('customDateInput').style.display = 'none';
-    $('dateTextInput').style.display = 'block';
-  });
-  $('customDateInput').addEventListener('blur', () => {
-    // If they open the picker and dismiss it without choosing a date, revert
-    // to the typable box rather than leaving an empty date field showing.
-    setTimeout(() => {
-      if($('customDateInput').style.display !== 'none' && !$('customDateInput').value){
-        $('customDateInput').style.display = 'none';
-        $('dateTextInput').style.display = 'block';
-      }
-    }, 150);
-  });
   $('dateTextInput').addEventListener('blur', (e) => {
     const val = e.target.value.trim();
     if(!val) return;
     const iso = parseTypedDate(val);
-    if(iso){ setDate(iso, 'typed'); }
-    else { showToast('Use DD/MM/YYYY format'); }
+    if(!iso){ showToast('Use DD/MM/YYYY format'); return; }
+    if(iso > isoToday(0)){
+      showToast('Date can\u2019t be in the future');
+      e.target.value = state.selectedDateISO ? formatDateForExcel(state.selectedDateISO) : '';
+      return;
+    }
+    setDate(iso, 'typed');
   });
 
   // ---------- SELF TRANSFER TOGGLE ----------
@@ -793,11 +803,10 @@
 
   function applySelfTransferMode(){
     const on = state.isSelfTransfer;
-    $('singleAccountField').style.display = on ? 'none' : 'flex';
-    $('transferAccountFields').style.display = on ? 'grid' : 'none';
+    $('toAccountField').style.display = on ? 'flex' : 'none';
 
     $('singleTypeField').style.display = on ? 'none' : 'flex';
-    $('customTypeField').style.display = 'none';
+    if(on) exitTxnTypeCustomMode();
     $('splitTypeFields').style.display = on ? 'grid' : 'none';
 
     if(on){
@@ -806,7 +815,7 @@
       setIdKind('Y');
 
       $('expenseName').value = 'Self Transfer';
-      $('txnFreq').value = 'One Off';
+      $('txnFreq').value = 'Monthly';
       $('txnTypeFrom').value = 'Sent Transfer';
       $('txnTypeTo').value = 'Received Transfer';
       updateSplitCustomVisibility();
@@ -815,6 +824,16 @@
       renderKindButtons(true);
       $('debitBtn').classList.add('locked');
       $('creditBtn').classList.add('locked');
+
+      // Account may have been changed while in single-account mode, and
+      // could now coincide with To account's untouched default — resolve
+      // that before it ever becomes a visible conflict.
+      if(state.account === state.toAccount){
+        const options = ['Domestic', 'International', 'Cash'];
+        const alt = options.find(o => o !== state.account) || options[0];
+        state.toAccount = alt;
+        document.querySelectorAll('#toChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.val === alt));
+      }
     } else {
       $('idSegment').style.pointerEvents = 'auto';
       $('idSegment').style.opacity = '1';
@@ -831,6 +850,19 @@
   }
 
   // ---------- ACCOUNT CHIPS (single + from/to) ----------
+  // Every chip is always clickable — nothing is ever disabled. If picking a
+  // value would make From and To the same account, the *other* side swaps
+  // to whatever this side just gave up, rather than blocking the click or
+  // making the person manually clear a conflict first. E.g. From=Domestic,
+  // To=International — clicking International on the From side instantly
+  // flips To to Domestic, landing exactly on "International to Domestic"
+  // in one tap.
+  function selectChip(groupId, value){
+    document.querySelectorAll(`#${groupId} .chip`).forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === value);
+    });
+  }
+
   function wireChipGroup(groupId, onSelect, defaultIndex=0){
     const chips = document.querySelectorAll(`#${groupId} .chip`);
     chips.forEach((chip, i) => {
@@ -843,9 +875,22 @@
       if(i === defaultIndex) chip.classList.add('selected');
     });
   }
-  wireChipGroup('accountChips', (v) => state.account = v, 0);
-  wireChipGroup('fromChips', (v) => state.fromAccount = v, 0);
-  wireChipGroup('toChips', (v) => state.toAccount = v, 1);
+  wireChipGroup('accountChips', (v) => {
+    const prev = state.account;
+    if(state.isSelfTransfer && v === state.toAccount){
+      state.toAccount = prev;
+      selectChip('toChips', prev);
+    }
+    state.account = v;
+  }, 0);
+  wireChipGroup('toChips', (v) => {
+    const prev = state.toAccount;
+    if(state.isSelfTransfer && v === state.account){
+      state.account = prev;
+      selectChip('accountChips', prev);
+    }
+    state.toAccount = v;
+  }, 1);
 
   // ---------- ID Y/N SEGMENTED CONTROL ----------
   function setIdKind(kind){
@@ -860,7 +905,7 @@
     if(kind === 'N'){
       $('idHint').textContent = 'N = one-way payment, auto-generates a new ID';
     } else {
-      $('idHint').textContent = 'Bidirectional Payment, can auto-generate or close a previous entry';
+      $('idHint').textContent = 'Y = to be returned, new ID or closes an old one';
     }
     regenerateId();
     updateCTA();
@@ -954,10 +999,8 @@
 
   // ---------- OPEN Y-IDS + ROW CACHE (via List Rows webhook) ----------
   async function refreshOpenYIds(){
-    const { listRowsUrl } = loadSettings();
-    if(!listRowsUrl){ state.openYIds = []; state.allRows = []; return; }
     try{
-      const res = await fetch(listRowsUrl);
+      const res = await fetch(LIST_ROWS_URL);
       const data = await res.json();
       const rows = data.value || data || [];
       const counts = {};
@@ -979,25 +1022,121 @@
   }
   refreshOpenYIds();
 
-  // ---------- AMOUNT DISPLAY ----------
+  // ---------- AMOUNT INPUT (masked, comma-formatted, 2-decimal cap) ----------
   const amountInput = $('amountInput');
-  function updateAmountDisplay(){
-    const raw = amountInput.value;
-    if(raw === ''){
-      $('amtWhole').textContent = '0';
-      $('amtDec').textContent = '.00';
-    } else {
-      const num = parseFloat(raw);
-      if(!isNaN(num)){
-        const [whole, dec=''] = num.toFixed(2).split('.');
-        $('amtWhole').textContent = Number(whole).toLocaleString('en-IN');
-        $('amtDec').textContent = '.' + dec;
-      }
-    }
-    updateCTA();
+
+  // Formats a clean "digits[.digits]" string with Indian comma grouping on
+  // the integer part, preserving the decimal part exactly as-is (including
+  // an in-progress trailing dot or a single lone decimal digit).
+  function formatAmountString(clean){
+    const [intPart, decPart] = clean.split('.');
+    const groupedInt = intPart === '' ? '' : Number(intPart).toLocaleString('en-IN');
+    return clean.includes('.') ? groupedInt + '.' + (decPart || '') : groupedInt;
   }
-  amountInput.addEventListener('input', updateAmountDisplay);
-  updateAmountDisplay();
+
+  // Reads the numeric value for calculations — strips the display commas
+  // this field adds, which a plain parseFloat would otherwise choke on
+  // (parseFloat("5,000.00") stops at the comma and silently returns 5).
+  function amountRawNumber(){
+    const num = parseFloat(amountInput.value.replace(/,/g, ''));
+    return isNaN(num) ? 0 : num;
+  }
+
+  // A plain text input defaults to a fairly wide box. Sizing it in
+  // character units (the "size" attribute) is imprecise for a bold,
+  // proportionally-spaced font — it tends to leave a sliver of invisible
+  // space inside the box, which throws off centering: justify-content
+  // centers the whole (₹ + box) group including that invisible space, so
+  // the visible ₹+number ends up sitting left of true center. Measuring
+  // the actual rendered pixel width of the current text and setting the
+  // input's width to exactly that removes the dead space entirely.
+  const amountMeasureCanvas = document.createElement('canvas').getContext('2d');
+  function updateAmountWidth(){
+    const cs = getComputedStyle(amountInput);
+    amountMeasureCanvas.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const text = amountInput.value || amountInput.placeholder;
+    const width = amountMeasureCanvas.measureText(text).width;
+    amountInput.style.width = Math.ceil(width) + 3 + 'px'; // +3px for the caret
+  }
+
+  amountInput.addEventListener('input', (e) => {
+    // Keep only digits and a single "." — everything else (letters, a
+    // second dot, minus signs) is simply dropped rather than typeable.
+    let cleaned = '';
+    let dotSeen = false;
+    for(const ch of e.target.value){
+      if(ch >= '0' && ch <= '9') cleaned += ch;
+      else if(ch === '.' && !dotSeen){ cleaned += ch; dotSeen = true; }
+    }
+    // Hard cap: once 2 digits exist after the dot, a 3rd is simply refused
+    // rather than accepted and truncated later.
+    if(dotSeen){
+      const [intPart, decPart = ''] = cleaned.split('.');
+      cleaned = intPart + '.' + decPart.slice(0, 2);
+    }
+    // Drop leading zeros on the integer part (e.g. "0" + "5" -> "05" should
+    // read as "5"), but leave a lone "0" before a dot alone (e.g. "0.5").
+    let [intPart, decPart] = cleaned.split('.');
+    intPart = intPart.replace(/^0+(?=\d)/, '');
+    cleaned = decPart !== undefined ? intPart + '.' + decPart : intPart;
+
+    const formatted = formatAmountString(cleaned);
+    e.target.value = formatted;
+    e.target.setSelectionRange(formatted.length, formatted.length);
+    updateAmountWidth();
+    updateCTA();
+  });
+
+  // Backspace/Delete: literal last-character removal, same fix as the date
+  // field — otherwise deleting a comma doesn't change the digit count, and
+  // the very next re-render draws the exact same comma right back, getting
+  // stuck instead of actually deleting anything.
+  amountInput.addEventListener('keydown', (e) => {
+    if(e.key !== 'Backspace' && e.key !== 'Delete') return;
+    e.preventDefault();
+    const trimmed = e.target.value.slice(0, -1);
+    e.target.value = trimmed;
+    e.target.setSelectionRange(trimmed.length, trimmed.length);
+    updateAmountWidth();
+    updateCTA();
+  });
+
+  // The native placeholder only disappears once real text exists — it
+  // would otherwise sit there through the tap and up until the first
+  // keystroke. Clearing the placeholder attribute itself on focus makes it
+  // vanish the instant the field is tapped, and since updateAmountWidth
+  // measures value||placeholder, clearing it also collapses the box to
+  // zero width immediately — so what's left centered is just ₹ on its own,
+  // not ₹ plus a lingering gap the width of "00.00".
+  amountInput.addEventListener('focus', (e) => {
+    e.target.dataset.placeholderBackup = e.target.placeholder || '00.00';
+    e.target.placeholder = '';
+    updateAmountWidth();
+  });
+
+  // On leaving the field, pad a lone decimal digit out to two — "57.1"
+  // becomes "57.10" — and a bare integer or trailing dot gets a full
+  // ".00", so whatever's left in the field is always a clean amount.
+  amountInput.addEventListener('blur', (e) => {
+    let val = e.target.value.replace(/,/g, '');
+    if(val === ''){
+      // Field is empty on blur — bring the placeholder back.
+      e.target.placeholder = e.target.dataset.placeholderBackup || '00.00';
+      updateAmountWidth();
+      return;
+    }
+    if(val.includes('.')){
+      let [intPart, decPart = ''] = val.split('.');
+      if(intPart === '') intPart = '0';
+      decPart = (decPart + '00').slice(0, 2);
+      val = intPart + '.' + decPart;
+    } else {
+      val = val + '.00';
+    }
+    e.target.value = formatAmountString(val);
+    updateCTA();
+
+  });
 
   // ---------- DEBIT/CREDIT ----------
   function renderKindButtons(bothOn){
@@ -1018,9 +1157,40 @@
   });
   renderKindButtons(false);
 
-  // ---------- TRANSACTION TYPE (single mode: Custom lives inside the dropdown) ----------
-  $('txnType').addEventListener('change', (e) => {
-    $('customTypeField').style.display = e.target.value === 'Custom' ? 'flex' : 'none';
+  // ---------- TRANSACTION TYPE (single mode combo) ----------
+  const txnTypeWrap = $('txnTypeWrap');
+  const txnTypeSelect = $('txnType');
+  const txnTypeCustomInput = $('txnTypeCustomInput');
+
+  txnTypeSelect.addEventListener('change', (e) => {
+    if(e.target.value === 'Custom'){
+      txnTypeWrap.classList.add('custom-mode');
+      txnTypeCustomInput.style.display = 'block';
+      txnTypeCustomInput.value = '';
+    } else {
+      // Any real preset — picked either from the full select in normal
+      // mode, or from the same select now sitting as a narrow overlay
+      // over the arrow while in custom mode — always lands back here.
+      exitTxnTypeCustomMode();
+    }
+  });
+
+  // Back to a normal, full-width, fully visible <select> — identical in
+  // every way to any other dropdown in the app.
+  function exitTxnTypeCustomMode(){
+    txnTypeWrap.classList.remove('custom-mode');
+    txnTypeCustomInput.style.display = 'none';
+    txnTypeCustomInput.value = '';
+  }
+
+  // Same "placeholder vanishes the instant you tap in" treatment as the
+  // amount field — clearing the attribute itself, not just its color.
+  txnTypeCustomInput.addEventListener('focus', (e) => {
+    e.target.dataset.placeholderBackup = e.target.placeholder || 'Enter Custom Transaction Type';
+    e.target.placeholder = '';
+  });
+  txnTypeCustomInput.addEventListener('blur', (e) => {
+    if(e.target.value === '') e.target.placeholder = e.target.dataset.placeholderBackup || 'Enter Custom Transaction Type';
   });
 
   // ---------- TRANSACTION TYPE (self-transfer split mode) ----------
@@ -1036,14 +1206,14 @@
 
   // ---------- CTA (single Save button + live caption) ----------
   function formattedAmount(){
-    const num = parseFloat(amountInput.value);
-    return isNaN(num) ? '0.00' : num.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const num = amountRawNumber();
+    return num.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
   }
   function updateCTA(){
     const amt = formattedAmount();
     if(state.isSelfTransfer){
       $('ctaMainText').textContent = `Add Entry • ₹${amt} Transfer`;
-      const from = state.fromAccount, to = state.toAccount;
+      const from = state.account, to = state.toAccount;
       const dateLabel = state.selectedDateISO ? formatDisplayDate(state.selectedDateISO) : 'no date yet';
       $('ctaCaption').textContent = `Moves ${from} → ${to} • ${dateLabel} • self transfer`;
     } else {
@@ -1068,11 +1238,9 @@
   // ---------- RESET (runs automatically after a successful save) ----------
   function fullReset(){
     $('entryForm').reset();
+    exitTxnTypeCustomMode();
     state.selectedDateISO = null;
     $('dateTextInput').value = '';
-    $('customDateInput').value = '';
-    $('customDateInput').style.display = 'none';
-    $('dateTextInput').style.display = 'block';
     document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
     selfTransferToggle.checked = false;
     state.isSelfTransfer = false;
@@ -1080,9 +1248,8 @@
     setIdKind('N');
     document.querySelectorAll('#accountChips .chip').forEach((c,i) => c.classList.toggle('selected', i===0));
     state.account = 'Domestic';
-    $('customTypeField').style.display = 'none';
     $('splitCustomFields').style.display = 'none';
-    updateAmountDisplay();
+    updateAmountWidth();
     updateCTA();
   }
 
@@ -1093,11 +1260,6 @@
   }
 
   async function postRow(payload){
-    const { addEntryUrl } = loadSettings();
-    if(!addEntryUrl){
-      console.log('No Add-entry URL configured. Payload:', payload);
-      return { ok:false, reason:'no-url' };
-    }
     // Sent as a form-encoded body (not JSON) on purpose: a JSON Content-Type
     // forces the browser to send a CORS preflight (OPTIONS) request first,
     // and Make/most webhook receivers don't answer that preflight the way
@@ -1109,7 +1271,7 @@
     Object.entries(payload).forEach(([k, v]) => body.append(k, v == null ? '' : String(v)));
 
     try{
-      const res = await fetch(addEntryUrl, {
+      const res = await fetch(ADD_ENTRY_URL, {
         method:'POST',
         body
       });
@@ -1138,7 +1300,7 @@
     const expenseName = $('expenseName').value.trim();
     const moreInfo = $('moreInfo').value.trim();
     const txnFreq = $('txnFreq').value;
-    const amount = parseFloat(amountInput.value);
+    const amount = amountRawNumber();
 
     if(!expenseName || !amount || amount <= 0){
       showToast('Fill in expense name and amount');
@@ -1164,7 +1326,7 @@
       const typeFrom = $('txnTypeFrom').value === 'Custom' ? ($('customTypeFromInput').value.trim() || 'Custom') : $('txnTypeFrom').value;
       const typeTo = $('txnTypeTo').value === 'Custom' ? ($('customTypeToInput').value.trim() || 'Custom') : $('txnTypeTo').value;
       const legFrom = {
-        DATE: dateForSheet, RELEVANT_ACCOUNT: state.fromAccount, EXPENSE_NAME: expenseName,
+        DATE: dateForSheet, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeFrom, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: amount, CREDIT_AMOUNT: '', ID: id
       };
@@ -1182,7 +1344,7 @@
       allOk = r1.ok && r2.ok;
       lastFail = !r1.ok ? r1 : r2;
     } else {
-      const txnType = $('txnType').value === 'Custom' ? ($('customTypeInput').value.trim() || 'Custom') : $('txnType').value;
+      const txnType = $('txnType').value === 'Custom' ? ($('txnTypeCustomInput').value.trim() || 'Custom') : $('txnType').value;
       const id = currentId();
       savedId = id;
       const row = {
@@ -1205,31 +1367,42 @@
     } else {
       // Leave the form filled in so nothing typed is lost, and say plainly
       // that it did not save — no more false "Saved" toasts.
-      const reasonText = lastFail && lastFail.reason === 'no-url'
-        ? 'No webhook URL set — open Settings first'
-        : lastFail && lastFail.reason && lastFail.reason.startsWith('http-')
-          ? `Webhook error (${lastFail.reason.replace('http-','status ')})`
-          : 'Could not reach the webhook — check your connection';
+      const reasonText = lastFail && lastFail.reason && lastFail.reason.startsWith('http-')
+        ? `Webhook error (${lastFail.reason.replace('http-','status ')})`
+        : 'Could not reach the webhook — check your connection';
       showToast(reasonText, 3800);
       $('ctaMainText').textContent = 'Retry Save';
     }
   });
 
-  // ---------- BOTTOM NAV ----------
-  document.querySelectorAll('.navbtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const isAdd = btn.dataset.tab === 'add';
-      $('entryForm').style.display = isAdd ? 'flex' : 'none';
-      $('statsScreen').style.display = isAdd ? 'none' : 'block';
-      document.querySelector('.topbar h1').textContent = isAdd ? 'Add Payment' : 'Stats';
+  // ---------- SCREEN NAVIGATION (Add Payment / Stats / Account) ----------
+  function showScreen(name){
+    $('entryForm').style.display = name === 'add' ? 'flex' : 'none';
+    $('statsScreen').style.display = name === 'stats' ? 'block' : 'none';
+    $('accountScreen').style.display = name === 'account' ? 'block' : 'none';
+    document.querySelectorAll('.top-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === name);
     });
+  }
+
+  document.querySelectorAll('.top-tab').forEach(btn => {
+    btn.addEventListener('click', () => showScreen(btn.dataset.tab));
   });
+
+  // The account icon no longer opens a Settings modal — the webhook URLs
+  // are hardcoded (see ADD_ENTRY_URL/LIST_ROWS_URL above) and were never
+  // meant to be user-editable, so there's nothing left to configure here.
+  $('openSettings').addEventListener('click', () => showScreen('account'));
 
   // ---------- INIT ----------
   setIdKind('N');
+  updateAmountWidth();
   updateCTA();
+  // The webfont loads asynchronously, so the very first measurement above
+  // may have used a fallback font's metrics — re-measure once it's ready.
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(updateAmountWidth);
+  }
 
   // ---------- SERVICE WORKER (required by Chrome/Android for installability) ----------
   if('serviceWorker' in navigator){
