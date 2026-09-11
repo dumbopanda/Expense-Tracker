@@ -1009,6 +1009,21 @@
     return lastMatch === null ? null : lastMatch + 1;
   }
 
+  // ---------- BACKDATED INSERT: BLOCK ROW BUILDER ----------
+  // Same literal formula the "Add Entry" scenario's own addATableRow module
+  // hardcodes for column K on every row (confirmed against the live Make
+  // blueprint) — never read back from the sheet, just reproduced here so a
+  // PATCH-written block matches what a normal append would have written.
+  const FORMULA_LITERAL = '=[@[CREDIT AMOUNT]]-[@[DEBIT AMOUNT]]';
+  function blockRowFromRaw(raw){
+    const cell = (v) => (v === undefined || v === null) ? '' : v;
+    return [
+      cell(raw.DATE), cell(raw.ID), cell(raw.ACCOUNT), cell(raw.EXPENSE),
+      cell(raw.INFO), cell(raw.TYPE), cell(raw.KIND),
+      cell(raw.DEBIT), cell(raw.CREDIT), FORMULA_LITERAL
+    ];
+  }
+
   // ---------- OPEN Y-IDS + ROW CACHE (via List Rows webhook) ----------
   async function refreshOpenYIds(){
     try{
@@ -1031,19 +1046,29 @@
         const idx = parseInt(rawIndex, 10);
         const rawDate = r.DATE != null ? r.DATE : r.date;
         const isoDate = parseSheetDateToISO(rawDate);
-        if(!isNaN(idx) && isoDate) state.allRows.push({
-          index: idx,
-          isoDate,
-          rawDate,
-          id: id || '',
-          account: r.ACCOUNT != null ? r.ACCOUNT : r.account,
-          expense: r.EXPENSE != null ? r.EXPENSE : r.expense,
-          info: r.INFO != null ? r.INFO : r.info,
-          type: r.TYPE != null ? r.TYPE : r.type,
-          kind: r.KIND != null ? r.KIND : r.kind,
-          debit: r.DEBIT != null ? r.DEBIT : r.debit,
-          credit: r.CREDIT != null ? r.CREDIT : r.credit
-        });
+        if(!isNaN(idx) && isoDate){
+          // Full column values, in the exact order the "Add Entry" scenario
+          // writes them (DATE, ID, ACCOUNT, EXPENSE, INFO, TYPE, KIND, DEBIT,
+          // CREDIT) — cached so a backdated insert can rebuild this row
+          // unchanged as part of the shifted block. FORMULA (10th column) is
+          // never cached/read back — it's the same literal formula string on
+          // every row, added fresh by blockRowFromRaw() below.
+          state.allRows.push({
+            index: idx,
+            isoDate,
+            raw: {
+              DATE: rawDate,
+              ID: id || '',
+              ACCOUNT: r.ACCOUNT != null ? r.ACCOUNT : r.account,
+              EXPENSE: r.EXPENSE != null ? r.EXPENSE : r.expense,
+              INFO: r.INFO != null ? r.INFO : r.info,
+              TYPE: r.TYPE != null ? r.TYPE : r.type,
+              KIND: r.KIND != null ? r.KIND : r.kind,
+              DEBIT: r.DEBIT != null ? r.DEBIT : r.debit,
+              CREDIT: r.CREDIT != null ? r.CREDIT : r.credit
+            }
+          });
+        }
       });
       state.openYIds = Object.keys(counts).filter(id => counts[id] === 1);
       if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
@@ -1361,28 +1386,6 @@
     let lastFail = null;
     let savedId = null;
 
-    // Excel's own "insert a row at position N" API turned out to be
-    // unreliable (silently ignored on the table-row endpoint, and outright
-    // rejected on the range endpoint for cells inside a Table). So instead
-    // of asking Excel to insert, we build the exact post-insertion block of
-    // row values ourselves — the new row(s) followed by every existing row
-    // that needs to shift down — and send that whole block in one go. Make
-    // then only needs two cheap, always-supported operations regardless of
-    // how large the table is: append enough blank rows to grow the table,
-    // then one range PATCH to write the whole block into place.
-    const FORMULA_STR = '=[@[CREDIT AMOUNT]]-[@[DEBIT AMOUNT]]';
-    const rowValuesArray = (f) => [
-      f.DATE, f.ID, f.RELEVANT_ACCOUNT, f.EXPENSE_NAME, f.MORE_INFORMATION,
-      f.TRANSACTION_TYPE, f.TRANSACTION_KIND, f.DEBIT_AMOUNT, f.CREDIT_AMOUNT, FORMULA_STR
-    ];
-    const tailValuesArray = (r) => [
-      r.rawDate, r.id, r.account, r.expense, r.info, r.type, r.kind,
-      r.debit != null ? r.debit : '', r.credit != null ? r.credit : '', FORMULA_STR
-    ];
-    const tailRowsFor = (idx) => state.allRows
-      .filter(r => r.index >= idx)
-      .sort((a, b) => a.index - b.index);
-
     if(state.isSelfTransfer){
       const id = currentId();
       savedId = id;
@@ -1398,29 +1401,16 @@
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeTo, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: '', CREDIT_AMOUNT: amount, ID: id, TABLE: targetTable
       };
-
-      if(insertIndex != null){
-        // Both legs land together in one combined block, right after the
-        // last existing row of this date — sent as a single request so
-        // there's only ever one snapshot of the table involved, instead of
-        // racing two separate inserts against data that's already stale
-        // by the time the second one runs.
-        const tailRows = tailRowsFor(insertIndex);
-        const block = [rowValuesArray(legFrom), rowValuesArray(legTo), ...tailRows.map(tailValuesArray)];
-        const payload = {
-          ...legFrom, TABLE: targetTable,
-          BLOCK: JSON.stringify(block), START_INDEX: insertIndex,
-          NEW_ROW_COUNT: 2, ROW_COUNT: block.length
-        };
-        const r = await postRow(payload);
-        allOk = r.ok;
-        lastFail = r;
-      } else {
-        const r1 = await postRow(legFrom);
-        const r2 = await postRow(legTo);
-        allOk = r1.ok && r2.ok;
-        lastFail = !r1.ok ? r1 : r2;
-      }
+      // NOTE: self-transfer backdated entries still append at the end for
+      // now. Proper positional insert needs the "Has BLOCK" route's
+      // repeater to write leg-specific field values per iteration; today it
+      // repeats the same flat {{1.*}} fields NEW_ROW_COUNT times, so a
+      // 2-row self-transfer block would write leg-1's data twice and lose
+      // leg 2. Fix that in the Add Entry scenario before wiring this up.
+      const r1 = await postRow(legFrom);
+      const r2 = await postRow(legTo);
+      allOk = r1.ok && r2.ok;
+      lastFail = !r1.ok ? r1 : r2;
     } else {
       const txnType = $('txnType').value === 'Custom' ? ($('txnTypeCustomInput').value.trim() || 'Custom') : $('txnType').value;
       const id = currentId();
@@ -1430,23 +1420,30 @@
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: txnType, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: state.debit ? amount : '', CREDIT_AMOUNT: state.credit ? amount : '', ID: id, TABLE: targetTable
       };
-
       if(insertIndex != null){
-        const tailRows = tailRowsFor(insertIndex);
-        const block = [rowValuesArray(row), ...tailRows.map(tailValuesArray)];
-        const payload = {
-          ...row,
-          BLOCK: JSON.stringify(block), START_INDEX: insertIndex,
-          NEW_ROW_COUNT: 1, ROW_COUNT: block.length
+        // Backdated into a spot that already has rows: build the whole
+        // post-insertion block ourselves (new row + every existing row from
+        // insertIndex onward, shifted down by one) and let the Add Entry
+        // scenario PATCH it in as one contiguous range — see
+        // Handoff-Context.md for why per-row Graph inserts don't work.
+        const newRowRaw = {
+          DATE: dateForSheet, ID: id, ACCOUNT: state.account, EXPENSE: expenseName,
+          INFO: moreInfo, TYPE: txnType, KIND: txnFreq,
+          DEBIT: state.debit ? amount : '', CREDIT: state.credit ? amount : ''
         };
-        const r = await postRow(payload);
-        allOk = r.ok;
-        lastFail = r;
-      } else {
-        const r = await postRow(row);
-        allOk = r.ok;
-        lastFail = r;
+        const shifted = state.allRows
+          .filter(r => r.index >= insertIndex)
+          .sort((a, b) => a.index - b.index)
+          .map(r => blockRowFromRaw(r.raw));
+        const block = [blockRowFromRaw(newRowRaw)].concat(shifted);
+        row.BLOCK = JSON.stringify(block);
+        row.START_INDEX = insertIndex;
+        row.ROW_COUNT = block.length;
+        row.NEW_ROW_COUNT = 1;
       }
+      const r = await postRow(row);
+      allOk = r.ok;
+      lastFail = r;
     }
 
     $('saveBtn').disabled = false;
