@@ -1026,6 +1026,16 @@
 
   // ---------- OPEN Y-IDS + ROW CACHE (via List Rows webhook) ----------
   async function refreshOpenYIds(){
+    // Cleared up front, not just on success — a failed/slow fetch below must
+    // never leave a previous (possibly stale) row snapshot in place. Stale
+    // positions are exactly what caused a backdated insert to compute a
+    // BLOCK/START_INDEX/ROW_COUNT that no longer matched the sheet's real
+    // shape, which Graph rejected with a dimensions-mismatch 400. Starting
+    // empty means any failure here simply falls back to a safe plain
+    // append (findInsertionIndex has nothing to match against) instead of
+    // risking a write built on out-of-date row data.
+    state.allRows = [];
+    state.openYIds = [];
     try{
       // Always reflects the current calendar month, not whatever date is
       // selected in the form — this cache is for "what's currently open"
@@ -1037,7 +1047,6 @@
       const data = await res.json();
       const rows = data.value || data || [];
       const counts = {};
-      state.allRows = [];
       rows.forEach(r => {
         const id = r.ID || r.id;
         if(id && id.startsWith('Y')) counts[id] = (counts[id]||0) + 1;
@@ -1072,8 +1081,10 @@
       });
       state.openYIds = Object.keys(counts).filter(id => counts[id] === 1);
       if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
+      return true;
     }catch(e){
-      console.warn('Could not load open IDs / rows', e);
+      console.warn('Could not load open IDs / rows — falling back to plain append for this save', e);
+      return false;
     }
   }
   refreshOpenYIds();
@@ -1373,7 +1384,7 @@
     // Pull the current row list fresh right before deciding where this entry
     // goes — using a stale cache here could compute an insertion point that
     // no longer matches the table's actual current shape.
-    await refreshOpenYIds();
+    const rowsFresh = await refreshOpenYIds();
     // The row cache from refreshOpenYIds only ever reflects TODAY's month's
     // table — if this entry is backdated (or postdated) into a different
     // month, that cache says nothing about that other table's shape, so
@@ -1381,6 +1392,7 @@
     // back to a plain append is always safe regardless of which table.
     const { table: todayTable } = monthNamesFor(isoToday(0));
     const insertIndex = (targetTable === todayTable) ? findInsertionIndex(state.selectedDateISO) : null;
+    const backdatedButUnverified = !rowsFresh && targetTable === todayTable && state.selectedDateISO !== isoToday(0);
 
     let allOk = false;
     let lastFail = null;
@@ -1449,7 +1461,8 @@
     $('saveBtn').disabled = false;
 
     if(allOk){
-      showToast(state.isSelfTransfer ? `Transfer saved · ${savedId}` : `Saved · ${savedId}`);
+      const savedMsg = state.isSelfTransfer ? `Transfer saved · ${savedId}` : `Saved · ${savedId}`;
+      showToast(backdatedButUnverified ? `${savedMsg} (couldn't confirm row order — check placement)` : savedMsg, backdatedButUnverified ? 3800 : 2200);
       fullReset();
       refreshOpenYIds();
     } else {
