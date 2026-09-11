@@ -613,12 +613,7 @@
     debit: true,
     credit: false,
     openYIds: [],
-    selectedDateISO: null,
-    // Cached rows from the List Rows webhook, each as {index, isoDate}.
-    // Used to find where to insert a backdated entry — right after the last
-    // existing row that shares its date — instead of always appending at
-    // the very end of the table.
-    allRows: []
+    selectedDateISO: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -957,90 +952,12 @@
     return kind === 'Y' ? `Y${randomSuffix()}` : `N${randomSuffix()}`;
   }
 
-  // ---------- ROW DATE PARSING ----------
-  // The sheet has rows written three different ways over its history: a raw
-  // Excel serial number (what this app now sends), an ISO date-time string
-  // (possible depending on how Graph serializes a real date value), or plain
-  // "DD/MM/YYYY" text (older rows, or any manually-typed entry). This parses
-  // whichever one comes back into a comparable ISO "YYYY-MM-DD" string, so
-  // the date-match lookup below works regardless of which format a given
-  // row happens to be in.
-  function parseSheetDateToISO(raw){
-    if(raw == null) return null;
-    const s = String(raw).trim();
-    if(!s) return null;
-
-    // Pure integer -> Excel serial number (days since 1899-12-30).
-    if(/^\d+$/.test(s)){
-      const serial = parseInt(s, 10);
-      const ms = (serial - 25569) * 86400000; // 25569 = days between 1899-12-30 and 1970-01-01
-      const d = new Date(ms);
-      if(isNaN(d.getTime())) return null;
-      return d.toISOString().slice(0,10);
-    }
-
-    // ISO date or date-time, e.g. "2026-09-09" or "2026-09-09T00:00:00.000Z".
-    const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
-
-    // "D/M/YYYY" or "DD/MM/YYYY" text, with or without leading zeros.
-    const dmyMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if(dmyMatch){
-      const d = dmyMatch[1].padStart(2,'0'), m = dmyMatch[2].padStart(2,'0'), y = dmyMatch[3];
-      return `${y}-${m}-${d}`;
-    }
-
-    return null; // unrecognized — treated as "no date" by callers
-  }
-
-  // Finds the table index to insert a new row at so it lands right after
-  // the last existing row sharing the same date, keeping same-day entries
-  // grouped together instead of always appending to the physical end of
-  // the table. Returns null when no row shares that date (falls back to a
-  // normal append, which is correct for same-day/forward-dated entries).
-  function findInsertionIndex(targetISO){
-    if(!targetISO || !state.allRows.length) return null;
-    let lastMatch = null;
-    for(const row of state.allRows){
-      if(row.isoDate === targetISO){
-        if(lastMatch === null || row.index > lastMatch) lastMatch = row.index;
-      }
-    }
-    return lastMatch === null ? null : lastMatch + 1;
-  }
-
-  // ---------- BACKDATED INSERT: BLOCK ROW BUILDER ----------
-  // Same literal formula the "Add Entry" scenario's own addATableRow module
-  // hardcodes for column K on every row (confirmed against the live Make
-  // blueprint) — never read back from the sheet, just reproduced here so a
-  // PATCH-written block matches what a normal append would have written.
-  const FORMULA_LITERAL = '=[@[CREDIT AMOUNT]]-[@[DEBIT AMOUNT]]';
-  function blockRowFromRaw(raw){
-    const cell = (v) => (v === undefined || v === null) ? '' : v;
-    return [
-      cell(raw.DATE), cell(raw.ID), cell(raw.ACCOUNT), cell(raw.EXPENSE),
-      cell(raw.INFO), cell(raw.TYPE), cell(raw.KIND),
-      cell(raw.DEBIT), cell(raw.CREDIT), FORMULA_LITERAL
-    ];
-  }
-
-  // ---------- OPEN Y-IDS + ROW CACHE (via List Rows webhook) ----------
+  // ---------- OPEN Y-IDS (via List Rows webhook) ----------
   async function refreshOpenYIds(){
-    // Cleared up front, not just on success — a failed/slow fetch below must
-    // never leave a previous (possibly stale) row snapshot in place. Stale
-    // positions are exactly what caused a backdated insert to compute a
-    // BLOCK/START_INDEX/ROW_COUNT that no longer matched the sheet's real
-    // shape, which Graph rejected with a dimensions-mismatch 400. Starting
-    // empty means any failure here simply falls back to a safe plain
-    // append (findInsertionIndex has nothing to match against) instead of
-    // risking a write built on out-of-date row data.
-    state.allRows = [];
     state.openYIds = [];
     try{
       // Always reflects the current calendar month, not whatever date is
-      // selected in the form — this cache is for "what's currently open"
-      // and "same-day insertion within the active month", not historical
-      // lookups into past months.
+      // selected in the form.
       const { sheet, table } = monthNamesFor(isoToday(0));
       const url = `${LIST_ROWS_URL}?sheet=${encodeURIComponent(sheet)}&table=${encodeURIComponent(table)}`;
       const res = await fetch(url);
@@ -1050,64 +967,17 @@
       rows.forEach(r => {
         const id = r.ID || r.id;
         if(id && id.startsWith('Y')) counts[id] = (counts[id]||0) + 1;
-
-        const rawIndex = r.INDEX != null ? r.INDEX : r.index;
-        const idx = parseInt(rawIndex, 10);
-        if(isNaN(idx)) return; // no usable table position at all — nothing to cache
-        const rawDate = r.DATE != null ? r.DATE : r.date;
-        const isoDate = parseSheetDateToISO(rawDate); // may be null — still cached below regardless
-        // Full column values, in the exact order the "Add Entry" scenario
-        // writes them (DATE, ID, ACCOUNT, EXPENSE, INFO, TYPE, KIND, DEBIT,
-        // CREDIT) — cached so a backdated insert can rebuild this row
-        // unchanged as part of the shifted block. FORMULA (10th column) is
-        // never cached/read back — it's the same literal formula string on
-        // every row, added fresh by blockRowFromRaw() below.
-        //
-        // isoDate is only used for MATCHING (findInsertionIndex compares it
-        // against the target date) — a null isoDate just means "this row
-        // never matches as an insertion point," not "skip this row." Every
-        // row with a valid index must stay in the cache or it silently
-        // vanishes from any block that spans its position, producing a
-        // block one row short of what the live table actually has there —
-        // which Graph then rejects as a dimensions mismatch.
-        state.allRows.push({
-          index: idx,
-          isoDate,
-          raw: {
-            DATE: rawDate,
-            ID: id || '',
-            ACCOUNT: r.ACCOUNT != null ? r.ACCOUNT : r.account,
-            EXPENSE: r.EXPENSE != null ? r.EXPENSE : r.expense,
-            INFO: r.INFO != null ? r.INFO : r.info,
-            TYPE: r.TYPE != null ? r.TYPE : r.type,
-            KIND: r.KIND != null ? r.KIND : r.kind,
-            DEBIT: r.DEBIT != null ? r.DEBIT : r.debit,
-            CREDIT: r.CREDIT != null ? r.CREDIT : r.credit
-          }
-        });
       });
-      // Belt-and-suspenders: a well-formed Excel Table's row indices should
-      // be exactly contiguous, 0..N-1, with no gaps or duplicates. If they
-      // aren't — a partial response, the listTableRows 200-row cap kicking
-      // in on a bigger table, or anything else — the cache can't be trusted
-      // to build a complete block. Discard it rather than risk a block with
-      // an invisible hole in it; this simply forces a safe plain append for
-      // this save (findInsertionIndex has nothing to match against).
-      const sortedIdx = state.allRows.map(r => r.index).sort((a, b) => a - b);
-      const gapless = sortedIdx.every((v, i) => v === i);
-      if(!gapless){
-        console.warn('Row index cache is not contiguous — treating as unreliable for positional insert', sortedIdx);
-        state.allRows = [];
-      }
       state.openYIds = Object.keys(counts).filter(id => counts[id] === 1);
       if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
       return true;
     }catch(e){
-      console.warn('Could not load open IDs / rows — falling back to plain append for this save', e);
+      console.warn('Could not load open Y-IDs', e);
       return false;
     }
   }
   refreshOpenYIds();
+
 
   // ---------- AMOUNT INPUT (masked, comma-formatted, 2-decimal cap) ----------
   const amountInput = $('amountInput');
@@ -1401,30 +1271,12 @@
     $('saveBtn').disabled = true;
     $('ctaMainText').textContent = 'Saving…';
 
-    // Pull the current row list fresh right before deciding where this entry
-    // goes — using a stale cache here could compute an insertion point that
-    // no longer matches the table's actual current shape.
-    const rowsFresh = await refreshOpenYIds();
-    // The row cache from refreshOpenYIds only ever reflects TODAY's month's
-    // table — if this entry is backdated (or postdated) into a different
-    // month, that cache says nothing about that other table's shape, so
-    // computing an insertion index from it would be meaningless. Falling
-    // back to a plain append is always safe regardless of which table.
-    const { table: todayTable } = monthNamesFor(isoToday(0));
-    const insertIndex = (targetTable === todayTable) ? findInsertionIndex(state.selectedDateISO) : null;
-    const backdatedButUnverified = !rowsFresh && targetTable === todayTable && state.selectedDateISO !== isoToday(0);
-    // TEMPORARY DIAGNOSTIC — remove once positional insert is confirmed
-    // working. Shows exactly what the row cache contained and decided,
-    // since the Make API here only exposes pass/fail, never the actual
-    // payload a run received.
-    const matchingRows = state.allRows.filter(r => r.isoDate === state.selectedDateISO);
-    const debugInfo = `cache=${state.allRows.length} sameDate=${matchingRows.length} idx=${insertIndex}`;
-    console.log('[insert-debug]', debugInfo, 'target=', state.selectedDateISO, 'sample=', state.allRows.slice(0,3));
+    // Still needed for the Y-ID reuse dropdown — no longer for positioning.
+    await refreshOpenYIds();
 
     let allOk = false;
     let lastFail = null;
     let savedId = null;
-    let blockDebug = null;
 
     if(state.isSelfTransfer){
       const id = currentId();
@@ -1441,12 +1293,9 @@
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeTo, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: '', CREDIT_AMOUNT: amount, ID: id, TABLE: targetTable
       };
-      // NOTE: self-transfer backdated entries still append at the end for
-      // now. Proper positional insert needs the "Has BLOCK" route's
-      // repeater to write leg-specific field values per iteration; today it
-      // repeats the same flat {{1.*}} fields NEW_ROW_COUNT times, so a
-      // 2-row self-transfer block would write leg-1's data twice and lose
-      // leg 2. Fix that in the Add Entry scenario before wiring this up.
+      // Each leg is its own append; the scenario sorts the whole table by
+      // date after each one, so it doesn't matter that these land as two
+      // separate writes — both end up correctly placed either way.
       const r1 = await postRow(legFrom);
       const r2 = await postRow(legTo);
       allOk = r1.ok && r2.ok;
@@ -1460,28 +1309,10 @@
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: txnType, TRANSACTION_KIND: txnFreq,
         DEBIT_AMOUNT: state.debit ? amount : '', CREDIT_AMOUNT: state.credit ? amount : '', ID: id, TABLE: targetTable
       };
-      if(insertIndex != null){
-        // Backdated into a spot that already has rows: build the whole
-        // post-insertion block ourselves (new row + every existing row from
-        // insertIndex onward, shifted down by one) and let the Add Entry
-        // scenario PATCH it in as one contiguous range — see
-        // Handoff-Context.md for why per-row Graph inserts don't work.
-        const newRowRaw = {
-          DATE: dateForSheet, ID: id, ACCOUNT: state.account, EXPENSE: expenseName,
-          INFO: moreInfo, TYPE: txnType, KIND: txnFreq,
-          DEBIT: state.debit ? amount : '', CREDIT: state.credit ? amount : ''
-        };
-        const shifted = state.allRows
-          .filter(r => r.index >= insertIndex)
-          .sort((a, b) => a.index - b.index)
-          .map(r => blockRowFromRaw(r.raw));
-        const block = [blockRowFromRaw(newRowRaw)].concat(shifted);
-        row.BLOCK = JSON.stringify(block);
-        row.START_INDEX = insertIndex;
-        row.ROW_COUNT = block.length;
-        row.NEW_ROW_COUNT = 1;
-        blockDebug = `start=${insertIndex} rows=${block.length} shifted=${shifted.length}`;
-      }
+      // Always a plain append now — no client-side insertion math. The Add
+      // Entry scenario re-sorts the whole table by date (column B) right
+      // after writing, via Excel's native Table.sort, so a backdated entry
+      // ends up in the right place regardless of where it physically landed.
       const r = await postRow(row);
       allOk = r.ok;
       lastFail = r;
@@ -1491,8 +1322,7 @@
 
     if(allOk){
       const savedMsg = state.isSelfTransfer ? `Transfer saved · ${savedId}` : `Saved · ${savedId}`;
-      const savedMsgWithDebug = `${savedMsg} [${debugInfo}]`;
-      showToast(backdatedButUnverified ? `${savedMsgWithDebug} (couldn't confirm row order)` : savedMsgWithDebug, 5000);
+      showToast(savedMsg);
       fullReset();
       refreshOpenYIds();
     } else {
@@ -1501,7 +1331,7 @@
       const reasonText = lastFail && lastFail.reason && lastFail.reason.startsWith('http-')
         ? `Webhook error (${lastFail.reason.replace('http-','status ')})`
         : 'Could not reach the webhook — check your connection';
-      showToast(blockDebug ? `${reasonText} [${blockDebug}]` : reasonText, 5000);
+      showToast(reasonText, 3800);
       $('ctaMainText').textContent = 'Retry Save';
     }
   });
