@@ -655,6 +655,18 @@
     const excelEpoch = Date.UTC(1899, 11, 30);
     return Math.round((utcDate - excelEpoch) / 86400000);
   }
+  // Every month gets its own worksheet ("OCT26") and its own Table ("OCT_26"
+  // — the underscore is required, since a bare "OCT26" is syntactically a
+  // valid Excel cell reference and gets rejected as a Table name). This
+  // computes both names from a given date so entries automatically land in
+  // the right month's sheet without ever hardcoding a month.
+  const MONTH_ABBR = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  function monthNamesFor(iso){
+    const [y, m] = iso.split('-').map(Number);
+    const mon = MONTH_ABBR[m - 1];
+    const yy = String(y).slice(-2);
+    return { sheet: `${mon}${yy}`, table: `${mon}_${yy}` };
+  }
   function formatDisplayDate(iso){
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
@@ -1000,7 +1012,13 @@
   // ---------- OPEN Y-IDS + ROW CACHE (via List Rows webhook) ----------
   async function refreshOpenYIds(){
     try{
-      const res = await fetch(LIST_ROWS_URL);
+      // Always reflects the current calendar month, not whatever date is
+      // selected in the form — this cache is for "what's currently open"
+      // and "same-day insertion within the active month", not historical
+      // lookups into past months.
+      const { sheet, table } = monthNamesFor(isoToday(0));
+      const url = `${LIST_ROWS_URL}?sheet=${encodeURIComponent(sheet)}&table=${encodeURIComponent(table)}`;
+      const res = await fetch(url);
       const data = await res.json();
       const rows = data.value || data || [];
       const counts = {};
@@ -1297,6 +1315,10 @@
     // the "DD/MM/YYYY" display string — that's what makes Excel store a real
     // date instead of text.
     const dateForSheet = toExcelSerial(state.selectedDateISO);
+    // Which month's table this entry belongs in — computed from the entry's
+    // own date (not today's date), so backdating into a different month
+    // correctly targets that month's sheet.
+    const { table: targetTable } = monthNamesFor(state.selectedDateISO);
     const expenseName = $('expenseName').value.trim();
     const moreInfo = $('moreInfo').value.trim();
     const txnFreq = $('txnFreq').value;
@@ -1314,7 +1336,13 @@
     // goes — using a stale cache here could compute an insertion point that
     // no longer matches the table's actual current shape.
     await refreshOpenYIds();
-    const insertIndex = findInsertionIndex(state.selectedDateISO);
+    // The row cache from refreshOpenYIds only ever reflects TODAY's month's
+    // table — if this entry is backdated (or postdated) into a different
+    // month, that cache says nothing about that other table's shape, so
+    // computing an insertion index from it would be meaningless. Falling
+    // back to a plain append is always safe regardless of which table.
+    const { table: todayTable } = monthNamesFor(isoToday(0));
+    const insertIndex = (targetTable === todayTable) ? findInsertionIndex(state.selectedDateISO) : null;
 
     let allOk = false;
     let lastFail = null;
@@ -1328,12 +1356,12 @@
       const legFrom = {
         DATE: dateForSheet, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeFrom, TRANSACTION_KIND: txnFreq,
-        DEBIT_AMOUNT: amount, CREDIT_AMOUNT: '', ID: id
+        DEBIT_AMOUNT: amount, CREDIT_AMOUNT: '', ID: id, TABLE: targetTable
       };
       const legTo = {
         DATE: dateForSheet, RELEVANT_ACCOUNT: state.toAccount, EXPENSE_NAME: expenseName,
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeTo, TRANSACTION_KIND: txnFreq,
-        DEBIT_AMOUNT: '', CREDIT_AMOUNT: amount, ID: id
+        DEBIT_AMOUNT: '', CREDIT_AMOUNT: amount, ID: id, TABLE: targetTable
       };
       // Both legs share a date, so both need an explicit position — leaving
       // it off for the second leg would make it fall back to a plain
@@ -1350,7 +1378,7 @@
       const row = {
         DATE: dateForSheet, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
         MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: txnType, TRANSACTION_KIND: txnFreq,
-        DEBIT_AMOUNT: state.debit ? amount : '', CREDIT_AMOUNT: state.credit ? amount : '', ID: id
+        DEBIT_AMOUNT: state.debit ? amount : '', CREDIT_AMOUNT: state.credit ? amount : '', ID: id, TABLE: targetTable
       };
       if(insertIndex != null) row.INDEX = insertIndex;
       const r = await postRow(row);
