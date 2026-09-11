@@ -1413,6 +1413,13 @@
     const { table: todayTable } = monthNamesFor(isoToday(0));
     const insertIndex = (targetTable === todayTable) ? findInsertionIndex(state.selectedDateISO) : null;
     const backdatedButUnverified = !rowsFresh && targetTable === todayTable && state.selectedDateISO !== isoToday(0);
+    // TEMPORARY DIAGNOSTIC — remove once positional insert is confirmed
+    // working. Shows exactly what the row cache contained and decided,
+    // since the Make API here only exposes pass/fail, never the actual
+    // payload a run received.
+    const matchingRows = state.allRows.filter(r => r.isoDate === state.selectedDateISO);
+    const debugInfo = `cache=${state.allRows.length} sameDate=${matchingRows.length} idx=${insertIndex}`;
+    console.log('[insert-debug]', debugInfo, 'target=', state.selectedDateISO, 'sample=', state.allRows.slice(0,3));
 
     let allOk = false;
     let lastFail = null;
@@ -1484,7 +1491,8 @@
 
     if(allOk){
       const savedMsg = state.isSelfTransfer ? `Transfer saved · ${savedId}` : `Saved · ${savedId}`;
-      showToast(backdatedButUnverified ? `${savedMsg} (couldn't confirm row order — check placement)` : savedMsg, backdatedButUnverified ? 3800 : 2200);
+      const savedMsgWithDebug = `${savedMsg} [${debugInfo}]`;
+      showToast(backdatedButUnverified ? `${savedMsgWithDebug} (couldn't confirm row order)` : savedMsgWithDebug, 5000);
       fullReset();
       refreshOpenYIds();
     } else {
