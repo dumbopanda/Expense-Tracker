@@ -1053,32 +1053,52 @@
 
         const rawIndex = r.INDEX != null ? r.INDEX : r.index;
         const idx = parseInt(rawIndex, 10);
+        if(isNaN(idx)) return; // no usable table position at all — nothing to cache
         const rawDate = r.DATE != null ? r.DATE : r.date;
-        const isoDate = parseSheetDateToISO(rawDate);
-        if(!isNaN(idx) && isoDate){
-          // Full column values, in the exact order the "Add Entry" scenario
-          // writes them (DATE, ID, ACCOUNT, EXPENSE, INFO, TYPE, KIND, DEBIT,
-          // CREDIT) — cached so a backdated insert can rebuild this row
-          // unchanged as part of the shifted block. FORMULA (10th column) is
-          // never cached/read back — it's the same literal formula string on
-          // every row, added fresh by blockRowFromRaw() below.
-          state.allRows.push({
-            index: idx,
-            isoDate,
-            raw: {
-              DATE: rawDate,
-              ID: id || '',
-              ACCOUNT: r.ACCOUNT != null ? r.ACCOUNT : r.account,
-              EXPENSE: r.EXPENSE != null ? r.EXPENSE : r.expense,
-              INFO: r.INFO != null ? r.INFO : r.info,
-              TYPE: r.TYPE != null ? r.TYPE : r.type,
-              KIND: r.KIND != null ? r.KIND : r.kind,
-              DEBIT: r.DEBIT != null ? r.DEBIT : r.debit,
-              CREDIT: r.CREDIT != null ? r.CREDIT : r.credit
-            }
-          });
-        }
+        const isoDate = parseSheetDateToISO(rawDate); // may be null — still cached below regardless
+        // Full column values, in the exact order the "Add Entry" scenario
+        // writes them (DATE, ID, ACCOUNT, EXPENSE, INFO, TYPE, KIND, DEBIT,
+        // CREDIT) — cached so a backdated insert can rebuild this row
+        // unchanged as part of the shifted block. FORMULA (10th column) is
+        // never cached/read back — it's the same literal formula string on
+        // every row, added fresh by blockRowFromRaw() below.
+        //
+        // isoDate is only used for MATCHING (findInsertionIndex compares it
+        // against the target date) — a null isoDate just means "this row
+        // never matches as an insertion point," not "skip this row." Every
+        // row with a valid index must stay in the cache or it silently
+        // vanishes from any block that spans its position, producing a
+        // block one row short of what the live table actually has there —
+        // which Graph then rejects as a dimensions mismatch.
+        state.allRows.push({
+          index: idx,
+          isoDate,
+          raw: {
+            DATE: rawDate,
+            ID: id || '',
+            ACCOUNT: r.ACCOUNT != null ? r.ACCOUNT : r.account,
+            EXPENSE: r.EXPENSE != null ? r.EXPENSE : r.expense,
+            INFO: r.INFO != null ? r.INFO : r.info,
+            TYPE: r.TYPE != null ? r.TYPE : r.type,
+            KIND: r.KIND != null ? r.KIND : r.kind,
+            DEBIT: r.DEBIT != null ? r.DEBIT : r.debit,
+            CREDIT: r.CREDIT != null ? r.CREDIT : r.credit
+          }
+        });
       });
+      // Belt-and-suspenders: a well-formed Excel Table's row indices should
+      // be exactly contiguous, 0..N-1, with no gaps or duplicates. If they
+      // aren't — a partial response, the listTableRows 200-row cap kicking
+      // in on a bigger table, or anything else — the cache can't be trusted
+      // to build a complete block. Discard it rather than risk a block with
+      // an invisible hole in it; this simply forces a safe plain append for
+      // this save (findInsertionIndex has nothing to match against).
+      const sortedIdx = state.allRows.map(r => r.index).sort((a, b) => a - b);
+      const gapless = sortedIdx.every((v, i) => v === i);
+      if(!gapless){
+        console.warn('Row index cache is not contiguous — treating as unreliable for positional insert', sortedIdx);
+        state.allRows = [];
+      }
       state.openYIds = Object.keys(counts).filter(id => counts[id] === 1);
       if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
       return true;
@@ -1397,6 +1417,7 @@
     let allOk = false;
     let lastFail = null;
     let savedId = null;
+    let blockDebug = null;
 
     if(state.isSelfTransfer){
       const id = currentId();
@@ -1452,6 +1473,7 @@
         row.START_INDEX = insertIndex;
         row.ROW_COUNT = block.length;
         row.NEW_ROW_COUNT = 1;
+        blockDebug = `start=${insertIndex} rows=${block.length} shifted=${shifted.length}`;
       }
       const r = await postRow(row);
       allOk = r.ok;
@@ -1471,7 +1493,7 @@
       const reasonText = lastFail && lastFail.reason && lastFail.reason.startsWith('http-')
         ? `Webhook error (${lastFail.reason.replace('http-','status ')})`
         : 'Could not reach the webhook — check your connection';
-      showToast(reasonText, 3800);
+      showToast(blockDebug ? `${reasonText} [${blockDebug}]` : reasonText, 5000);
       $('ctaMainText').textContent = 'Retry Save';
     }
   });
