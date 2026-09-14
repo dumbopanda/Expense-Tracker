@@ -234,11 +234,16 @@
   /* Everything inside a card is nudged 5px right of its header, so the
      header reads as the level above rather than the first item in the list. */
   .group > *{padding-left:5px;}
-  .group > .group-title,
-  .group > .label-row{padding-left:0;}
-  /* The pill makes this row taller than a bare title, which pushed the
-     chips further from their heading than in any other card. */
-  .group > .label-row{margin-top:-7px;margin-bottom:-9px;}
+  .group > .group-title{padding-left:0;}
+  /* The pill is no longer a sibling in the title's row — it is pinned to the
+     card's own top-right corner, on the same 16px inset every other first
+     element sits on. Its position can then be tuned without the title, the
+     chips or anything under them moving by a pixel. */
+  .account-group{position:relative;}
+  .account-group > .toggle-pill{
+    position:absolute;
+    top:16px;right:16px;
+  }
 
   .group-title{
     font-size:16px;font-weight:700;
@@ -246,7 +251,6 @@
     color:var(--text-dark);
     margin-bottom:-2px;
   }
-  .label-row .group-title{margin-bottom:0;}
 
   /* Inside a card, white fields on a white surface would vanish — so the
      fill and the page swap: cream controls on white, rather than white
@@ -341,14 +345,6 @@
   .account-block .chip-group{display:flex;flex-direction:row;gap:8px;}
   .account-block .chip{flex:1;width:auto;text-align:center;padding:12px 8px;font-size:12px;font-weight:700;}
 
-  /* A label and its one modifier on the same line. As a full-width switch
-     row this cost a bordered bar, a title, a description and the empty
-     space around them — for a control that is on for perhaps one entry in
-     twenty. As a pill it costs the gap beside a label that was already
-     there, and it speaks the same on/off language as every chip under it. */
-  .label-row{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-  }
   .toggle-pill{
     position:relative;
     display:flex;align-items:center;gap:5px;
@@ -404,9 +400,18 @@
   .date-box-input:focus{border-color:var(--green);}
   #txnFreqChips .chip{padding:12px 8px;font-size:12px;font-weight:700;}
 
-  /* Always occupies its line, so an error appearing under the shortcuts
-     never moves the field, the buttons or anything below them. */
-  .date-hint{min-height:16px;transition:color .15s;}
+  /* Shrink-to-fit and left-aligned under the input, so a warning is a line of
+     text sitting beside the field rather than a full-width band of its own.
+     It still reserves its line, so nothing jumps when it appears. */
+  .date-hint{
+    align-self:flex-start;
+    width:auto;max-width:100%;
+    text-align:left;
+    font-size:11px;line-height:13px;
+    min-height:13px;
+    margin-top:-4px;margin-bottom:-6px;
+    transition:color .15s;
+  }
   .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
   .date-hint.is-error{color:var(--red);font-weight:600;}
   /* Input and its two shortcuts on one line. The input takes whatever is
@@ -918,13 +923,11 @@
     <!-- The accounts and the one switch that reshapes them. Turning the pill
          on opens a second row underneath; nothing above it moves and no chip
          changes size or position. -->
-    <div class="group">
-    <div class="label-row">
-      <div class="group-title">Which account</div>
-      <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
-        <span class="swap" aria-hidden="true">⇄</span>Self transfer
-      </button>
-    </div>
+    <div class="group account-group">
+    <div class="group-title">Which account</div>
+    <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
+      <span class="swap" aria-hidden="true">⇄</span>Self transfer
+    </button>
 
     <div class="account-block" id="accountRow">
 
