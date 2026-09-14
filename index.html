@@ -64,17 +64,28 @@
     margin-top:2px;
     font-weight:500;
   }
+  /* Three layers, same as a tab sitting in the nav track: a black outer
+     fill, a lime ring inside it, and an inner fill that is what actually
+     changes. Unselected the inner fill is black with a grey glyph;
+     selected it is lime with a black glyph. */
   .gear-btn{
-    padding:0;
-    width:42px;height:42px;
+    padding:6px;
+    width:52px;height:52px;
     border-radius:var(--radius-pill);
-    background:var(--text-dark);
+    background:var(--canvas-dark);
     border:none;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
     flex-shrink:0;
   }
-  .gear-btn svg{width:20px;height:20px;stroke:var(--lime);}
+  .gear-inner{
+    width:100%;height:100%;
+    border-radius:var(--radius-pill);
+    border:2px solid var(--lime);
+    background:var(--canvas-dark);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .gear-btn svg{width:20px;height:20px;stroke:#9EAD9C;}
 
   .gear-wrap{position:relative;flex-shrink:0;}
   .pending-count{
@@ -213,12 +224,29 @@
     padding:16px;
     display:flex;flex-direction:column;gap:14px;
   }
+  /* Title hierarchy, largest to smallest:
+       L1  app title      22 / 800 / dark
+       L2  section title  15 / 700 / dark      ← this
+       L3  field label    13 / 600 / muted
+       L4  hint           12 / 500 / grey
+     Size, weight and colour all step down together, so the level is
+     readable without comparing two things side by side. */
+  /* Everything inside a card is nudged 5px right of its header, so the
+     header reads as the level above rather than the first item in the list. */
+  .group > *{padding-left:5px;}
+  .group > .group-title,
+  .group > .label-row{padding-left:0;}
+  /* The pill makes this row taller than a bare title, which pushed the
+     chips further from their heading than in any other card. */
+  .group > .label-row{margin-top:-7px;margin-bottom:-9px;}
+
   .group-title{
-    font-size:11px;font-weight:800;
-    letter-spacing:0.6px;text-transform:uppercase;
-    color:var(--text-muted);
-    margin-bottom:-4px;
+    font-size:16px;font-weight:700;
+    letter-spacing:-0.2px;
+    color:var(--text-dark);
+    margin-bottom:-2px;
   }
+  .label-row .group-title{margin-bottom:0;}
 
   /* Inside a card, white fields on a white surface would vanish — so the
      fill and the page swap: cream controls on white, rather than white
@@ -231,6 +259,7 @@
   .group .segmented,
   .group .reuse-btn,
   .group .quick-date-btn:not(.active),
+  .group .btn-outline,
   .group .chip:not(.selected){
     background-color:var(--canvas-light);
   }
@@ -309,9 +338,36 @@
      is a reveal rather than a jump: everything above it holds still and
      only the form below it moves down. */
   .account-block{display:flex;flex-direction:column;}
-  .account-block .switch-row{margin-bottom:14px;}
   .account-block .chip-group{display:flex;flex-direction:row;gap:8px;}
-  .account-block .chip{flex:1;width:auto;text-align:center;padding:12px 8px;}
+  .account-block .chip{flex:1;width:auto;text-align:center;padding:12px 8px;font-size:12px;font-weight:700;}
+
+  /* A label and its one modifier on the same line. As a full-width switch
+     row this cost a bordered bar, a title, a description and the empty
+     space around them — for a control that is on for perhaps one entry in
+     twenty. As a pill it costs the gap beside a label that was already
+     there, and it speaks the same on/off language as every chip under it. */
+  .label-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .toggle-pill{
+    position:relative;
+    display:flex;align-items:center;gap:5px;
+    min-height:34px;
+    padding:0 12px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
+    background:var(--canvas-light);
+    font-family:var(--font);font-size:12px;font-weight:600;
+    color:var(--text-muted);
+    cursor:pointer;flex-shrink:0;
+  }
+  /* Smaller than the account chips it modifies, but still a 44px target —
+     the extra reach is invisible rather than drawn. */
+  .toggle-pill::after{content:"";position:absolute;inset:-6px -4px;}
+  .toggle-pill .swap{font-size:13px;line-height:1;}
+  .toggle-pill[aria-pressed="true"]{
+    background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);
+  }
 
   .to-slot{
     max-height:0;
@@ -333,7 +389,6 @@
   #txnTypeSection{display:flex;flex-direction:column;gap:18px;}
 
   /* DATE FIELD */
-  .date-input-wrap{position:relative;}
   .date-box-input{
     width:100%;
     padding:14px 16px;
@@ -347,20 +402,34 @@
   }
   .date-box-input::placeholder{color:var(--text-muted);font-weight:500;}
   .date-box-input:focus{border-color:var(--green);}
+  #txnFreqChips .chip{padding:12px 8px;font-size:12px;font-weight:700;}
+
+  /* Always occupies its line, so an error appearing under the shortcuts
+     never moves the field, the buttons or anything below them. */
   .date-hint{min-height:16px;transition:color .15s;}
   .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
   .date-hint.is-error{color:var(--red);font-weight:600;}
-  .quick-date-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  /* Input and its two shortcuts on one line. The input takes whatever is
+     left, which is always more than a date needs. */
+  .date-row{display:flex;gap:8px;align-items:stretch;}
+  .date-row .date-box-input{flex:1 1 auto;min-width:0;padding:14px 12px;}
+  .quick-date-row{display:flex;gap:8px;}
   .quick-date-btn{
-    padding:13px 0;
+    flex-shrink:0;
+    min-height:40px;
+    padding:0 12px;
     border-radius:var(--radius-pill);
     border:1px solid var(--border);
-    background:var(--white);
-    font-family:var(--font);font-size:13px;font-weight:700;
-    color:var(--text-dark);
+    background:var(--canvas-light);
+    font-family:var(--font);font-size:12px;font-weight:600;
+    color:var(--text-muted);
     cursor:pointer;
   }
   .quick-date-btn.active{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);font-style:normal;}
+
+  /* The resolved date used to sit under the field as a full line of its own,
+     where it read as a heading for whatever came next. Beside the label it
+     is plainly a readout of the field it belongs to. */
 
   /* toggle switch (self-transfer) */
   .switch-row{
@@ -371,7 +440,7 @@
     padding:14px 16px;
   }
   .switch-row .label-block{display:flex;flex-direction:column;gap:2px;}
-  .switch-row .label-block .title{font-size:15px;font-weight:600;color:var(--text-dark);}
+  .switch-row .label-block .title{font-size:14px;font-weight:600;color:var(--text-dark);}
   .switch-row .label-block .desc{font-size:12px;color:var(--text-muted);font-weight:500;}
   .switch{position:relative;width:46px;height:28px;flex-shrink:0;}
   .switch input{opacity:0;width:0;height:0;}
@@ -468,10 +537,11 @@
   .amount-card .amt-label{
     display:flex;justify-content:space-between;align-items:center;
     width:100%;
-    font-size:12px;font-weight:700;color:var(--text-muted);
-    letter-spacing:0.4px;
+    font-size:12px;font-weight:600;color:var(--text-muted);
   }
+  .amt-label label{font-size:16px;font-weight:700;letter-spacing:-0.2px;color:var(--text-dark);}
   .amt-label .pill-inr{
+    font-size:12px;
     background:var(--canvas-light);
     padding:4px 10px;
     border-radius:var(--radius-pill);
@@ -509,22 +579,17 @@
 
   .kind-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
   .kind-btn{
-    padding:14px 0;
-    border-radius:var(--radius-input);
-    border:1.5px solid var(--border);
+    padding:12px 8px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
     background:var(--white);
-    font-family:var(--font);font-size:15px;font-weight:700;
+    font-family:var(--font);font-size:12px;font-weight:700;
     cursor:pointer;
   }
-  /* Deliberately not the dark+lime "selected" treatment used everywhere
-     else. Direction is the one thing on this form that must be readable at
-     a glance, and the history list already says out=red, in=green — so the
-     place you choose it says the same thing. */
-  .amount-card .kind-btn:not(.on){background:var(--canvas-light);}
-  .kind-btn.debit{color:var(--text-muted);}
-  .kind-btn.debit.on{background:#FBE9E9;border-color:var(--red);color:#A82F2F;}
-  .kind-btn.credit{color:var(--text-muted);}
-  .kind-btn.credit.on{background:var(--mint);border-color:var(--green);color:#0A5B41;}
+  /* Same selected treatment as every other choice in the app — dark fill,
+     lime label — so there is one thing to learn rather than two. */
+  .amount-card .kind-btn:not(.on){background:var(--canvas-light);color:var(--text-dark);}
+  .kind-btn.on{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
   .kind-btn.locked{opacity:0.85;cursor:default;}
 
   /* CTA save button */
@@ -550,33 +615,42 @@
 
   /* bottom nav */
   /* ---------- STATS / HISTORY ---------- */
-  .stats-screen{padding:4px 20px 32px;display:flex;flex-direction:column;gap:14px;}
+  .stats-screen{padding:14px 20px 32px;display:flex;flex-direction:column;gap:14px;}
 
-  /* inner tabs: cream active on the dark track, to read as a level below
-     the lime top tabs rather than competing with them */
+  /* A second dark pill directly under the dark top nav read as two navs of
+     equal rank. This track is light instead, so the level is obvious before
+     either label is read — and the selected tab keeps the same dark + lime
+     treatment used for every other choice in the app. */
   .sub-tabs{
     display:flex;
-    background:var(--canvas-dark);
+    background:var(--white);
+    border:1px solid var(--border);
     border-radius:var(--radius-pill);
     padding:5px;gap:5px;
   }
   .sub-tab{
     flex:1;
     display:flex;align-items:center;justify-content:center;gap:7px;
-    padding:12px 0;
+    padding:11px 0;
     border:none;background:transparent;
     border-radius:var(--radius-pill);
     font-family:var(--font);font-size:14px;font-weight:700;
-    color:#9EAD9C;cursor:pointer;
+    color:var(--text-muted);cursor:pointer;
   }
-  .sub-tab.active{background:var(--canvas-light);color:var(--text-dark);}
+  .sub-tab.active{background:var(--text-dark);color:var(--lime);}
   .sub-tab .badge{
     min-width:22px;padding:0 6px;
     border-radius:var(--radius-pill);
     background:var(--amber);color:var(--text-dark);
     font-size:12px;font-weight:800;line-height:20px;
   }
-  .sub-tab.active .badge{background:var(--amber);}
+  .sub-tab .count{
+    min-width:22px;padding:0 6px;
+    border-radius:var(--radius-pill);
+    background:var(--canvas-light);color:var(--text-muted);
+    font-size:12px;font-weight:800;line-height:20px;
+  }
+  .sub-tab.active .count{background:#2C312E;color:#9EAD9C;}
 
   .ledger-card{
     background:var(--white);
@@ -591,8 +665,14 @@
     background:var(--canvas-light);
     border-bottom:1px solid var(--border);
   }
-  .day-head .day{font-size:14px;font-weight:800;color:var(--text-dark);}
-  .day-head .net{font-size:13px;font-weight:600;color:var(--text-muted);}
+  .day-head .day{
+    font-size:12px;font-weight:800;
+    letter-spacing:0.5px;text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .day-head .net{font-size:13px;font-weight:700;color:var(--text-muted);}
+  .day-head .net.out{color:var(--red);}
+  .day-head .net.in{color:var(--green);}
 
   .txn{
     display:flex;align-items:center;gap:14px;
@@ -600,10 +680,13 @@
     border-bottom:1px solid var(--border);
   }
   .txn:last-child{border-bottom:none;}
+  /* One letter turns the colour swatch into a label you can key against. */
   .txn .tile{
     width:42px;height:42px;flex-shrink:0;
     border-radius:14px;
     background:var(--mint);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:800;color:var(--text-dark);
   }
   .txn .tile.acct-International{background:var(--amber);}
   .txn .tile.acct-Cash{background:#EAE5D8;}
@@ -633,7 +716,7 @@
   .stats-empty{
     padding:44px 24px;text-align:center;
   }
-  .stats-empty h2{font-size:17px;margin:0 0 6px;color:var(--text-dark);}
+  .stats-empty h2{font-size:17px;font-weight:700;margin:0 0 6px;color:var(--text-dark);}
   .stats-empty p{font-size:14px;margin:0;font-weight:500;color:var(--text-muted);}
 
   .show-more{
@@ -651,12 +734,20 @@
      first, so moving money between your own accounts never shows up as
      both an expense and income. */
   .month-card{
-    display:grid;grid-template-columns:1fr 1fr 1fr;
     background:var(--white);
     border:1px solid var(--border);
     border-radius:var(--radius-card);
     overflow:hidden;
   }
+  .month-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:14px 18px 12px;
+    background:var(--canvas-light);
+    border-bottom:1px solid var(--border);
+  }
+  .month-title{font-size:16px;font-weight:700;letter-spacing:-0.2px;color:var(--text-dark);}
+  .month-count{font-size:12px;font-weight:600;color:var(--text-muted);}
+  .month-grid{display:grid;grid-template-columns:1fr 1fr 1fr;}
   .ms-cell{padding:14px 10px;text-align:center;border-right:1px solid var(--border);}
   .ms-cell:last-child{border-right:none;}
   .ms-cell .ms-key{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:0.4px;text-transform:uppercase;}
@@ -664,16 +755,8 @@
   .ms-val.out{color:var(--red);}
   .ms-val.in{color:var(--green);}
   .ms-val.net{color:var(--text-dark);}
-  .month-scope{font-size:12px;font-weight:500;color:#6B6861;text-align:center;}
 
-  /* The account tiles were bare colour swatches with nothing to key them
-     against. One letter turns a decoration into a label. */
-  .txn .tile{
-    display:flex;align-items:center;justify-content:center;
-    font-size:15px;font-weight:800;color:var(--text-dark);
-  }
-
-  .gear-btn.active{background:var(--lime);}
+  .gear-btn.active .gear-inner{background:var(--lime);}
   .gear-btn.active svg{stroke:var(--text-dark);}
 
   /* modal */
@@ -684,6 +767,7 @@
   }
   .modal-overlay.open{display:flex;}
   .modal{
+    position:relative;
     background:var(--canvas-light);
     width:100%;max-width:480px;
     border-radius:24px 24px 0 0;
@@ -693,6 +777,45 @@
   }
   .modal h2{margin:0 0 4px;font-size:18px;}
   .modal .close{align-self:flex-end;font-size:13px;color:var(--text-muted);font-weight:700;cursor:pointer;}
+
+  /* CONFIRM SHEET — the entry read back in a sentence before it is saved.
+     The form can only ever show the settings; this shows what they add up
+     to, which is the thing actually worth checking. */
+  .sheet-close{
+    position:absolute;top:18px;right:18px;
+    width:32px;height:32px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--white);
+    color:var(--text-muted);
+    font-family:var(--font);font-size:14px;font-weight:700;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .sheet-title{font-size:19px;font-weight:800;color:var(--text-dark);padding-right:44px;}
+  .sheet-line{margin:0;font-size:14px;font-weight:500;line-height:1.55;color:var(--text-dark);}
+  .sheet-note{
+    align-self:flex-start;
+    padding:7px 14px;
+    border-radius:var(--radius-pill);
+    background:var(--amber);color:#8A6D1F;
+    font-size:13px;font-weight:700;
+  }
+  .sheet-props{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    overflow:hidden;
+  }
+  .sheet-prop{
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .sheet-prop:last-child{border-bottom:none;}
+  .sheet-prop .k{font-size:13px;font-weight:600;color:var(--text-muted);flex-shrink:0;}
+  .sheet-prop .v{font-size:14px;font-weight:700;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
+  .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px;}
   .btn{
     padding:16px 0;
     border-radius:var(--radius-pill);
@@ -725,10 +848,12 @@
     </div>
     <div class="gear-wrap">
       <button type="button" class="gear-btn" id="openSettings" aria-label="Settings and sync">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-          <circle cx="12" cy="8" r="4"/>
-          <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
-        </svg>
+        <span class="gear-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+          </svg>
+        </span>
       </button>
       <span class="pending-count" id="pendingCount" style="display:none;" aria-label="entries waiting to be sent">0</span>
     </div>
@@ -767,35 +892,41 @@
   <form id="entryForm">
 
     <div class="group">
-    <div class="group-title">When &amp; where</div>
+    <div class="group-title">What and when</div>
 
     <div class="field">
       <label for="dateTextInput">Date</label>
-      <div class="date-input-wrap">
-        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9 or 5 9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
-      </div>
-      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
-      <div class="quick-date-row">
+      <div class="date-row">
+        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
         <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
         <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
       </div>
+      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
     </div>
 
-    <!-- The toggle and the accounts it reshapes are one block. Turning it on
-         opens a second row underneath; nothing above it moves and no chip
-         changes size or position. -->
-    <div class="account-block" id="accountRow">
+    <div class="field">
+      <label for="expenseName">Expense name</label>
+      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc">
+    </div>
 
-      <div class="switch-row">
-        <div class="label-block">
-          <div class="title" id="selfTransferTitle">Self transfer</div>
-          <div class="desc">Moving money between your own accounts</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="selfTransferToggle" aria-labelledby="selfTransferTitle">
-          <span class="slider"></span>
-        </label>
-      </div>
+    <div class="field">
+      <label for="moreInfo">More info <span style="font-weight:500;">(optional)</span></label>
+      <input type="text" id="moreInfo" placeholder="Notes">
+    </div>
+    </div><!-- /group: what and when -->
+
+    <!-- The accounts and the one switch that reshapes them. Turning the pill
+         on opens a second row underneath; nothing above it moves and no chip
+         changes size or position. -->
+    <div class="group">
+    <div class="label-row">
+      <div class="group-title">Which account</div>
+      <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
+        <span class="swap" aria-hidden="true">⇄</span>Self transfer
+      </button>
+    </div>
+
+    <div class="account-block" id="accountRow">
 
       <div class="field" id="singleAccountField">
         <div class="field-label" id="accountLabel">Account</div>
@@ -817,19 +948,28 @@
         </div>
       </div>
     </div>
-    </div><!-- /group: when & where -->
+    </div><!-- /group: which account -->
 
     <div class="group">
-    <div class="group-title">What for</div>
+    <div class="group-title">How it's tracked</div>
 
     <div class="field">
-      <label for="expenseName">Expense name</label>
-      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc">
-    </div>
-
-    <div class="field">
-      <label for="moreInfo">More info <span style="font-weight:500;">(optional)</span></label>
-      <input type="text" id="moreInfo" placeholder="Notes">
+      <div class="field-label" id="idLabel">Transaction ID</div>
+      <div class="id-row" role="group" aria-labelledby="idLabel" aria-describedby="idHint">
+        <div class="segmented" id="idSegment" role="group" aria-label="ID type">
+          <button type="button" data-kind="Y" id="btnY" aria-pressed="false">Y</button>
+          <button type="button" data-kind="N" id="btnN" aria-pressed="true">N</button>
+        </div>
+        <div class="id-box" id="idBoxDisplay" role="status" aria-label="Transaction ID">N9f8s3d</div>
+        <select class="id-box" id="idBoxSelect" style="display:none;" aria-label="Transaction ID"></select>
+        <button type="button" class="reuse-btn" id="regenBtn" title="Generate new ID" aria-label="Generate a new ID">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+      </div>
+      <div class="field-hint" id="idHint">N = one-way payment, auto-generates a new ID</div>
     </div>
 
     <div id="txnTypeSection">
@@ -841,6 +981,7 @@
             <option>Payment</option>
             <option>Refund</option>
             <option>Cashback</option>
+            <option>Payment Split</option>
             <option>Salary</option>
             <option>Sent Transfer</option>
             <option>Received Transfer</option>
@@ -858,6 +999,7 @@
             <option>Payment</option>
             <option>Refund</option>
             <option>Cashback</option>
+            <option>Payment Split</option>
             <option>Salary</option>
             <option>Sent Transfer</option>
             <option>Received Transfer</option>
@@ -870,6 +1012,7 @@
             <option>Payment</option>
             <option>Refund</option>
             <option>Cashback</option>
+            <option>Payment Split</option>
             <option>Salary</option>
             <option>Sent Transfer</option>
             <option>Received Transfer</option>
@@ -896,26 +1039,7 @@
         <button type="button" class="chip selected" data-val="Monthly" aria-pressed="true" style="flex:1;text-align:center;">Monthly</button>
       </div>
     </div>
-
-    <div class="field">
-      <div class="field-label" id="idLabel">Transaction ID</div>
-      <div class="id-row" role="group" aria-labelledby="idLabel" aria-describedby="idHint">
-        <div class="segmented" id="idSegment" role="group" aria-label="ID type">
-          <button type="button" data-kind="Y" id="btnY" aria-pressed="false">Y</button>
-          <button type="button" data-kind="N" id="btnN" aria-pressed="true">N</button>
-        </div>
-        <div class="id-box" id="idBoxDisplay" role="status" aria-label="Transaction ID">N9f8s3d</div>
-        <select class="id-box" id="idBoxSelect" style="display:none;" aria-label="Transaction ID"></select>
-        <button type="button" class="reuse-btn" id="regenBtn" title="Generate new ID" aria-label="Generate a new ID">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-        </button>
-      </div>
-      <div class="field-hint" id="idHint">N = one-way payment, auto-generates a new ID</div>
-    </div>
-    </div><!-- /group: what for -->
+    </div><!-- /group: how it's tracked -->
 
     <div class="amount-card">
       <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">₹ INR</span></div>
@@ -925,8 +1049,8 @@
       </div>
       <div class="amt-note" id="amountNote" style="display:none;" role="status"></div>
       <div class="kind-toggle">
-        <button type="button" class="kind-btn debit" id="debitBtn">− Debit</button>
-        <button type="button" class="kind-btn credit" id="creditBtn">+ Credit</button>
+        <button type="button" class="kind-btn credit" id="creditBtn">Credit</button>
+        <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
       </div>
     </div>
 
@@ -941,7 +1065,7 @@
   <div class="stats-screen" id="statsScreen" style="display:none;">
     <div class="sub-tabs" role="tablist" aria-label="History">
       <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
-        <span>Recent</span><span id="recentCount"></span>
+        <span>Recent</span><span class="count" id="recentCount" style="display:none;">0</span>
       </button>
       <button type="button" class="sub-tab" id="tabDues" data-sub="dues" role="tab" aria-selected="false">
         <span>Owed to me</span><span class="badge" id="duesBadge" style="display:none;">0</span>
@@ -953,61 +1077,85 @@
 
   <!-- ACCOUNT / SYNC SCREEN -->
   <div class="account-screen" id="accountScreen" style="display:none;">
-    <div class="field">
-      <div class="field-label" id="syncModeLabel">When to send entries to the sheet</div>
-      <div class="chip-group vertical" id="syncModeChips" role="group" aria-labelledby="syncModeLabel">
-        <button type="button" class="chip" data-val="smart" aria-pressed="false">Wait and send them together</button>
-        <button type="button" class="chip" data-val="instant" aria-pressed="false">As soon as I add them</button>
-        <button type="button" class="chip" data-val="manual" aria-pressed="false">Only when I tap send</button>
+
+    <div class="group">
+      <div class="group-title">Sending</div>
+
+      <div class="field">
+        <div class="field-label" id="syncModeLabel">When to send entries to the sheet</div>
+        <div class="chip-group vertical" id="syncModeChips" role="group" aria-labelledby="syncModeLabel">
+          <button type="button" class="chip" data-val="smart" aria-pressed="false">Wait and send them together</button>
+          <button type="button" class="chip" data-val="instant" aria-pressed="false">As soon as I add them</button>
+          <button type="button" class="chip" data-val="manual" aria-pressed="false">Only when I tap send</button>
+        </div>
+        <div class="field-hint" id="syncModeHint">Every entry is kept on this device first, so nothing is lost while it waits.</div>
       </div>
-      <div class="field-hint" id="syncModeHint">Every entry is kept on this device first, so nothing is lost while it waits.</div>
-    </div>
 
-    <div class="switch-row" style="align-items:flex-start;">
-      <div class="label-block">
-        <div class="title">Waiting to be sent</div>
-        <div class="desc" id="queueSummary">Nothing waiting</div>
+      <div class="field">
+        <div class="field-label">Waiting to be sent</div>
+        <div class="field-hint" id="queueSummary">Nothing waiting</div>
+        <button type="button" class="btn btn-save" id="sendAllBtn">Send everything now</button>
+      </div>
+
+      <div class="switch-row">
+        <div class="label-block">
+          <div class="title" id="confirmTitle">Wait for the sheet to confirm</div>
+          <div class="desc">Only clear an entry once Excel says it has the row. Needs the Make scenario to reply <b>LEDGER_OK</b> — leave this off until it does, or nothing will ever send.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="confirmToggle" aria-labelledby="confirmTitle">
+          <span class="slider"></span>
+        </label>
       </div>
     </div>
 
-    <button type="button" class="btn btn-save" id="sendAllBtn">Send everything now</button>
-
-    <div class="switch-row">
-      <div class="label-block">
-        <div class="title" id="confirmTitle">Wait for the sheet to confirm</div>
-        <div class="desc">Only clear an entry once Excel says it has the row. Needs the Make scenario to reply <b>LEDGER_OK</b> — leave this off until it does, or nothing will ever send.</div>
+    <div class="group">
+      <div class="group-title">Backup</div>
+      <div class="field">
+        <div class="field-hint" id="backupStatus">—</div>
+        <button type="button" class="btn btn-save" id="exportBtn">Save a backup file</button>
+        <button type="button" class="btn btn-outline" id="importBtn">Restore from a file</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none;" aria-label="Choose a backup file">
+        <div class="field-hint">Restoring adds anything missing. It never deletes what is already on this device.</div>
       </div>
-      <label class="switch">
-        <input type="checkbox" id="confirmToggle" aria-labelledby="confirmTitle">
-        <span class="slider"></span>
-      </label>
     </div>
 
-    <div class="field">
-      <div class="field-label">Backup</div>
-      <div class="field-hint" id="backupStatus">—</div>
-      <button type="button" class="btn btn-save" id="exportBtn">Save a backup file</button>
-      <button type="button" class="btn btn-outline" id="importBtn">Restore from a file</button>
-      <input type="file" id="importFile" accept="application/json,.json" style="display:none;" aria-label="Choose a backup file">
-      <div class="field-hint">Restoring adds anything missing. It never deletes what is already on this device.</div>
+    <div class="group" id="lastSendField" style="display:none;">
+      <div class="group-title">Last send</div>
+      <div class="field">
+        <div class="field-hint" id="lastSendSummary">—</div>
+        <button type="button" class="btn btn-outline" id="requeueBtn">Put them back in the queue</button>
+        <div class="field-hint">Only if they never reached the sheet. Check Excel first — putting back a batch that did land will write it twice.</div>
+      </div>
     </div>
 
-    <div class="field" id="lastSendField" style="display:none;">
-      <div class="field-label">Last send</div>
-      <div class="field-hint" id="lastSendSummary">—</div>
-      <button type="button" class="btn btn-outline" id="requeueBtn">Put them back in the queue</button>
-      <div class="field-hint">Only if they never reached the sheet. Check Excel first — putting back a batch that did land will write it twice.</div>
-    </div>
+    <div class="group">
+      <div class="group-title">The sheet</div>
 
-    <div class="field">
-      <div class="field-label">Open IDs</div>
-      <div class="field-hint">The app tracks these itself. Read the sheet again if you have edited it in Excel directly.</div>
-      <button type="button" class="btn btn-outline" id="refreshBtn">Read the sheet again</button>
-    </div>
+      <div class="field">
+        <div class="field-label">Open IDs</div>
+        <div class="field-hint">The app tracks these itself. Read the sheet again if you have edited it in Excel directly.</div>
+        <button type="button" class="btn btn-outline" id="refreshBtn">Read the sheet again</button>
+      </div>
 
-    <div class="field">
-      <div class="field-label">This month</div>
-      <div class="field-hint" id="monthSummary">—</div>
+      <div class="field">
+        <div class="field-label">This month</div>
+        <div class="field-hint" id="monthSummary">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmSheet" role="dialog" aria-modal="true" aria-labelledby="confirmTitleText">
+  <div class="modal">
+    <button type="button" class="sheet-close" id="confirmCloseBtn" aria-label="Close without saving">✕</button>
+    <div class="sheet-title" id="confirmTitleText">Add this entry?</div>
+    <p class="sheet-line" id="confirmLine">—</p>
+    <div class="sheet-note" id="confirmNote" style="display:none;"></div>
+    <div class="sheet-props" id="confirmProps"></div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-outline" id="confirmEditBtn">Edit entry</button>
+      <button type="button" class="btn btn-save" id="confirmAddBtn">Add entry</button>
     </div>
   </div>
 </div>
@@ -1033,7 +1181,8 @@
     history: [],
     subTab: 'recent',
     historyShown: 40,
-    requireConfirm: false
+    requireConfirm: false,
+    pending: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -1259,8 +1408,6 @@
       .toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
   }
 
-  $('dateTextInput').placeholder = 'e.g. 5.9 or 5 9';
-
   // ---------- DATE FIELD ----------
   // The field accepts digits and separators and otherwise leaves the text
   // alone: no mask, no auto-inserted characters, no cursor repositioning.
@@ -1274,13 +1421,17 @@
     const res = parseDateInput($('dateTextInput').value);
     dateHint.classList.remove('is-warn', 'is-error');
 
+    const say = (text, cls) => {
+      dateHint.textContent = text;
+      if(cls) dateHint.classList.add(cls);
+    };
+
     if(res.empty){
-      dateHint.textContent = 'Day and month, separated — the year is worked out';
+      say('Day and month, separated — the year is worked out');
       return;
     }
     if(res.error){
-      dateHint.textContent = res.error;
-      dateHint.classList.add('is-error');
+      say(res.error, 'is-error');
       return;
     }
 
@@ -1288,15 +1439,14 @@
     // Two cases deserve attention rather than quiet acceptance: a date that
     // resolved into last year, and one that is months old. Both are legitimate
     // — backdating is the whole point of the field — but both are also what a
-    // mistyped month looks like, so the year is spelled out and marked.
+    // mistyped month looks like. A normal date says nothing at all; the line
+    // stays where it is, empty, so nothing jumps when it has something to say.
     if(res.inferredYear){
-      dateHint.textContent = `${formatFullDate(res.iso)} — last year`;
-      dateHint.classList.add('is-warn');
+      say(`${formatFullDate(res.iso)} — last year`, 'is-warn');
     } else if(back > 90){
-      dateHint.textContent = `${formatFullDate(res.iso)} — ${back} days ago`;
-      dateHint.classList.add('is-warn');
+      say(`${formatFullDate(res.iso)} — ${back} days ago`, 'is-warn');
     } else {
-      dateHint.textContent = formatFullDate(res.iso);
+      dateHint.textContent = '';
     }
   }
 
@@ -1348,13 +1498,14 @@
 
   // ---------- SELF TRANSFER TOGGLE ----------
   const selfTransferToggle = $('selfTransferToggle');
-  selfTransferToggle.addEventListener('change', () => {
-    state.isSelfTransfer = selfTransferToggle.checked;
+  selfTransferToggle.addEventListener('click', () => {
+    state.isSelfTransfer = !state.isSelfTransfer;
     applySelfTransferMode();
   });
 
   function applySelfTransferMode(){
     const on = state.isSelfTransfer;
+    selfTransferToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     // The To row is never added or removed — it opens and closes. A text
     // swap on the label above it costs no layout at all.
     $('accountRow').classList.toggle('is-transfer', on);
@@ -1870,21 +2021,9 @@
     const raw = amountRawNumber();
     renderAmountNote(raw);
 
-    // A large amount that has been asked about but not yet confirmed owns the
-    // button until it is either confirmed or changed. This is rendered from
-    // state inside updateCTA rather than written over the button from
-    // outside, so no later updateCTA call can quietly wipe it (bug #18).
-    if(state.confirmAmount !== null && state.confirmAmount === raw){
-      $('ctaMainText').textContent = `Confirm ₹${amt}`;
-      $('ctaCaption').textContent = `That is ${largeAmountLabel(raw)} — tap again to save it, or edit the amount`;
-      return;
-    }
-
     // An amount of zero is "not typed yet", not a real figure — printing
     // "₹0.00" on the button from the first paint makes the number stop
     // meaning anything, so it only appears once there is one.
-    const dateLabel = state.selectedDateISO ? formatDisplayDate(state.selectedDateISO) : 'no date yet';
-
     if(state.isSelfTransfer){
       $('ctaMainText').textContent = raw ? `Add Entry • ₹${amt} Transfer` : 'Add Entry';
     } else {
@@ -1892,8 +2031,10 @@
       $('ctaMainText').textContent = raw ? `Add Entry • ₹${amt} ${dir}` : 'Add Entry';
     }
 
-    // The caption is the only line that can say why a tap will not work, so
-    // it says that first and goes back to summarising once it can.
+    // The caption's only remaining job is saying why a tap will not work.
+    // What the entry will actually be is read back in the confirm sheet,
+    // where it is a sentence rather than three fields joined by bullets.
+    const cap = $('ctaCaption');
     const missing = [];
     if(!state.selectedDateISO) missing.push('a date');
     if(!$('expenseName').value.trim()) missing.push('a name');
@@ -1901,15 +2042,11 @@
     if(missing.length){
       const list = missing.length === 1 ? missing[0]
         : missing.slice(0, -1).join(', ') + ' and ' + missing[missing.length - 1];
-      $('ctaCaption').textContent = `Needs ${list}`;
-      return;
-    }
-
-    if(state.isSelfTransfer){
-      $('ctaCaption').textContent = `Moves ${state.account} → ${state.toAccount} • ${dateLabel} • self transfer`;
+      cap.textContent = `Needs ${list}`;
+      cap.style.display = 'block';
     } else {
-      const status = state.kind === 'Y' ? 'marked to be returned' : 'one-way payment';
-      $('ctaCaption').textContent = `Saves to ${state.account} • ${dateLabel} • ${status}`;
+      cap.textContent = '';
+      cap.style.display = 'none';
     }
   }
 
@@ -1949,7 +2086,6 @@
     // a visible, labelled default — the Today chip is lit and the CTA
     // caption spells the date out — not a hidden assumption.
     setDate(isoToday(0), 'today');
-    selfTransferToggle.checked = false;
     state.isSelfTransfer = false;
     applySelfTransferMode();
     setIdKind('N');
@@ -2329,17 +2465,9 @@
       return;
     }
 
-    // One stray zero turns ₹5,000 into ₹50,000 and nothing else on the form
-    // would look wrong. From a lakh up, the first tap asks and the second
-    // saves. Changing the amount clears the confirmation.
-    if(amount >= AMOUNT_CONFIRM_FROM && state.confirmAmount !== amount){
-      state.confirmAmount = amount;
-      updateCTA();
-      showToast(`That is ${largeAmountLabel(amount)} — tap again to save it`, 3600);
-      return;
-    }
-
-    $('saveBtn').disabled = true;
+    // The large-amount double-tap lived here because nothing else asked
+    // before writing. The confirm sheet asks about every entry now, and it
+    // reads the figure back in lakhs, so the second tap moved there.
 
     const { sheet: targetSheet } = monthNamesFor(state.selectedDateISO);
     const savedId = currentId();
@@ -2370,21 +2498,132 @@
       ];
     }
 
-    enqueue(entries);
+    // Nothing is written yet. The form is left exactly as it is, so Edit
+    // entry is a close rather than a restore.
+    state.pending = {
+      entries, savedId, amount,
+      isSelfTransfer: state.isSelfTransfer,
+      account: state.account,
+      toAccount: state.toAccount,
+      kind: state.kind,
+      debit: state.debit,
+      dateISO: state.selectedDateISO,
+      expenseName, moreInfo, txnFreq
+    };
+    openConfirmSheet();
+  });
+
+  // ---------- CONFIRM SHEET ----------
+  // The form can only show its own settings. This shows what they add up to,
+  // in a sentence, which is the thing worth checking before a row is written.
+  function propRow(k, v){
+    if(v === '' || v == null) return '';
+    return `<div class="sheet-prop"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`;
+  }
+
+  // "14 Sep 2026 (Monday)". The form no longer echoes the resolved date, so
+  // this is where the day it landed on is checked.
+  function formatConfirmDate(iso){
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+         + ' (' + d.toLocaleDateString('en-GB', { weekday:'long' }) + ')';
+  }
+
+  function openConfirmSheet(){
+    const p = state.pending;
+    if(!p) return;
+    const amt = p.amount.toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    const when = formatDisplayDate(p.dateISO);
+    const whenFull = formatConfirmDate(p.dateISO);
+
+    let line, rows;
+    if(p.isSelfTransfer){
+      line = `₹${amt} moves from your ${p.account} account to your ${p.toAccount} account on ${when}. `
+           + `It is your own money changing hands, so it is recorded as two rows but counts as neither spending nor income.`;
+      rows = [
+        ['Date', whenFull],
+        ['From account', p.account],
+        ['To account', p.toAccount],
+        ['Expense name', p.expenseName],
+        ['More info', p.moreInfo],
+        ['Sent leg type', p.entries[0].txnType],
+        ['Received leg type', p.entries[1].txnType],
+        ['Frequency', p.txnFreq],
+        ['Amount', `₹${amt} moved`],
+        ['Transaction ID', p.savedId]
+      ];
+    } else {
+      line = p.debit
+        ? `₹${amt} leaves your ${p.account} account on ${when} for ${p.expenseName}. `
+        : `₹${amt} comes into your ${p.account} account on ${when} from ${p.expenseName}. `;
+      line += p.kind === 'Y'
+        ? 'It is marked to be returned, so it stays under Owed to me until the other half is entered.'
+        : 'It is a one-way payment, so nothing is expected back.';
+      rows = [
+        ['Date', whenFull],
+        ['Account', p.account],
+        ['Expense name', p.expenseName],
+        ['More info', p.moreInfo],
+        ['Transaction type', p.entries[0].txnType],
+        ['Frequency', p.txnFreq],
+        ['Amount', `₹${amt} ${p.debit ? 'out' : 'in'}`],
+        ['Transaction ID', p.savedId]
+      ];
+    }
+
+    $('confirmLine').textContent = line;
+    $('confirmProps').innerHTML = rows.map(r => propRow(r[0], r[1])).join('');
+
+    // One stray zero turns ₹5,000 into ₹50,000 and nothing else on the form
+    // would look wrong, so from a lakh up the figure is read back in the
+    // unit it would be misread in.
+    const big = largeAmountLabel(p.amount);
+    $('confirmNote').textContent = big ? `That is ${big} — check the zeros` : '';
+    $('confirmNote').style.display = big ? 'block' : 'none';
+
+    $('confirmSheet').classList.add('open');
+  }
+
+  function closeConfirmSheet(){
+    $('confirmSheet').classList.remove('open');
+  }
+
+  function commitPending(){
+    const p = state.pending;
+    if(!p) return;
+    state.pending = null;
+    closeConfirmSheet();
+
+    enqueue(p.entries);
     // enqueue() stamps `at`; the history copy has to carry the same stamp,
     // which is what pairs a self transfer's two legs back together later.
-    recordHistory(state.queue.slice(-entries.length));
+    recordHistory(state.queue.slice(-p.entries.length));
     // A self transfer writes two rows under one ID, which would read as a
     // closed pair. Only the single-row case changes the open list.
-    if(!state.isSelfTransfer) applyYId(savedId);
+    if(!p.isSelfTransfer) applyYId(p.savedId);
 
-    $('saveBtn').disabled = false;
-    showToast(state.isSelfTransfer ? `Transfer added · ${savedId}` : `Added · ${savedId}`);
+    showToast(p.isSelfTransfer ? `Transfer added · ${p.savedId}` : `Added · ${p.savedId}`);
     fullReset();
 
     // enqueue() already rearmed the timers. Whether this goes now or waits
     // for company is scheduleSync's call — either way it is safe on the
     // device the moment it was added.
+  }
+
+  // Edit, the cross and a tap outside all do the same thing: nothing is
+  // written and the form is left untouched.
+  function dismissConfirm(){
+    state.pending = null;
+    closeConfirmSheet();
+  }
+  $('confirmAddBtn').addEventListener('click', commitPending);
+  $('confirmEditBtn').addEventListener('click', dismissConfirm);
+  $('confirmCloseBtn').addEventListener('click', dismissConfirm);
+  $('confirmSheet').addEventListener('click', (e) => {
+    if(e.target === $('confirmSheet')) dismissConfirm();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && $('confirmSheet').classList.contains('open')) dismissConfirm();
   });
 
   function newUid(){
@@ -2494,17 +2733,24 @@
     const label = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
 
     return `<div class="month-card">
-      <div class="ms-cell"><div class="ms-key">Out</div><div class="ms-val out">₹${money(out)}</div></div>
-      <div class="ms-cell"><div class="ms-key">In</div><div class="ms-val in">₹${money(inn)}</div></div>
-      <div class="ms-cell"><div class="ms-key">Net</div><div class="ms-val net">${net < 0 ? '−' : '+'} ₹${money(Math.abs(net))}</div></div>
-    </div>
-    <div class="month-scope">${label} · ${rows.length === 1 ? '1 entry' : rows.length + ' entries'}</div>`;
+      <div class="month-head">
+        <span class="month-title">${label}</span>
+        <span class="month-count">${rows.length === 1 ? '1 entry' : rows.length + ' entries'}</span>
+      </div>
+      <div class="month-grid">
+        <div class="ms-cell"><div class="ms-key">Out</div><div class="ms-val out">₹${money(out)}</div></div>
+        <div class="ms-cell"><div class="ms-key">In</div><div class="ms-val in">₹${money(inn)}</div></div>
+        <div class="ms-cell"><div class="ms-key">Net</div><div class="ms-val net">${net < 0 ? '−' : '+'} ₹${money(Math.abs(net))}</div></div>
+      </div>
+    </div>`;
   }
 
   function renderRecent(){
     const pane = $('recentPane');
     const all = allRows().sort((a,b) => b.at - a.at);
-    $('recentCount').textContent = all.length ? `(${all.length})` : '';
+    const rc = $('recentCount');
+    rc.textContent = all.length;
+    rc.style.display = all.length ? 'inline-block' : 'none';
 
     let html = '';
     if(!all.length){
@@ -2534,8 +2780,9 @@
       const net = rows.reduce((n, r) => n + (r.transfer ? 0 : (r.isOut ? -r.amount : r.amount)), 0);
       const netText = net === 0 ? '' :
         (net > 0 ? '+ ₹' : '− ₹') + money(Math.abs(net));
+      const netCls = net === 0 ? '' : (net > 0 ? ' in' : ' out');
       html += `<div class="ledger-card">
-        <div class="day-head"><span class="day">${dayLabel(iso)}</span><span class="net">${netText}</span></div>
+        <div class="day-head"><span class="day">${dayLabel(iso)}</span><span class="net${netCls}">${netText}</span></div>
         ${rows.map(txnRow).join('')}
       </div>`;
     });
