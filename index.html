@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ledger — Add Payment</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F4F1EA">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ledger">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -65,6 +65,7 @@
     font-weight:500;
   }
   .gear-btn{
+    padding:0;
     width:42px;height:42px;
     border-radius:var(--radius-pill);
     background:var(--text-dark);
@@ -74,7 +75,102 @@
     flex-shrink:0;
   }
   .gear-btn svg{width:20px;height:20px;stroke:var(--lime);}
-
+ 
+  .gear-wrap{position:relative;flex-shrink:0;}
+  .pending-count{
+    position:absolute;
+    top:-3px;right:-3px;
+    min-width:20px;height:20px;
+    padding:0 5px;
+    border-radius:var(--radius-pill);
+    background:var(--lime);
+    color:var(--text-dark);
+    font-size:11px;font-weight:800;
+    align-items:center;justify-content:center;
+    border:2px solid var(--canvas-light);
+  }
+ 
+  /* UPDATE BAR — only present when a newer build is sitting in the cache */
+  .update-bar{
+    margin:10px 20px 0;
+    padding:12px 14px 12px 16px;
+    border-radius:var(--radius-input);
+    background:var(--amber);
+    display:flex;align-items:center;gap:10px;
+  }
+  .update-label{
+    flex:1;
+    font-size:13px;font-weight:700;color:#5A4708;
+  }
+  .update-btn{
+    border:none;
+    background:var(--text-dark);color:var(--lime);
+    border-radius:var(--radius-pill);
+    padding:8px 14px;
+    font-family:var(--font);font-size:13px;font-weight:700;
+    cursor:pointer;flex-shrink:0;
+  }
+ 
+  /* BACKUP BAR — nightly nudge, calm rather than alarming */
+  .backup-bar{
+    margin:10px 20px 0;
+    padding:12px 14px 12px 16px;
+    border-radius:var(--radius-input);
+    background:var(--mint);
+    display:flex;align-items:center;gap:8px;
+  }
+  .backup-label{flex:1;font-size:13px;font-weight:600;color:var(--text-dark);}
+  .backup-btn{
+    border:none;background:var(--green);color:var(--white);
+    border-radius:var(--radius-pill);padding:8px 14px;
+    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;
+  }
+  .backup-later{
+    border:none;background:transparent;color:var(--text-muted);
+    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
+    padding:8px 4px;flex-shrink:0;
+  }
+ 
+  /* SYNC BAR — only present when something is actually waiting */
+  .sync-bar{
+    margin:10px 20px 0;
+    padding:12px 14px 12px 16px;
+    border-radius:var(--radius-input);
+    background:var(--mint);
+    display:flex;align-items:center;gap:10px;
+  }
+  .sync-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--green);flex-shrink:0;
+  }
+  /* Offline is a normal state here, not a failure — the entry is already
+     safe on the device. The bar says so without turning red about it. */
+  .sync-bar.is-offline{background:var(--canvas-light);border:1px solid var(--border);}
+  .sync-bar.is-offline .sync-dot{background:var(--text-muted);}
+  .sync-label{
+    flex:1;
+    font-size:13px;font-weight:600;color:var(--text-dark);
+  }
+  .sync-btn{
+    border:none;
+    background:var(--green);color:var(--white);
+    border-radius:var(--radius-pill);
+    padding:8px 14px;
+    font-family:var(--font);font-size:13px;font-weight:700;
+    cursor:pointer;flex-shrink:0;
+  }
+  .sync-btn:disabled{opacity:.6;}
+ 
+  .account-screen{
+    padding:14px 20px 32px;
+    display:flex;flex-direction:column;gap:18px;
+  }
+  .btn-outline{
+    background:var(--white);
+    border:1px solid var(--border);
+    color:var(--text-dark);
+  }
+ 
   /* TOP TABS (page switcher) */
   .top-tabs-wrap{
     padding:4px 20px 4px;
@@ -88,6 +184,8 @@
   }
   .top-tab{
     flex:1;
+    background:transparent;
+    font-family:var(--font);
     text-align:center;
     padding:13px 0;
     border-radius:var(--radius-pill);
@@ -101,13 +199,13 @@
     border-color:var(--lime);
     color:var(--text-dark);
   }
-
+ 
   /* FORM */
   form{padding:14px 20px 20px;display:flex;flex-direction:column;gap:18px;}
   .field{display:flex;flex-direction:column;gap:8px;}
-  .field label{font-size:13px;font-weight:600;color:var(--text-muted);}
+  .field label, .field .field-label{font-size:13px;font-weight:600;color:var(--text-muted);}
   .field-hint{font-size:12px;color:var(--text-muted);font-weight:500;margin-top:-2px;}
-
+ 
   input[type="text"], input[type="date"], select{
     width:100%;
     padding:14px 16px;
@@ -128,7 +226,7 @@
     background-position:right 16px center;
     padding-right:38px;
   }
-
+ 
   /* Transaction type combo: a real <select> normally (identical to every
      other dropdown in the app), which shrinks down to an invisible strip
      over just the arrow once Custom is chosen — the visible custom text
@@ -152,13 +250,13 @@
     background-position:right 16px center;
     padding-right:38px;
   }
-
+ 
   /* row of two */
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-
+ 
   /* txn type + frequency wrapper */
   #txnTypeSection{display:flex;flex-direction:column;gap:18px;}
-
+ 
   /* DATE FIELD */
   .date-input-wrap{position:relative;}
   .date-box-input{
@@ -174,6 +272,9 @@
   }
   .date-box-input::placeholder{color:var(--text-muted);font-weight:500;}
   .date-box-input:focus{border-color:var(--green);}
+  .date-hint{min-height:16px;transition:color .15s;}
+  .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
+  .date-hint.is-error{color:var(--red);font-weight:600;}
   .quick-date-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .quick-date-btn{
     padding:10px 0;
@@ -185,7 +286,7 @@
     cursor:pointer;
   }
   .quick-date-btn.active{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);font-style:normal;}
-
+ 
   /* toggle switch (self-transfer) */
   .switch-row{
     display:flex;align-items:center;justify-content:space-between;
@@ -215,7 +316,7 @@
   }
   .switch input:checked + .slider{background:var(--green);}
   .switch input:checked + .slider::before{transform:translateX(18px);}
-
+ 
   /* segmented control (Y/N id kind) */
   .segmented{
     display:flex;
@@ -236,7 +337,7 @@
     cursor:pointer;
   }
   .segmented button.active-seg{background:var(--text-dark);color:var(--lime);}
-
+ 
   .id-row{display:flex;align-items:center;gap:8px;}
   .id-box{
     flex:1;
@@ -253,6 +354,7 @@
     padding-right:34px;
   }
   .reuse-btn{
+    padding:0;
     width:44px;height:44px;
     flex-shrink:0;
     border-radius:50%;
@@ -263,7 +365,7 @@
   }
   .reuse-btn svg{width:19px;height:19px;stroke:var(--text-dark);transition:transform .3s;}
   .reuse-btn:active svg{transform:rotate(180deg);}
-
+ 
   /* account / from-to chips */
   .chip-group{display:flex;gap:8px;flex-wrap:wrap;}
   .chip-group.vertical{flex-direction:column;flex-wrap:nowrap;}
@@ -278,7 +380,7 @@
     cursor:pointer;
   }
   .chip.selected{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
-
+ 
   /* amount card */
   .amount-card{
     background:var(--white);
@@ -320,7 +422,16 @@
     padding:0;
   }
   #amountInput::placeholder{color:var(--text-muted);font-weight:600;opacity:1;}
-
+ 
+  .amt-note{
+    margin-top:-10px;
+    padding:5px 12px;
+    border-radius:var(--radius-pill);
+    background:var(--amber);
+    color:#8A6D1F;
+    font-size:13px;font-weight:700;
+  }
+ 
   .kind-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
   .kind-btn{
     padding:14px 0;
@@ -335,7 +446,7 @@
   .kind-btn.credit{color:var(--text-muted);}
   .kind-btn.credit.on{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
   .kind-btn.locked{opacity:0.85;cursor:default;}
-
+ 
   /* CTA save button */
   .cta-save{
     width:100%;
@@ -356,16 +467,105 @@
     color:var(--text-muted);
     margin-top:-8px;
   }
-
+ 
   /* bottom nav */
-  /* stats placeholder */
-  .stats-placeholder{
-    padding:60px 30px;text-align:center;color:var(--text-muted);
+  /* ---------- STATS / HISTORY ---------- */
+  .stats-screen{padding:4px 20px 32px;display:flex;flex-direction:column;gap:14px;}
+ 
+  /* inner tabs: cream active on the dark track, to read as a level below
+     the lime top tabs rather than competing with them */
+  .sub-tabs{
+    display:flex;
+    background:var(--canvas-dark);
+    border-radius:var(--radius-pill);
+    padding:5px;gap:5px;
   }
-  .stats-placeholder .icon{font-size:38px;margin-bottom:12px;}
-  .stats-placeholder h2{font-size:18px;color:var(--text-dark);margin:0 0 6px;}
-  .stats-placeholder p{font-size:14px;margin:0;font-weight:500;}
-
+  .sub-tab{
+    flex:1;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    padding:12px 0;
+    border:none;background:transparent;
+    border-radius:var(--radius-pill);
+    font-family:var(--font);font-size:14px;font-weight:700;
+    color:#9EAD9C;cursor:pointer;
+  }
+  .sub-tab.active{background:var(--canvas-light);color:var(--text-dark);}
+  .sub-tab .badge{
+    min-width:22px;padding:0 6px;
+    border-radius:var(--radius-pill);
+    background:var(--amber);color:var(--text-dark);
+    font-size:12px;font-weight:800;line-height:20px;
+  }
+  .sub-tab.active .badge{background:var(--amber);}
+ 
+  .ledger-card{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    overflow:hidden;
+  }
+ 
+  .day-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:14px 18px 10px;
+    background:var(--canvas-light);
+    border-bottom:1px solid var(--border);
+  }
+  .day-head .day{font-size:14px;font-weight:800;color:var(--text-dark);}
+  .day-head .net{font-size:13px;font-weight:600;color:var(--text-muted);}
+ 
+  .txn{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--border);
+  }
+  .txn:last-child{border-bottom:none;}
+  .txn .tile{
+    width:42px;height:42px;flex-shrink:0;
+    border-radius:14px;
+    background:var(--mint);
+  }
+  .txn .tile.acct-International{background:var(--amber);}
+  .txn .tile.acct-Cash{background:#EAE5D8;}
+  .txn .tile.transfer{background:var(--white);border:1.5px solid var(--border);}
+  .txn .body{flex:1;min-width:0;}
+  .txn .name{
+    font-size:15px;font-weight:700;color:var(--text-dark);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .txn .meta{
+    font-size:13px;font-weight:500;color:var(--text-muted);
+    margin-top:2px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .txn .meta .held{color:#8A6D1F;font-weight:700;}
+  .txn .amt{
+    font-size:15px;font-weight:800;flex-shrink:0;
+    text-align:right;
+  }
+  .txn .amt.out{color:var(--red);}
+  .txn .amt.in{color:var(--green);}
+  .txn .amt.flat{color:var(--text-muted);}
+ 
+  .due .body .name{font-weight:700;}
+  .due .amt{color:var(--text-dark);}
+ 
+  .stats-empty{
+    padding:44px 24px;text-align:center;
+  }
+  .stats-empty h2{font-size:17px;margin:0 0 6px;color:var(--text-dark);}
+  .stats-empty p{font-size:14px;margin:0;font-weight:500;color:var(--text-muted);}
+ 
+  .show-more{
+    width:100%;
+    padding:15px 0;
+    border:1px solid var(--border);
+    background:var(--white);
+    border-radius:var(--radius-pill);
+    font-family:var(--font);font-size:14px;font-weight:700;
+    color:var(--text-dark);cursor:pointer;
+  }
+ 
   /* modal */
   .modal-overlay{
     position:fixed;inset:0;background:rgba(18,22,20,.5);
@@ -407,101 +607,127 @@
 </head>
 <body>
 <div class="app">
-
+ 
   <div class="topbar">
     <div>
       <h1>Ledger</h1>
       <div class="sub" id="dateSub">—</div>
     </div>
-    <div class="gear-btn" id="openSettings">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
-      </svg>
+    <div class="gear-wrap">
+      <button type="button" class="gear-btn" id="openSettings" aria-label="Settings and sync">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+        </svg>
+      </button>
+      <span class="pending-count" id="pendingCount" style="display:none;" aria-label="entries waiting to be sent">0</span>
     </div>
   </div>
-
+ 
+  <div class="update-bar" id="monthBar" style="display:none;" role="status">
+    <span class="update-label" id="monthLabel">—</span>
+    <button type="button" class="update-btn" id="monthAckBtn">Done</button>
+  </div>
+ 
+  <div class="backup-bar" id="backupBar" style="display:none;" role="status">
+    <span class="backup-label" id="backupLabel">Back up today's entries</span>
+    <button type="button" class="backup-later" id="backupLaterBtn">Later</button>
+    <button type="button" class="backup-btn" id="backupNowBtn">Save file</button>
+  </div>
+ 
+  <div class="update-bar" id="updateBar" style="display:none;" role="status">
+    <span class="update-label">A newer version is ready</span>
+    <button type="button" class="update-btn" id="updateBtn">Reload</button>
+  </div>
+ 
   <div class="top-tabs-wrap">
-    <div class="top-tabs">
-      <div class="top-tab active" data-tab="add">Add Payment</div>
-      <div class="top-tab" data-tab="stats">Stats</div>
+    <div class="top-tabs" role="tablist" aria-label="Screens">
+      <button type="button" class="top-tab active" data-tab="add" role="tab" aria-selected="true">Add Payment</button>
+      <button type="button" class="top-tab" data-tab="stats" role="tab" aria-selected="false">Stats</button>
     </div>
   </div>
-
+ 
+  <div class="sync-bar" id="syncBar" style="display:none;">
+    <span class="sync-dot"></span>
+    <span class="sync-label" id="syncLabel">—</span>
+    <button type="button" class="sync-btn" id="syncNowBtn">Send to sheet</button>
+  </div>
+ 
   <!-- ADD PAYMENT SCREEN -->
   <form id="entryForm">
-
+ 
     <div class="field">
-      <label>Date</label>
+      <label for="dateTextInput">Date</label>
       <div class="date-input-wrap">
-        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 08/09/2026" inputmode="numeric" autocomplete="off">
+        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9 or 5 9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
       </div>
+      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
       <div class="quick-date-row">
         <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
         <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
       </div>
     </div>
-
+ 
     <div class="switch-row">
       <div class="label-block">
-        <div class="title">Self transfer</div>
+        <div class="title" id="selfTransferTitle">Self transfer</div>
         <div class="desc">Moving money between your own accounts</div>
       </div>
       <label class="switch">
-        <input type="checkbox" id="selfTransferToggle">
+        <input type="checkbox" id="selfTransferToggle" aria-labelledby="selfTransferTitle">
         <span class="slider"></span>
       </label>
     </div>
-
+ 
     <!-- Account field (left) + To account (right, revealed for self-transfer) -->
     <div class="row-2" id="accountRow">
       <div class="field" id="singleAccountField">
-        <label>Account</label>
-        <div class="chip-group vertical" id="accountChips">
-          <div class="chip" data-val="Domestic">Domestic</div>
-          <div class="chip" data-val="International">International</div>
-          <div class="chip" data-val="Cash">Cash</div>
+        <div class="field-label" id="accountLabel">Account</div>
+        <div class="chip-group vertical" id="accountChips" role="group" aria-labelledby="accountLabel">
+          <button type="button" class="chip" data-val="Domestic" aria-pressed="false">Domestic</button>
+          <button type="button" class="chip" data-val="International" aria-pressed="false">International</button>
+          <button type="button" class="chip" data-val="Cash" aria-pressed="false">Cash</button>
         </div>
       </div>
       <div class="field" id="toAccountField" style="display:none;">
-        <label>To account</label>
-        <div class="chip-group vertical" id="toChips">
-          <div class="chip" data-val="Domestic">Domestic</div>
-          <div class="chip" data-val="International">International</div>
-          <div class="chip" data-val="Cash">Cash</div>
+        <div class="field-label" id="toAccountLabel">To account</div>
+        <div class="chip-group vertical" id="toChips" role="group" aria-labelledby="toAccountLabel">
+          <button type="button" class="chip" data-val="Domestic" aria-pressed="false">Domestic</button>
+          <button type="button" class="chip" data-val="International" aria-pressed="false">International</button>
+          <button type="button" class="chip" data-val="Cash" aria-pressed="false">Cash</button>
         </div>
       </div>
     </div>
-
+ 
     <div class="field">
-      <label>Transaction ID</label>
-      <div class="id-row">
-        <div class="segmented" id="idSegment">
-          <button type="button" data-kind="Y" id="btnY">Y</button>
-          <button type="button" data-kind="N" id="btnN">N</button>
+      <div class="field-label" id="idLabel">Transaction ID</div>
+      <div class="id-row" role="group" aria-labelledby="idLabel" aria-describedby="idHint">
+        <div class="segmented" id="idSegment" role="group" aria-label="ID type">
+          <button type="button" data-kind="Y" id="btnY" aria-pressed="false">Y</button>
+          <button type="button" data-kind="N" id="btnN" aria-pressed="true">N</button>
         </div>
-        <div class="id-box" id="idBoxDisplay">N9f8s3d</div>
-        <select class="id-box" id="idBoxSelect" style="display:none;"></select>
-        <div class="reuse-btn" id="regenBtn" title="Generate new ID">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="id-box" id="idBoxDisplay" role="status" aria-label="Transaction ID">N9f8s3d</div>
+        <select class="id-box" id="idBoxSelect" style="display:none;" aria-label="Transaction ID"></select>
+        <button type="button" class="reuse-btn" id="regenBtn" title="Generate new ID" aria-label="Generate a new ID">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
             <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
           </svg>
-        </div>
+        </button>
       </div>
       <div class="field-hint" id="idHint">N = one-way payment, auto-generates a new ID</div>
     </div>
-
+ 
     <div class="field">
       <label for="expenseName">Expense name</label>
-      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc" required>
+      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc">
     </div>
-
+ 
     <div class="field">
       <label for="moreInfo">More info <span style="font-weight:500;">(optional)</span></label>
       <input type="text" id="moreInfo" placeholder="Notes">
     </div>
-
+ 
     <div id="txnTypeSection">
       <!-- single mode (default) -->
       <div class="field" id="singleTypeField">
@@ -516,10 +742,10 @@
             <option>Received Transfer</option>
             <option value="Custom" style="font-style:italic;">Custom…</option>
           </select>
-          <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter Custom Transaction Type" autocomplete="off">
+          <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter Custom Transaction Type" autocomplete="off" aria-label="Custom transaction type">
         </div>
       </div>
-
+ 
       <!-- self-transfer mode: type splits into the two legs -->
       <div class="row-2" id="splitTypeFields" style="display:none;">
         <div class="field">
@@ -558,7 +784,7 @@
         </div>
       </div>
     </div>
-
+ 
     <div class="field">
       <label for="txnFreq">Frequency</label>
       <select id="txnFreq">
@@ -566,43 +792,104 @@
         <option selected>Monthly</option>
       </select>
     </div>
-
+ 
     <div class="amount-card">
-      <div class="amt-label"><span>Amount</span><span class="pill-inr">₹ INR</span></div>
+      <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">₹ INR</span></div>
       <div class="amt-display-wrap">
-        <span class="rupee" id="rupeeSymbol">₹</span>
-        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00" required>
+        <span class="rupee" id="rupeeSymbol" aria-hidden="true">₹</span>
+        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00">
       </div>
+      <div class="amt-note" id="amountNote" style="display:none;" role="status"></div>
       <div class="kind-toggle">
         <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
         <button type="button" class="kind-btn credit" id="creditBtn">Credit</button>
       </div>
     </div>
-
+ 
     <button type="submit" class="cta-save" id="saveBtn">
       <span class="cta-dot"></span>
       <span id="ctaMainText">Add Entry</span>
     </button>
     <div class="cta-caption" id="ctaCaption">Fill in the details above</div>
   </form>
-
-  <!-- STATS PLACEHOLDER -->
-  <div class="stats-placeholder" id="statsScreen" style="display:none;">
-    <div class="icon">📊</div>
-    <h2>Stats are coming soon</h2>
-    <p>This tab will show spending trends once entries start rolling in.</p>
+ 
+  <!-- STATS / HISTORY -->
+  <div class="stats-screen" id="statsScreen" style="display:none;">
+    <div class="sub-tabs" role="tablist" aria-label="History">
+      <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
+        <span>Recent</span><span id="recentCount"></span>
+      </button>
+      <button type="button" class="sub-tab" id="tabDues" data-sub="dues" role="tab" aria-selected="false">
+        <span>Owed to me</span><span class="badge" id="duesBadge" style="display:none;">0</span>
+      </button>
+    </div>
+    <div id="recentPane"></div>
+    <div id="duesPane" style="display:none;"></div>
   </div>
-
-  <!-- ACCOUNT PLACEHOLDER -->
-  <div class="stats-placeholder" id="accountScreen" style="display:none;">
-    <div class="icon">👤</div>
-    <h2>Account is coming soon</h2>
-    <p>Profile and account settings will live here.</p>
+ 
+  <!-- ACCOUNT / SYNC SCREEN -->
+  <div class="account-screen" id="accountScreen" style="display:none;">
+    <div class="field">
+      <div class="field-label" id="syncModeLabel">When to send entries to the sheet</div>
+      <div class="chip-group vertical" id="syncModeChips" role="group" aria-labelledby="syncModeLabel">
+        <button type="button" class="chip" data-val="smart" aria-pressed="false">Wait and send them together</button>
+        <button type="button" class="chip" data-val="instant" aria-pressed="false">As soon as I add them</button>
+        <button type="button" class="chip" data-val="manual" aria-pressed="false">Only when I tap send</button>
+      </div>
+      <div class="field-hint" id="syncModeHint">Every entry is kept on this device first, so nothing is lost while it waits.</div>
+    </div>
+ 
+    <div class="switch-row" style="align-items:flex-start;">
+      <div class="label-block">
+        <div class="title">Waiting to be sent</div>
+        <div class="desc" id="queueSummary">Nothing waiting</div>
+      </div>
+    </div>
+ 
+    <button type="button" class="btn btn-save" id="sendAllBtn">Send everything now</button>
+ 
+    <div class="switch-row">
+      <div class="label-block">
+        <div class="title" id="confirmTitle">Wait for the sheet to confirm</div>
+        <div class="desc">Only clear an entry once Excel says it has the row. Needs the Make scenario to reply <b>LEDGER_OK</b> — leave this off until it does, or nothing will ever send.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="confirmToggle" aria-labelledby="confirmTitle">
+        <span class="slider"></span>
+      </label>
+    </div>
+ 
+    <div class="field">
+      <div class="field-label">Backup</div>
+      <div class="field-hint" id="backupStatus">—</div>
+      <button type="button" class="btn btn-save" id="exportBtn">Save a backup file</button>
+      <button type="button" class="btn btn-outline" id="importBtn">Restore from a file</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none;" aria-label="Choose a backup file">
+      <div class="field-hint">Restoring adds anything missing. It never deletes what is already on this device.</div>
+    </div>
+ 
+    <div class="field" id="lastSendField" style="display:none;">
+      <div class="field-label">Last send</div>
+      <div class="field-hint" id="lastSendSummary">—</div>
+      <button type="button" class="btn btn-outline" id="requeueBtn">Put them back in the queue</button>
+      <div class="field-hint">Only if they never reached the sheet. Check Excel first — putting back a batch that did land will write it twice.</div>
+    </div>
+ 
+    <div class="field">
+      <div class="field-label">Open IDs</div>
+      <div class="field-hint">The app tracks these itself. Read the sheet again if you have edited it in Excel directly.</div>
+      <button type="button" class="btn btn-outline" id="refreshBtn">Read the sheet again</button>
+    </div>
+ 
+    <div class="field">
+      <div class="field-label">This month</div>
+      <div class="field-hint" id="monthSummary">—</div>
+    </div>
   </div>
 </div>
-
+ 
 <div class="toast" id="toast"></div>
-
+ 
 <script>
   // ---------- STATE ----------
   const state = {
@@ -613,22 +900,106 @@
     debit: true,
     credit: false,
     openYIds: [],
-    selectedDateISO: null
+    selectedDateISO: null,
+    queue: [],
+    syncMode: 'smart',
+    syncing: false,
+    confirmAmount: null,
+    history: [],
+    subTab: 'recent',
+    historyShown: 40,
+    requireConfirm: false
   };
-
+ 
   const $ = (id) => document.getElementById(id);
-
-  // ---------- WEBHOOK URLS (hardcoded, no user-facing settings) ----------
-  const ADD_ENTRY_URL = 'https://hook.us2.make.com/pmrsweyiswbqrox3sj5ibmkj83bhuhz9';
-  const LIST_ROWS_URL = 'https://hook.us2.make.com/unqqsltxzci7itcfdlln241cdgsu9go8';
-
+ 
+  // ---------- LEDGER ENDPOINT ----------
+  // One webhook now serves both jobs. The Make scenario reads MODE and builds
+  // its Graph URL and method from it — MODE=add appends rows, MODE=read
+  // returns the whole table range. Two jobs, one scenario, one billed module
+  // per request instead of two separate scenarios each burning their own
+  // trigger. The reply module carries a filter so it only runs on reads,
+  // which is why a write costs 2 operations and a read costs 3.
+  const LEDGER_URL = 'https://hook.us2.make.com/pmrsweyiswbqrox3sj5ibmkj83bhuhz9';
+ 
+  // The order of values inside each row array, matching the Excel Table's
+  // structured columns left to right (B through K). Getting this wrong writes
+  // every field one column off with no error from Graph, so it is defined
+  // once here and never rebuilt inline.
+  const COLUMN_ORDER = ['DATE','ID','ACCOUNT','EXPENSE','INFO','TYPE','KIND','DEBIT','CREDIT','FORMULA'];
+  const ROW_FORMULA = '=[@[CREDIT AMOUNT]]-[@[DEBIT AMOUNT]]';
+ 
+  // Storage keys. Everything the app needs to survive a reload lives under
+  // these — the unsent queue, the locally-tracked open Y-IDs, and the
+  // sync preference.
+  // ---------- BATCHING ----------
+  // Entries are not sent on a count. They are sent once you stop adding, so a
+  // run of ten goes across in one call rather than being chopped into threes.
+  //
+  // The budget makes this a comfort choice rather than a necessity: a write
+  // costs 2 operations whatever the batch size, and 400 entries a month plus
+  // 30 nightly sorts and a handful of reads leaves room for 477 calls — so
+  // even one entry per call fits. That means nothing has to sit around
+  // waiting for company longer than it is worth.
+  const BATCH_FULL  = 3;                 // enough to be worth sending alone
+  const SETTLE_MS   = 90 * 1000;         // quiet time before a full batch goes
+  const MAX_WAIT_MS = 60 * 60 * 1000;    // nothing waits longer than this
+ 
+  const LS_QUEUE = 'ledger.queue.v1';
+  const LS_YIDS  = 'ledger.openYIds.v1';
+  const LS_MODE  = 'ledger.syncMode.v1';
+  // A batch is dropped from the queue the moment Make answers OK, but an OK
+  // only means Make received it — not that the row reached Excel. If the
+  // scenario is off, out of operations, or misconfigured, the reply can still
+  // be a 200 and the entry would be gone from the only place it existed.
+  // Every sent batch is kept here for a week so it can be put back.
+  const LS_SENT  = 'ledger.sent.v1';
+  // Every entry ever added on this device, oldest first. The queue only holds
+  // what has not gone across yet, so it cannot answer "what did I spend on
+  // Tuesday" — this can, with no Make operations and no connection.
+  const LS_HIST  = 'ledger.history.v1';
+  // Months pulled back from the sheet, so older history can be read in the app
+  // without paying for it again. { "AUG26": { at, rows } }
+  const LS_SHEET = 'ledger.sheetCache.v1';
+  const SHEET_CACHE_MONTHS = 12;
+  const LS_BACKUP = 'ledger.lastBackup.v1';
+  const LS_SNOOZE = 'ledger.backupSnooze.v1';
+  const BACKUP_HOUR = 22;   // the nightly nudge
+  const LS_MONTHACK = 'ledger.monthAck.v1';
+  // The string the Make scenario must reply with for a write to count as
+  // landed. Make's default reply is "Accepted", which only means Make got the
+  // request — not that Graph wrote the row.
+  const LS_CONFIRM = 'ledger.requireConfirm.v1';
+  const CONFIRM_TOKEN = 'LEDGER_OK';
+  const HIST_MAX = 2000;
+  const SENT_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
+  const SENT_KEEP_MAX = 400;
+ 
+  // Private browsing and some embedded webviews throw on localStorage access
+  // rather than simply returning null, so every read and write goes through
+  // these. If storage is unavailable the app still works for the session —
+  // it just loses the queue when the tab closes.
+  const memoryStore = {};
+  function lsGet(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw === null ? fallback : JSON.parse(raw);
+    }catch(e){
+      return key in memoryStore ? memoryStore[key] : fallback;
+    }
+  }
+  function lsSet(key, value){
+    memoryStore[key] = value;
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+ 
   // ---------- HEADER DATE (static, real today's date — not tied to the form) ----------
   function initHeaderDate(){
     const now = new Date();
     $('dateSub').textContent = now.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
   }
   initHeaderDate();
-
+ 
   // ---------- FORM DATE ----------
   function isoToday(offsetDays=0){
     const d = new Date();
@@ -666,172 +1037,222 @@
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
   }
-  function parseTypedDate(str){
-    let s = str.trim();
-    // "26" as a full year is shorthand for "2026" — expand before validating.
-    const shortYear = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
-    if(shortYear) s = `${shortYear[1]}/${shortYear[2]}/20${shortYear[3]}`;
-
-    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if(!m) return null;
-    const d = parseInt(m[1],10), mo = parseInt(m[2],10), y = parseInt(m[3],10);
-    if(mo<1||mo>12||d<1||d>31) return null;
-    const iso = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dt = new Date(iso+'T00:00:00');
-    if(dt.getFullYear()!==y || dt.getMonth()+1!==mo || dt.getDate()!==d) return null;
-    return iso;
+  // ---------- DATE PARSING ----------
+  // The field takes day, a separator, then month. The year is worked out
+  // rather than typed, because in an expense tracker it is never genuinely
+  // ambiguous: a day+month pair either already happened this year, or it
+  // happened last year. Those are the only two candidates, so "5.9" on 12
+  // Sep 2026 is 5 Sep 2026, and "25.12" typed on 2 Jan 2027 is 25 Dec 2026.
+  //
+  // The separator is required and carries real meaning. Without it "212"
+  // could be 21 Feb or 2 Dec and no amount of ranking can know which was
+  // meant — so rather than guess, the field asks for the one keystroke that
+  // removes the guess entirely. Dot, space, slash and hyphen are all
+  // accepted, because which of those is reachable depends on whichever
+  // keyboard the phone happens to offer.
+  //
+  // Nothing here rewrites what was typed. An impossible value is reported,
+  // not silently clamped into a different date.
+  const SEPARATORS = /[.\-\/\s]+/;
+ 
+  // A two-digit year means the most recent year ending in those digits, so
+  // "26" reads as 2026 rather than 1926 — and stays correct without a
+  // hardcoded century window.
+  function expandYear(raw){
+    if(raw.length === 4) return parseInt(raw, 10);
+    if(raw.length > 2) return null;
+    const n = parseInt(raw, 10);
+    const now = new Date().getFullYear();
+    const century = Math.floor(now / 100) * 100;
+    const candidate = century + n;
+    return candidate > now ? candidate - 100 : candidate;
   }
-
-  // set placeholder to today's actual date as a live format example
-  $('dateTextInput').placeholder = `e.g. ${formatDateForExcel(isoToday(0))}`;
-
-  // Splits a raw digit string into day/month/year, advancing to the next
-  // segment the moment the current one can no longer become a double-digit
-  // value — a day can only start with 0/1/2/3 (nothing starting 4-9 can be
-  // a valid day up to 31), so typing "5" alone is unambiguously day 05 and
-  // the next digit belongs to month. Same idea for month: only a leading
-  // "0" or "1" leaves room for a second digit (months 01-12); anything else
-  // completes immediately as a single-digit month.
-  function splitDateDigits(rawDigits){
-    let i = 0;
-    let day = '', dayPartial = false;
-    if(i < rawDigits.length){
-      const d1 = rawDigits[i];
-      if('456789'.includes(d1)){
-        day = '0' + d1; i += 1;
-      } else if(i + 1 < rawDigits.length){
-        const dayNum = parseInt(d1 + rawDigits[i+1], 10);
-        day = dayNum === 0 ? '01' : dayNum > 31 ? '31' : d1 + rawDigits[i+1];
-        i += 2;
-      } else {
-        day = d1; dayPartial = true; i += 1;
-      }
-    }
-
-    let month = '', monthPartial = false;
-    if(!dayPartial && day.length === 2 && i < rawDigits.length){
-      const m1 = rawDigits[i];
-      if('23456789'.includes(m1)){
-        month = '0' + m1; i += 1;
-      } else if(i + 1 < rawDigits.length){
-        const monthNum = parseInt(m1 + rawDigits[i+1], 10);
-        month = monthNum === 0 ? '01' : monthNum > 12 ? '12' : m1 + rawDigits[i+1];
-        i += 2;
-      } else {
-        month = m1; monthPartial = true; i += 1;
-      }
-    }
-
-    let year = '';
-    if(!monthPartial && month.length === 2 && i < rawDigits.length){
-      year = rawDigits.slice(i, i + 4);
-    }
-
-    return { day, month, year };
+ 
+  function isRealDate(y, mo, d){
+    const dt = new Date(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}T00:00:00`);
+    return dt.getFullYear() === y && dt.getMonth() + 1 === mo && dt.getDate() === d;
   }
-
-  // Mask input as the person types: strip anything that isn't a digit and
-  // auto-insert slashes using splitDateDigits above — this is what blocks
-  // "kkndnfk" and clamps impossible values like "99/99/9999" before they
-  // can ever be typed. The "/" is never protected as a special character —
-  // it's just drawn from however many digits currently exist. The cursor
-  // always lands at the end of the rebuilt value — no attempt to preserve
-  // a mid-string position, which is what caused it to jump around before.
-  // Full calendar correctness (e.g. 30 Feb, which needs the finished year
-  // to check leap years) and the future-date check both happen at blur.
-  function renderDateDigits(rawDigits){
-    const { day, month, year } = splitDateDigits(rawDigits);
-    let formatted = day;
-    if(day.length === 2){
-      formatted += '/' + month;
-      if(month.length === 2) formatted += '/' + year;
-    }
-    return formatted;
+  function toIso(y, mo, d){
+    return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
-
+ 
+  // Returns { iso, inferredYear, ... } on success, or { error } with a
+  // message that says what is actually wrong.
+  function parseDateInput(str){
+    const s = (str || '').trim();
+    if(!s) return { empty:true };
+ 
+    const parts = s.split(SEPARATORS).filter(p => p !== '');
+    if(parts.some(p => !/^\d+$/.test(p))) return { error:'Numbers only' };
+    if(parts.length === 1) return { error:'Add the month too — like 5.9' };
+    if(parts.length > 3) return { error:'Too many parts' };
+ 
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    if(parts[0].length > 2 || parts[1].length > 2) return { error:'Day and month are 1 or 2 digits' };
+    if(month < 1 || month > 12) return { error:`There is no month ${month}` };
+    if(day < 1 || day > 31) return { error:`There is no day ${day}` };
+ 
+    const today = isoToday(0);
+ 
+    // An explicit year is taken as given — no inference, no adjustment.
+    if(parts.length === 3){
+      const year = expandYear(parts[2]);
+      if(year === null) return { error:'Year should be 2 or 4 digits' };
+      if(!isRealDate(year, month, day)) return { error:noSuchDateMessage(year, month, day) };
+      const iso = toIso(year, month, day);
+      if(iso > today) return { error:'That date is still in the future' };
+      return { iso, inferredYear:false };
+    }
+ 
+    // No year typed: this year if it has already happened, otherwise last
+    // year. The loop exists only for 29 February, where the two nearest
+    // candidates can both be non-leap years and the real one is further back.
+    const thisYear = new Date().getFullYear();
+    for(let y = thisYear; y >= thisYear - 8; y--){
+      if(!isRealDate(y, month, day)) continue;
+      const iso = toIso(y, month, day);
+      if(iso <= today) return { iso, inferredYear: y !== thisYear };
+    }
+    return { error: noSuchDateMessage(thisYear, month, day) };
+  }
+ 
+  function noSuchDateMessage(y, mo, d){
+    const monthName = new Date(`${y}-${String(mo).padStart(2,'0')}-01T00:00:00`)
+      .toLocaleDateString('en-GB', { month:'long' });
+    return `There is no ${d} ${monthName}`;
+  }
+ 
+  // How far back a date sits, for deciding whether it deserves a second look.
+  function daysAgo(iso){
+    const a = new Date(iso + 'T00:00:00');
+    const b = new Date(isoToday(0) + 'T00:00:00');
+    return Math.round((b - a) / 86400000);
+  }
+  function formatFullDate(iso){
+    return new Date(iso + 'T00:00:00')
+      .toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  }
+ 
+  $('dateTextInput').placeholder = 'e.g. 5.9 or 5 9';
+ 
+  // ---------- DATE FIELD ----------
+  // The field accepts digits and separators and otherwise leaves the text
+  // alone: no mask, no auto-inserted characters, no cursor repositioning.
+  // That is what lets select-all-and-delete, mid-string editing and the
+  // caret all behave the way they do in any other text field. Everything
+  // the old mask was protecting against is caught by parseDateInput and
+  // reported in the hint line instead.
+  const dateHint = $('dateHint');
+ 
+  function renderDateHint(){
+    const res = parseDateInput($('dateTextInput').value);
+    dateHint.classList.remove('is-warn', 'is-error');
+ 
+    if(res.empty){
+      dateHint.textContent = 'Day and month, separated — the year is worked out';
+      return;
+    }
+    if(res.error){
+      dateHint.textContent = res.error;
+      dateHint.classList.add('is-error');
+      return;
+    }
+ 
+    const back = daysAgo(res.iso);
+    // Two cases deserve attention rather than quiet acceptance: a date that
+    // resolved into last year, and one that is months old. Both are legitimate
+    // — backdating is the whole point of the field — but both are also what a
+    // mistyped month looks like, so the year is spelled out and marked.
+    if(res.inferredYear){
+      dateHint.textContent = `${formatFullDate(res.iso)} — last year`;
+      dateHint.classList.add('is-warn');
+    } else if(back > 90){
+      dateHint.textContent = `${formatFullDate(res.iso)} — ${back} days ago`;
+      dateHint.classList.add('is-warn');
+    } else {
+      dateHint.textContent = formatFullDate(res.iso);
+    }
+  }
+ 
   $('dateTextInput').addEventListener('input', (e) => {
-    const rawDigits = e.target.value.replace(/\D/g, '').slice(0, 8);
-    const formatted = renderDateDigits(rawDigits);
-    e.target.value = formatted;
-    e.target.setSelectionRange(formatted.length, formatted.length);
-    // Once they're editing by hand, the value no longer necessarily matches
-    // whichever quick-pick was last tapped, so drop that highlight.
+    const cleaned = e.target.value.replace(/[^\d.\-\/\s]/g, '');
+    if(cleaned !== e.target.value){
+      // Only rewrite when something illegal was actually typed, and put the
+      // caret back where it was rather than throwing it to the end.
+      const pos = e.target.selectionStart - (e.target.value.length - cleaned.length);
+      e.target.value = cleaned;
+      e.target.setSelectionRange(pos, pos);
+    }
     document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
+    renderDateHint();
+    // Resolve as they type so the CTA caption and the month the entry will
+    // land in are live, not held back until the field loses focus.
+    const res = parseDateInput(e.target.value);
+    state.selectedDateISO = res.iso || null;
+    updateCTA();
   });
-
-  // Backspace/Delete just remove the literal last character of what's
-  // displayed — a digit or a slash, whichever is actually last — with no
-  // re-derivation through the mask. This guarantees exactly one visible
-  // character disappears per press. (Re-running the smart day/month mask
-  // on delete was the earlier bug: shrinking a completed 2-digit segment
-  // back to partial also drops its trailing slash, so one press could
-  // remove two visible characters at once — e.g. "05/09/" jumping straight
-  // to "05/0".) Typing forward afterwards still goes through the normal
-  // mask via the 'input' handler above, which correctly re-derives the
-  // right segments regardless of the string's current in-between shape.
-  $('dateTextInput').addEventListener('keydown', (e) => {
-    if(e.key !== 'Backspace' && e.key !== 'Delete') return;
-    e.preventDefault();
-    const trimmed = e.target.value.slice(0, -1);
-    e.target.value = trimmed;
-    e.target.setSelectionRange(trimmed.length, trimmed.length);
-    document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
-  });
-
+ 
   function setDate(iso, mode){
     state.selectedDateISO = iso;
     $('dateTextInput').value = formatDateForExcel(iso);
     document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
     if(mode === 'today') $('todayBtn').classList.add('active');
     if(mode === 'yesterday') $('yesterdayBtn').classList.add('active');
+    renderDateHint();
     updateCTA();
   }
   $('todayBtn').addEventListener('click', () => setDate(isoToday(0), 'today'));
   $('yesterdayBtn').addEventListener('click', () => setDate(isoToday(-1), 'yesterday'));
+ 
+  // On leaving the field a resolved date is written back in full, so the
+  // year it settled on is visible in the field itself and not only in the
+  // hint. Unparseable text is left exactly as typed — clearing it would
+  // throw away what someone was halfway through correcting.
   $('dateTextInput').addEventListener('blur', (e) => {
-    const val = e.target.value.trim();
-    if(!val) return;
-    const iso = parseTypedDate(val);
-    if(!iso){ showToast('Use DD/MM/YYYY format'); return; }
-    if(iso > isoToday(0)){
-      showToast('Date can\u2019t be in the future');
-      e.target.value = state.selectedDateISO ? formatDateForExcel(state.selectedDateISO) : '';
-      return;
+    const res = parseDateInput(e.target.value);
+    if(res.iso){
+      e.target.value = formatDateForExcel(res.iso);
+      state.selectedDateISO = res.iso;
+    } else {
+      state.selectedDateISO = null;
     }
-    setDate(iso, 'typed');
+    renderDateHint();
+    updateCTA();
   });
-
+ 
   // ---------- SELF TRANSFER TOGGLE ----------
   const selfTransferToggle = $('selfTransferToggle');
   selfTransferToggle.addEventListener('change', () => {
     state.isSelfTransfer = selfTransferToggle.checked;
     applySelfTransferMode();
   });
-
+ 
   function applySelfTransferMode(){
     const on = state.isSelfTransfer;
     $('toAccountField').style.display = on ? 'flex' : 'none';
-
+ 
     $('singleTypeField').style.display = on ? 'none' : 'flex';
     if(on) exitTxnTypeCustomMode();
     $('splitTypeFields').style.display = on ? 'grid' : 'none';
-
+ 
     if(on){
       $('idSegment').style.pointerEvents = 'none';
       $('idSegment').style.opacity = '0.6';
+      $('btnY').disabled = true; $('btnN').disabled = true;
       setIdKind('Y');
-
+ 
       $('expenseName').value = 'Self Transfer';
       $('txnFreq').value = 'Monthly';
       $('txnTypeFrom').value = 'Sent Transfer';
       $('txnTypeTo').value = 'Received Transfer';
       updateSplitCustomVisibility();
-
+ 
       state.debit = true; state.credit = true;
       renderKindButtons(true);
       $('debitBtn').classList.add('locked');
       $('creditBtn').classList.add('locked');
-
+ 
       // Account may have been changed while in single-account mode, and
       // could now coincide with To account's untouched default — resolve
       // that before it ever becomes a visible conflict.
@@ -839,11 +1260,12 @@
         const options = ['Domestic', 'International', 'Cash'];
         const alt = options.find(o => o !== state.account) || options[0];
         state.toAccount = alt;
-        document.querySelectorAll('#toChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.val === alt));
+        selectChip('toChips', alt);
       }
     } else {
       $('idSegment').style.pointerEvents = 'auto';
       $('idSegment').style.opacity = '1';
+      $('btnY').disabled = false; $('btnN').disabled = false;
       $('debitBtn').classList.remove('locked');
       $('creditBtn').classList.remove('locked');
       state.credit = false; state.debit = true;
@@ -855,7 +1277,7 @@
     }
     updateCTA();
   }
-
+ 
   // ---------- ACCOUNT CHIPS (single + from/to) ----------
   // Every chip is always clickable — nothing is ever disabled. If picking a
   // value would make From and To the same account, the *other* side swaps
@@ -866,20 +1288,26 @@
   // in one tap.
   function selectChip(groupId, value){
     document.querySelectorAll(`#${groupId} .chip`).forEach(c => {
-      c.classList.toggle('selected', c.dataset.val === value);
+      const on = c.dataset.val === value;
+      c.classList.toggle('selected', on);
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
   }
-
+ 
   function wireChipGroup(groupId, onSelect, defaultIndex=0){
     const chips = document.querySelectorAll(`#${groupId} .chip`);
     chips.forEach((chip, i) => {
       chip.addEventListener('click', () => {
-        chips.forEach(c => c.classList.remove('selected'));
+        chips.forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
         chip.classList.add('selected');
+        chip.setAttribute('aria-pressed','true');
         onSelect(chip.dataset.val);
         updateCTA();
       });
-      if(i === defaultIndex) chip.classList.add('selected');
+      if(i === defaultIndex){
+        chip.classList.add('selected');
+        chip.setAttribute('aria-pressed','true');
+      }
     });
   }
   wireChipGroup('accountChips', (v) => {
@@ -898,17 +1326,19 @@
     }
     state.toAccount = v;
   }, 1);
-
+ 
   // ---------- ID Y/N SEGMENTED CONTROL ----------
   function setIdKind(kind){
     state.kind = kind;
     $('btnY').classList.toggle('active-seg', kind === 'Y');
     $('btnN').classList.toggle('active-seg', kind === 'N');
-
+    $('btnY').setAttribute('aria-pressed', kind === 'Y' ? 'true' : 'false');
+    $('btnN').setAttribute('aria-pressed', kind === 'N' ? 'true' : 'false');
+ 
     const interactiveY = (kind === 'Y' && !state.isSelfTransfer);
     $('idBoxDisplay').style.display = interactiveY ? 'none' : 'block';
     $('idBoxSelect').style.display = interactiveY ? 'block' : 'none';
-
+ 
     if(kind === 'N'){
       $('idHint').textContent = 'N = one-way payment, auto-generates a new ID';
     } else {
@@ -920,7 +1350,7 @@
   $('btnY').addEventListener('click', () => setIdKind('Y'));
   $('btnN').addEventListener('click', () => setIdKind('N'));
   $('regenBtn').addEventListener('click', () => regenerateId());
-
+ 
   function regenerateId(){
     const newId = generateId(state.kind);
     const interactiveY = (state.kind === 'Y' && !state.isSelfTransfer);
@@ -932,7 +1362,7 @@
       const optNew = document.createElement('option');
       optNew.value = newId; optNew.textContent = newId;
       sel.appendChild(optNew);
-      state.openYIds.forEach(id => {
+      computeOpenYIds().forEach(id => {
         const opt = document.createElement('option');
         opt.value = id; opt.textContent = id;
         sel.appendChild(opt);
@@ -940,7 +1370,7 @@
       sel.value = newId;
     }
   }
-
+ 
   // ---------- ID GENERATION ----------
   function randomSuffix(len=6){
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -951,37 +1381,122 @@
   function generateId(kind){
     return kind === 'Y' ? `Y${randomSuffix()}` : `N${randomSuffix()}`;
   }
-
-  // ---------- OPEN Y-IDS (via List Rows webhook) ----------
-  async function refreshOpenYIds(){
-    state.openYIds = [];
-    try{
-      // Always reflects the current calendar month, not whatever date is
-      // selected in the form.
-      const { sheet, table } = monthNamesFor(isoToday(0));
-      const url = `${LIST_ROWS_URL}?sheet=${encodeURIComponent(sheet)}&table=${encodeURIComponent(table)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const rows = data.value || data || [];
-      const counts = {};
-      rows.forEach(r => {
-        const id = r.ID || r.id;
-        if(id && id.startsWith('Y')) counts[id] = (counts[id]||0) + 1;
-      });
-      state.openYIds = Object.keys(counts).filter(id => counts[id] === 1);
-      if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
-      return true;
-    }catch(e){
-      console.warn('Could not load open Y-IDs', e);
+ 
+  // ---------- OPEN Y-IDS ----------
+  // A Y-ID is "open" while it appears exactly once in the sheet: the outgoing
+  // leg is recorded and the returning leg isn't yet. The app used to work
+  // this out by reading the whole table before every single submit, which
+  // meant two round trips per entry. It doesn't need to — the app knows every
+  // Y-ID it writes, so the same list is maintained locally: a new Y-ID opens,
+  // and writing the same Y-ID a second time closes it. Reading the sheet is
+  // now only for reconciling against edits made directly in Excel, which is
+  // a deliberate action rather than something that happens on every save.
+  function loadOpenYIds(){
+    const ids = lsGet(LS_YIDS, []);
+    state.openYIds = Array.isArray(ids) ? ids : [];
+  }
+  // A Y-ID is open while it appears an odd number of times: the outgoing leg
+  // is written and the returning one is not. Counted across everything this
+  // device knows — its own history plus every month pulled back from the
+  // sheet — so an ID opened in July is still visible in September.
+  //
+  // Where rows exist for an ID, they decide. The locally-tracked list only
+  // fills in IDs that predate this device having a row for them at all.
+  function computeOpenYIds(){
+    const counts = {};
+    allRows().forEach(r => {
+      const id = r.id;
+      if(typeof id === 'string' && id.startsWith('Y')) counts[id] = (counts[id] || 0) + 1;
+    });
+    const open = Object.keys(counts).filter(id => counts[id] % 2 === 1);
+    state.openYIds.forEach(id => { if(!(id in counts)) open.push(id); });
+    return open;
+  }
+ 
+  function applyYId(id){
+    if(!id || !id.startsWith('Y')) return;
+    const i = state.openYIds.indexOf(id);
+    if(i === -1) state.openYIds.push(id);
+    else state.openYIds.splice(i, 1);
+    lsSet(LS_YIDS, state.openYIds);
+  }
+ 
+  // Reads the current month's table back from the sheet and rebuilds the open
+  // Y-ID list from what's actually there. Costs 3 operations, so it's on a
+  // button rather than on every save.
+  // Re-reads the current month and folds it back in. It deliberately does not
+  // rebuild the open list from that one month — doing so used to erase every
+  // ID opened in any other month.
+  async function refreshOpenYIds({ silent = false } = {}){
+    const { sheet, table } = monthNamesFor(isoToday(0));
+    const r = await importMonth(sheet, table);
+    if(!r.ok){
+      if(!silent) showToast(r.why, 3400);
       return false;
     }
+    // Anything still queued has not reached the sheet, so the snapshot cannot
+    // know about it — allRows() keeps those local rows, which is what makes
+    // the count come out right.
+    const open = computeOpenYIds();
+    state.openYIds = open;
+    lsSet(LS_YIDS, open);
+    if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
+    if(!silent) showToast(`Read ${sheet} · ${open.length === 1 ? '1 open ID' : open.length + ' open IDs'}`);
+    return true;
   }
-  refreshOpenYIds();
-
-
+ 
+ 
   // ---------- AMOUNT INPUT (masked, comma-formatted, 2-decimal cap) ----------
+  // Two guards against a stray zero, which is the one typo this form cannot
+  // otherwise notice: ₹50,000 and ₹5,000 look equally plausible on the page.
+  // Nothing past 7 integer digits can be typed at all, and anything from a
+  // lakh up has to be confirmed with a second tap before it is queued.
+  const AMOUNT_MAX_INT_DIGITS = 7;                              // ₹99,99,999
+  const AMOUNT_MAX = Math.pow(10, AMOUNT_MAX_INT_DIGITS) - 1;
+  const AMOUNT_CONFIRM_FROM = 100000;                           // ₹1,00,000
+ 
   const amountInput = $('amountInput');
-
+ 
+  // Reads a large amount back in the unit it is most likely to be misread in.
+  // "5,00,000" and "50,000" differ by one glyph; "5 lakh" and "50 thousand"
+  // do not. Empty below the threshold, where there is nothing to catch.
+  function largeAmountLabel(n){
+    if(!n || n < AMOUNT_CONFIRM_FROM) return '';
+    return (Math.floor(n / 1000) / 100).toFixed(2).replace(/\.?0+$/, '') + ' lakh';
+  }
+  function renderAmountNote(n){
+    const note = $('amountNote');
+    if(!note) return;
+    const label = largeAmountLabel(n);
+    note.textContent = label;
+    note.style.display = label ? 'block' : 'none';
+  }
+ 
+  // The single definition of what this field will hold: digits, at most one
+  // dot, at most 2 decimals, at most AMOUNT_MAX_INT_DIGITS before the dot, no
+  // redundant leading zeros. Typing and deleting both run through this, so
+  // neither can produce a string the other would reject.
+  function cleanAmountString(raw){
+    let cleaned = '';
+    let dotSeen = false;
+    for(const ch of raw){
+      if(ch >= '0' && ch <= '9') cleaned += ch;
+      else if(ch === '.' && !dotSeen){ cleaned += ch; dotSeen = true; }
+    }
+    let [intPart, decPart] = cleaned.split('.');
+    // "0" + "5" reads as "5", but a lone "0" before a dot stays ("0.5").
+    intPart = intPart.replace(/^0+(?=\d)/, '');
+    const overflowed = intPart.length > AMOUNT_MAX_INT_DIGITS;
+    if(overflowed) intPart = intPart.slice(0, AMOUNT_MAX_INT_DIGITS);
+    // Once 2 decimals exist a 3rd is refused outright, not accepted and
+    // rounded off later.
+    if(decPart !== undefined) decPart = decPart.slice(0, 2);
+    return {
+      clean: decPart !== undefined ? intPart + '.' + decPart : intPart,
+      overflowed
+    };
+  }
+ 
   // Formats a clean "digits[.digits]" string with Indian comma grouping on
   // the integer part, preserving the decimal part exactly as-is (including
   // an in-progress trailing dot or a single lone decimal digit).
@@ -990,7 +1505,7 @@
     const groupedInt = intPart === '' ? '' : Number(intPart).toLocaleString('en-IN');
     return clean.includes('.') ? groupedInt + '.' + (decPart || '') : groupedInt;
   }
-
+ 
   // Reads the numeric value for calculations — strips the display commas
   // this field adds, which a plain parseFloat would otherwise choke on
   // (parseFloat("5,000.00") stops at the comma and silently returns 5).
@@ -998,7 +1513,7 @@
     const num = parseFloat(amountInput.value.replace(/,/g, ''));
     return isNaN(num) ? 0 : num;
   }
-
+ 
   // A plain text input defaults to a fairly wide box. Sizing it in
   // character units (the "size" attribute) is imprecise for a bold,
   // proportionally-spaced font — it tends to leave a sliver of invisible
@@ -1015,49 +1530,87 @@
     const width = amountMeasureCanvas.measureText(text).width;
     amountInput.style.width = Math.ceil(width) + 3 + 'px'; // +3px for the caret
   }
-
-  amountInput.addEventListener('input', (e) => {
-    // Keep only digits and a single "." — everything else (letters, a
-    // second dot, minus signs) is simply dropped rather than typeable.
-    let cleaned = '';
-    let dotSeen = false;
-    for(const ch of e.target.value){
-      if(ch >= '0' && ch <= '9') cleaned += ch;
-      else if(ch === '.' && !dotSeen){ cleaned += ch; dotSeen = true; }
+ 
+  // The commas this field inserts mean a position in the visible text is not
+  // a position in the number. Everything that edits the value works in
+  // "clean" coordinates — digits and the dot only — and converts back once,
+  // at the end. That is what lets the caret stay where it was put instead of
+  // being thrown to the end on every keystroke.
+  function toCleanPos(display, pos){
+    let n = 0;
+    for(let i = 0; i < pos; i++) if(display[i] !== ',') n++;
+    return n;
+  }
+  function toDisplayPos(display, cleanPos){
+    let n = 0;
+    for(let i = 0; i < display.length; i++){
+      if(n === cleanPos) return i;
+      if(display[i] !== ',') n++;
     }
-    // Hard cap: once 2 digits exist after the dot, a 3rd is simply refused
-    // rather than accepted and truncated later.
-    if(dotSeen){
-      const [intPart, decPart = ''] = cleaned.split('.');
-      cleaned = intPart + '.' + decPart.slice(0, 2);
-    }
-    // Drop leading zeros on the integer part (e.g. "0" + "5" -> "05" should
-    // read as "5"), but leave a lone "0" before a dot alone (e.g. "0.5").
-    let [intPart, decPart] = cleaned.split('.');
-    intPart = intPart.replace(/^0+(?=\d)/, '');
-    cleaned = decPart !== undefined ? intPart + '.' + decPart : intPart;
-
-    const formatted = formatAmountString(cleaned);
-    e.target.value = formatted;
-    e.target.setSelectionRange(formatted.length, formatted.length);
+    return display.length;
+  }
+ 
+  // Writes a clean string back to the field, re-grouped, with the caret put
+  // at the given clean position rather than at the end.
+  function setAmountValue(clean, cleanCaret){
+    const formatted = formatAmountString(clean);
+    amountInput.value = formatted;
+    const pos = toDisplayPos(formatted, Math.max(0, Math.min(cleanCaret, clean.length)));
+    amountInput.setSelectionRange(pos, pos);
     updateAmountWidth();
     updateCTA();
+  }
+ 
+  amountInput.addEventListener('input', (e) => {
+    // Editing the amount invalidates any pending large-amount confirmation —
+    // the number that was confirmed is no longer the number in the field.
+    state.confirmAmount = null;
+ 
+    const display = e.target.value;
+    const caret = e.target.selectionStart;
+    // Count the legal characters sitting before the caret. That count
+    // survives re-grouping, where the raw offset would not.
+    const cleanCaret = cleanAmountString(display.slice(0, caret)).clean.length;
+    const { clean, overflowed } = cleanAmountString(display);
+ 
+    setAmountValue(clean, cleanCaret);
+    if(overflowed) showToast(`Amounts stop at ₹${AMOUNT_MAX.toLocaleString('en-IN')}`);
   });
-
-  // Backspace/Delete: literal last-character removal, same fix as the date
-  // field — otherwise deleting a comma doesn't change the digit count, and
-  // the very next re-render draws the exact same comma right back, getting
-  // stuck instead of actually deleting anything.
+ 
+  // Backspace/Delete has to be intercepted here — unlike the date field, the
+  // handler cannot simply be deleted. Deleting a comma leaves the digit count
+  // unchanged, so the next re-render draws the same comma straight back and
+  // nothing ever gets removed. What it no longer does is assume the caret is
+  // at the end: the deletion is applied over the real selection, in clean
+  // coordinates, so select-all-and-delete clears the field and a caret in the
+  // middle of the number deletes the character next to it.
   amountInput.addEventListener('keydown', (e) => {
     if(e.key !== 'Backspace' && e.key !== 'Delete') return;
     e.preventDefault();
-    const trimmed = e.target.value.slice(0, -1);
-    e.target.value = trimmed;
-    e.target.setSelectionRange(trimmed.length, trimmed.length);
-    updateAmountWidth();
-    updateCTA();
+    state.confirmAmount = null;
+ 
+    const display = e.target.value;
+    const clean = display.replace(/,/g, '');
+    let from = toCleanPos(display, e.target.selectionStart);
+    let to   = toCleanPos(display, e.target.selectionEnd);
+ 
+    if(from === to){
+      // Nothing selected: take the character on the side the key points at.
+      // A comma is not a character here, so backspacing "over" one removes
+      // the digit beyond it — which is what it looks like it should do.
+      if(e.key === 'Backspace'){
+        if(from === 0) return;
+        from -= 1;
+      } else {
+        if(to === clean.length) return;
+        to += 1;
+      }
+    }
+ 
+    const next = cleanAmountString(clean.slice(0, from) + clean.slice(to)).clean;
+    setAmountValue(next, from);
   });
-
+ 
   // The native placeholder only disappears once real text exists — it
   // would otherwise sit there through the tap and up until the first
   // keystroke. Clearing the placeholder attribute itself on focus makes it
@@ -1070,7 +1623,7 @@
     e.target.placeholder = '';
     updateAmountWidth();
   });
-
+ 
   // On leaving the field, pad a lone decimal digit out to two — "57.1"
   // becomes "57.10" — and a bare integer or trailing dot gets a full
   // ".00", so whatever's left in the field is always a clean amount.
@@ -1091,10 +1644,12 @@
       val = val + '.00';
     }
     e.target.value = formatAmountString(val);
+    // Padding changes the string length — "57.1" becomes "57.10" — so the box
+    // has to be re-measured or it stays sized for the pre-padding text.
+    updateAmountWidth();
     updateCTA();
-
   });
-
+ 
   // ---------- DEBIT/CREDIT ----------
   function renderKindButtons(bothOn){
     $('debitBtn').classList.toggle('on', state.debit);
@@ -1113,12 +1668,12 @@
     updateCTA();
   });
   renderKindButtons(false);
-
+ 
   // ---------- TRANSACTION TYPE (single mode combo) ----------
   const txnTypeWrap = $('txnTypeWrap');
   const txnTypeSelect = $('txnType');
   const txnTypeCustomInput = $('txnTypeCustomInput');
-
+ 
   txnTypeSelect.addEventListener('change', (e) => {
     if(e.target.value === 'Custom'){
       txnTypeWrap.classList.add('custom-mode');
@@ -1131,7 +1686,7 @@
       exitTxnTypeCustomMode();
     }
   });
-
+ 
   // Back to a normal, full-width, fully visible <select> — identical in
   // every way to any other dropdown in the app.
   function exitTxnTypeCustomMode(){
@@ -1139,7 +1694,7 @@
     txnTypeCustomInput.style.display = 'none';
     txnTypeCustomInput.value = '';
   }
-
+ 
   // Same "placeholder vanishes the instant you tap in" treatment as the
   // amount field — clearing the attribute itself, not just its color.
   txnTypeCustomInput.addEventListener('focus', (e) => {
@@ -1149,7 +1704,7 @@
   txnTypeCustomInput.addEventListener('blur', (e) => {
     if(e.target.value === '') e.target.placeholder = e.target.dataset.placeholderBackup || 'Enter Custom Transaction Type';
   });
-
+ 
   // ---------- TRANSACTION TYPE (self-transfer split mode) ----------
   function updateSplitCustomVisibility(){
     const fromCustom = $('txnTypeFrom').value === 'Custom';
@@ -1160,7 +1715,7 @@
   }
   $('txnTypeFrom').addEventListener('change', updateSplitCustomVisibility);
   $('txnTypeTo').addEventListener('change', updateSplitCustomVisibility);
-
+ 
   // ---------- CTA (single Save button + live caption) ----------
   function formattedAmount(){
     const num = amountRawNumber();
@@ -1168,6 +1723,19 @@
   }
   function updateCTA(){
     const amt = formattedAmount();
+    const raw = amountRawNumber();
+    renderAmountNote(raw);
+ 
+    // A large amount that has been asked about but not yet confirmed owns the
+    // button until it is either confirmed or changed. This is rendered from
+    // state inside updateCTA rather than written over the button from
+    // outside, so no later updateCTA call can quietly wipe it (bug #18).
+    if(state.confirmAmount !== null && state.confirmAmount === raw){
+      $('ctaMainText').textContent = `Confirm ₹${amt}`;
+      $('ctaCaption').textContent = `That is ${largeAmountLabel(raw)} — tap again to save it, or edit the amount`;
+      return;
+    }
+ 
     if(state.isSelfTransfer){
       $('ctaMainText').textContent = `Add Entry • ₹${amt} Transfer`;
       const from = state.account, to = state.toAccount;
@@ -1181,7 +1749,7 @@
       $('ctaCaption').textContent = `Saves to ${state.account} • ${dateLabel} • ${status}`;
     }
   }
-
+ 
   // ---------- TOAST ----------
   let toastTimer;
   function showToast(msg, duration=2200){
@@ -1191,65 +1759,361 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), duration);
   }
-
+ 
   // ---------- RESET (runs automatically after a successful save) ----------
   function fullReset(){
     $('entryForm').reset();
     exitTxnTypeCustomMode();
     state.selectedDateISO = null;
     $('dateTextInput').value = '';
+    renderDateHint();
     document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
     selfTransferToggle.checked = false;
     state.isSelfTransfer = false;
     applySelfTransferMode();
     setIdKind('N');
-    document.querySelectorAll('#accountChips .chip').forEach((c,i) => c.classList.toggle('selected', i===0));
+    selectChip('accountChips', 'Domestic');
     state.account = 'Domestic';
     $('splitCustomFields').style.display = 'none';
+    // Submitting blurs the amount field while it still holds a value, so the
+    // blur handler's "restore the placeholder" branch never runs and the
+    // attribute stays empty from the earlier focus. Once reset() clears the
+    // value there would be neither text nor placeholder left to measure, and
+    // the box would collapse to a few pixels. Restore it here rather than
+    // relying on blur.
+    amountInput.placeholder = amountInput.dataset.placeholderBackup || '00.00';
+    state.confirmAmount = null;
     updateAmountWidth();
     updateCTA();
   }
-
+ 
   // ---------- SUBMIT ----------
   function currentId(){
     if(state.kind === 'Y' && !state.isSelfTransfer) return $('idBoxSelect').value;
     return $('idBoxDisplay').textContent;
   }
-
-  async function postRow(payload){
+ 
+  async function callLedger(payload){
     // Sent as a form-encoded body (not JSON) on purpose: a JSON Content-Type
     // forces the browser to send a CORS preflight (OPTIONS) request first,
     // and Make/most webhook receivers don't answer that preflight the way
     // fetch() needs — so the browser silently blocks the real POST before it
     // ever leaves the device. Form-encoding with no explicit Content-Type
-    // header is a "simple request" and skips preflight entirely. Make (and
-    // Power Automate) both parse this into the same flat key/value fields.
+    // header is a "simple request" and skips preflight entirely. Make parses
+    // this into the same flat key/value fields either way.
     const body = new URLSearchParams();
     Object.entries(payload).forEach(([k, v]) => body.append(k, v == null ? '' : String(v)));
-
+ 
     try{
-      const res = await fetch(ADD_ENTRY_URL, {
-        method:'POST',
-        body
-      });
+      const res = await fetch(LEDGER_URL, { method:'POST', body });
       if(!res.ok){
-        console.error('Webhook responded with an error status:', res.status);
+        console.error('Ledger webhook returned an error status:', res.status);
         return { ok:false, reason:'http-' + res.status };
       }
-      return { ok:true };
+      return { ok:true, text: await res.text() };
     }catch(e){
-      // A network-level failure (offline, DNS, CORS block, wrong URL). This
-      // is the case that used to be swallowed silently.
-      console.error('Webhook request failed:', e);
+      console.error('Ledger webhook request failed:', e);
       return { ok:false, reason:'network', error:e };
     }
   }
-
+ 
+  // ---------- QUEUE ----------
+  // An entry is written to the local queue first and pushed to the sheet
+  // second. That ordering is what makes the app safe to use offline, on a
+  // dropped connection, or against a paused Make account: the record exists
+  // on the device the moment Add Entry is tapped, and syncing is a separate
+  // concern that can fail and be retried without ever losing what was typed.
+  function loadQueue(){
+    const q = lsGet(LS_QUEUE, []);
+    state.queue = Array.isArray(q) ? q : [];
+    // Entries queued by an older build have no timestamp. Treating them as
+    // brand new would restart their hour; treating them as ancient would
+    // send them the moment the app opens. The latter is the right one —
+    // they have already waited.
+    let patched = false;
+    state.queue.forEach(e => { if(!e.at){ e.at = 0; patched = true; } });
+    if(patched) lsSet(LS_QUEUE, state.queue);
+  }
+  function saveQueue(){
+    lsSet(LS_QUEUE, state.queue);
+    renderSyncState();
+    scheduleSync();
+  }
+  function enqueue(items){
+    const at = Date.now();
+    items.forEach(it => state.queue.push({ ...it, at }));
+    saveQueue();
+  }
+ 
+  function loadHistory(){
+    const h = lsGet(LS_HIST, []);
+    state.history = Array.isArray(h) ? h : [];
+  }
+  function saveHistory(){
+    if(state.history.length > HIST_MAX) state.history = state.history.slice(-HIST_MAX);
+    lsSet(LS_HIST, state.history);
+  }
+  function recordHistory(entries){
+    entries.forEach(e => state.history.push({
+      uid: e.uid, at: e.at, dateISO: e.dateISO, id: e.id,
+      account: e.account, expenseName: e.expenseName, moreInfo: e.moreInfo,
+      txnType: e.txnType, debit: e.debit, credit: e.credit, sent: false
+    }));
+    saveHistory();
+  }
+  function markHistorySent(uids, sent){
+    const set = new Set(uids);
+    const now = Date.now();
+    state.history.forEach(h => {
+      if(!set.has(h.uid)) return;
+      h.sent = sent;
+      // When it reached the sheet, which is what decides whether a given
+      // snapshot of that sheet could have contained it.
+      if(sent) h.sentAt = now; else delete h.sentAt;
+    });
+    saveHistory();
+  }
+ 
+  let sheetCacheMemo = null;
+  function loadSheetCache(){
+    if(sheetCacheMemo) return sheetCacheMemo;
+    const c = lsGet(LS_SHEET, {});
+    sheetCacheMemo = (c && typeof c === 'object' && !Array.isArray(c)) ? c : {};
+    return sheetCacheMemo;
+  }
+  function saveSheetCache(cache){
+    sheetCacheMemo = cache;
+    const keys = Object.keys(cache);
+    if(keys.length > SHEET_CACHE_MONTHS){
+      keys.map(k => [k, cache[k].at]).sort((a,b) => a[1] - b[1])
+        .slice(0, keys.length - SHEET_CACHE_MONTHS).forEach(([k]) => delete cache[k]);
+    }
+    lsSet(LS_SHEET, cache);
+  }
+ 
+  // Excel counts days from 1899-12-30; this is toExcelSerial run backwards.
+  function excelSerialToIso(n){
+    const d = new Date(Date.UTC(1899, 11, 30) + Number(n) * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+ 
+  // The month the "get earlier" button should offer next: the most recent one
+  // that has not been pulled back yet, walking backwards from this month.
+  function nextImportMonth(){
+    const cache = loadSheetCache();
+    const now = new Date();
+    for(let i = 0; i < 36; i++){
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const names = monthNamesFor(toIso(d.getFullYear(), d.getMonth() + 1, 1));
+      if(!cache[names.sheet]) return names;
+    }
+    return null;
+  }
+ 
+  function loadSent(){
+    const a = lsGet(LS_SENT, []);
+    return Array.isArray(a) ? a : [];
+  }
+  function archiveSent(entries){
+    const cutoff = Date.now() - SENT_KEEP_MS;
+    let archive = loadSent().filter(b => b.at > cutoff);
+    archive.push({ at: Date.now(), entries });
+    // Oldest batches drop off first if the archive gets large.
+    let total = archive.reduce((n, b) => n + b.entries.length, 0);
+    while(archive.length > 1 && total > SENT_KEEP_MAX){
+      total -= archive[0].entries.length;
+      archive.shift();
+    }
+    lsSet(LS_SENT, archive);
+  }
+ 
+  // When the oldest thing in the queue runs out of patience.
+  function oldestAt(){
+    return state.queue.length ? Math.min(...state.queue.map(e => e.at || 0)) : null;
+  }
+  function deadline(){
+    const at = oldestAt();
+    return at === null ? null : at + MAX_WAIT_MS;
+  }
+  function overdue(){
+    const d = deadline();
+    return d !== null && Date.now() >= d;
+  }
+ 
+  // Two timers, rearmed on every queue change.
+  //
+  //   settle  — restarted by each new entry, so a burst keeps pushing it back
+  //             and the whole burst goes out as one call once you pause.
+  //   ceiling — measured from the oldest entry and never pushed back, so a
+  //             lone entry can wait for company without waiting all day.
+  //
+  // Neither runs while the app is closed, which is why backgrounding and
+  // launch are also flush points (see below).
+  const RETRY_MS = 5 * 60 * 1000;        // after a failed send, before trying again
+  let settleTimer = null, ceilingTimer = null, retryTimer = null;
+  function scheduleSync({ allowInstant = true } = {}){
+    clearTimeout(settleTimer); clearTimeout(ceilingTimer); clearTimeout(retryTimer);
+    settleTimer = ceilingTimer = retryTimer = null;
+    if(!state.queue.length || state.syncMode === 'manual' || state.syncing) return;
+ 
+    // allowInstant is false when this is being rearmed from the tail of a
+    // send, so a failure cannot bounce straight back into another attempt.
+    if(state.syncMode === 'instant' && allowInstant){ syncQueue({ silent:true }); return; }
+ 
+    settleTimer = setTimeout(() => {
+      if(state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
+      else renderSyncState();
+    }, SETTLE_MS);
+ 
+    ceilingTimer = setTimeout(() => syncQueue({ silent:true }),
+                              Math.max(0, deadline() - Date.now()));
+  }
+ 
+  // Builds the 10-value array for one entry in COLUMN_ORDER's exact order.
+  function toRowArray(e){
+    const map = {
+      DATE: e.dateSerial,
+      ID: e.id,
+      ACCOUNT: e.account,
+      EXPENSE: e.expenseName,
+      INFO: e.moreInfo,
+      TYPE: e.txnType,
+      KIND: e.txnFreq,
+      // Graph writes an empty string as a text cell, which then poisons the
+      // SUMIFS totals on row 5. null leaves the cell genuinely blank.
+      DEBIT: e.debit === '' ? null : e.debit,
+      CREDIT: e.credit === '' ? null : e.credit,
+      FORMULA: ROW_FORMULA
+    };
+    return COLUMN_ORDER.map(k => map[k]);
+  }
+ 
+  // A single Graph call can only append into one table, so entries are
+  // grouped by the month they belong to. Backdating across a month boundary
+  // is the only way this produces more than one group, and it stays correct
+  // when it does.
+  function groupByTable(entries){
+    const groups = {};
+    entries.forEach(e => {
+      const key = e.sheet + '|' + e.table;
+      (groups[key] = groups[key] || []).push(e);
+    });
+    return Object.values(groups);
+  }
+ 
+  // Pushes everything currently queued. Make replies "Accepted" before the
+  // Graph write actually runs — there is no success string to wait for — so
+  // a batch is cleared from the queue once the request itself is accepted,
+  // and the sheet is the source of truth from then on. Pull to refresh
+  // reconciles anything that slipped through.
+  async function syncQueue({ silent = false } = {}){
+    if(state.syncing) return { ok:true, sent:0 };
+    if(state.queue.length === 0) return { ok:true, sent:0 };
+ 
+    state.syncing = true;
+    renderSyncState();
+ 
+    const groups = groupByTable(state.queue);
+    let sent = 0;
+    let failure = null;
+ 
+    for(const group of groups){
+      const batchId = 'b_' + Date.now().toString(36) + '_' + randomSuffix(6);
+      const res = await callLedger({
+        MODE: 'add',
+        SHEET: group[0].sheet,
+        TABLE: group[0].table,
+        ROWS: JSON.stringify(group.map(toRowArray)),
+        COUNT: group.length,
+        BATCH: batchId
+      });
+ 
+      // An OK status only says Make received the request. With confirmation
+      // on, the reply itself has to say the row landed, or the batch stays
+      // queued rather than being deleted from the only place it exists.
+      if(res.ok && state.requireConfirm && !String(res.text || '').includes(CONFIRM_TOKEN)){
+        failure = { ok:false, reason:'unconfirmed' };
+        break;
+      }
+ 
+      if(res.ok){
+        const ids = new Set(group.map(e => e.uid));
+        markHistorySent([...ids], true);
+        archiveSent(group);
+        state.queue = state.queue.filter(e => !ids.has(e.uid));
+        saveQueue();
+        sent += group.length;
+      } else {
+        failure = res;
+        break; // leave this group and everything after it queued for retry
+      }
+    }
+ 
+    state.syncing = false;
+    renderSyncState();
+ 
+    if(failure && state.queue.length){
+      // Back off rather than hammer. Coming back online, backgrounding and
+      // launch all get there sooner than this when they apply.
+      clearTimeout(retryTimer);
+      retryTimer = setTimeout(() => syncQueue({ silent:true }), RETRY_MS);
+    } else {
+      scheduleSync({ allowInstant:false });
+    }
+ 
+    if(failure && !silent){
+      showToast(failureText(failure) + ' — ' + state.queue.length + ' still waiting', 3800);
+    } else if(sent && !silent){
+      showToast(sent === 1 ? 'Synced 1 entry' : `Synced ${sent} entries`);
+    }
+    return { ok: !failure, sent };
+  }
+ 
+  function failureText(res){
+    if(res && res.reason === 'unconfirmed') return 'The sheet did not confirm — nothing was cleared';
+    return res && res.reason && res.reason.startsWith('http-')
+      ? `Sync failed (${res.reason.replace('http-','status ')})`
+      : 'No connection';
+  }
+ 
+  // ---------- SYNC UI ----------
+  function renderSyncState(){
+    const n = state.queue.length;
+    const bar = $('syncBar');
+    const label = $('syncLabel');
+    const btn = $('syncNowBtn');
+    if(!bar) return;
+ 
+    const onAddScreen = $('entryForm').style.display !== 'none';
+    bar.style.display = (n > 0 && onAddScreen) ? 'flex' : 'none';
+    if(typeof renderAccountScreen === 'function' && $('accountScreen').style.display !== 'none'){
+      renderAccountScreen();
+    }
+    const offline = !navigator.onLine;
+    bar.classList.toggle('is-offline', offline && !state.syncing);
+    if(n > 0){
+      const held = n === 1 ? '1 entry saved on this device' : `${n} entries saved on this device`;
+      label.textContent = state.syncing
+        ? 'Sending…'
+        : offline ? `${held} — offline`
+        : (state.syncMode === 'smart' && n < BATCH_FULL)
+            ? `${held} — waiting for company`
+            : held;
+      btn.disabled = state.syncing || offline;
+      btn.textContent = state.syncing ? 'Sending…' : offline ? 'Waiting for signal' : 'Send to sheet';
+    }
+    const count = $('pendingCount');
+    if(count){
+      count.style.display = n > 0 ? 'inline-flex' : 'none';
+      count.textContent = n;
+    }
+  }
+ 
   $('entryForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-
+ 
     if(!state.selectedDateISO){ showToast('Pick a date first'); return; }
-
+ 
     // Sent to the webhook as an Excel serial number (see toExcelSerial), not
     // the "DD/MM/YYYY" display string — that's what makes Excel store a real
     // date instead of text.
@@ -1262,113 +2126,768 @@
     const moreInfo = $('moreInfo').value.trim();
     const txnFreq = $('txnFreq').value;
     const amount = amountRawNumber();
-
-    if(!expenseName || !amount || amount <= 0){
-      showToast('Fill in expense name and amount');
+ 
+    // Each missing field gets its own message and its own focus. `required`
+    // used to fire the browser's native bubble first, which meant the
+    // expense-name branch of the old combined toast could never run.
+    if(!expenseName){
+      showToast('Add an expense name');
+      $('expenseName').focus();
       return;
     }
-
+    if(!amount || amount <= 0){
+      showToast('Add an amount');
+      amountInput.focus();
+      return;
+    }
+ 
+    // One stray zero turns ₹5,000 into ₹50,000 and nothing else on the form
+    // would look wrong. From a lakh up, the first tap asks and the second
+    // saves. Changing the amount clears the confirmation.
+    if(amount >= AMOUNT_CONFIRM_FROM && state.confirmAmount !== amount){
+      state.confirmAmount = amount;
+      updateCTA();
+      showToast(`That is ${largeAmountLabel(amount)} — tap again to save it`, 3600);
+      return;
+    }
+ 
     $('saveBtn').disabled = true;
-    $('ctaMainText').textContent = 'Saving…';
-
-    // Still needed for the Y-ID reuse dropdown — no longer for positioning.
-    await refreshOpenYIds();
-
-    let allOk = false;
-    let lastFail = null;
-    let savedId = null;
-
+ 
+    const { sheet: targetSheet } = monthNamesFor(state.selectedDateISO);
+    const savedId = currentId();
+    const base = {
+      dateSerial: dateForSheet,
+      id: savedId,
+      expenseName, moreInfo, txnFreq,
+      dateISO: state.selectedDateISO,
+      sheet: targetSheet,
+      table: targetTable
+    };
+ 
+    let entries;
     if(state.isSelfTransfer){
-      const id = currentId();
-      savedId = id;
       const typeFrom = $('txnTypeFrom').value === 'Custom' ? ($('customTypeFromInput').value.trim() || 'Custom') : $('txnTypeFrom').value;
       const typeTo = $('txnTypeTo').value === 'Custom' ? ($('customTypeToInput').value.trim() || 'Custom') : $('txnTypeTo').value;
-      const legFrom = {
-        DATE: dateForSheet, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
-        MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeFrom, TRANSACTION_KIND: txnFreq,
-        DEBIT_AMOUNT: amount, CREDIT_AMOUNT: '', ID: id, TABLE: targetTable
-      };
-      const legTo = {
-        DATE: dateForSheet, RELEVANT_ACCOUNT: state.toAccount, EXPENSE_NAME: expenseName,
-        MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: typeTo, TRANSACTION_KIND: txnFreq,
-        DEBIT_AMOUNT: '', CREDIT_AMOUNT: amount, ID: id, TABLE: targetTable
-      };
-      // Each leg is its own append; the scenario sorts the whole table by
-      // date after each one, so it doesn't matter that these land as two
-      // separate writes — both end up correctly placed either way.
-      const r1 = await postRow(legFrom);
-      const r2 = await postRow(legTo);
-      allOk = r1.ok && r2.ok;
-      lastFail = !r1.ok ? r1 : r2;
+      // Both legs share one ID and go into the same batch, so a transfer can
+      // never be half-written: either both rows reach the sheet or neither
+      // does and both stay queued together.
+      entries = [
+        { ...base, uid: newUid(), account: state.account,   txnType: typeFrom, debit: amount, credit: '' },
+        { ...base, uid: newUid(), account: state.toAccount, txnType: typeTo,   debit: '', credit: amount }
+      ];
     } else {
       const txnType = $('txnType').value === 'Custom' ? ($('txnTypeCustomInput').value.trim() || 'Custom') : $('txnType').value;
-      const id = currentId();
-      savedId = id;
-      const row = {
-        DATE: dateForSheet, RELEVANT_ACCOUNT: state.account, EXPENSE_NAME: expenseName,
-        MORE_INFORMATION: moreInfo, TRANSACTION_TYPE: txnType, TRANSACTION_KIND: txnFreq,
-        DEBIT_AMOUNT: state.debit ? amount : '', CREDIT_AMOUNT: state.credit ? amount : '', ID: id, TABLE: targetTable
-      };
-      // Always a plain append now — no client-side insertion math. The Add
-      // Entry scenario re-sorts the whole table by date (column B) right
-      // after writing, via Excel's native Table.sort, so a backdated entry
-      // ends up in the right place regardless of where it physically landed.
-      const r = await postRow(row);
-      allOk = r.ok;
-      lastFail = r;
+      entries = [
+        { ...base, uid: newUid(), account: state.account, txnType, debit: state.debit ? amount : '', credit: state.credit ? amount : '' }
+      ];
     }
-
+ 
+    enqueue(entries);
+    // enqueue() stamps `at`; the history copy has to carry the same stamp,
+    // which is what pairs a self transfer's two legs back together later.
+    recordHistory(state.queue.slice(-entries.length));
+    // A self transfer writes two rows under one ID, which would read as a
+    // closed pair. Only the single-row case changes the open list.
+    if(!state.isSelfTransfer) applyYId(savedId);
+ 
     $('saveBtn').disabled = false;
-
-    if(allOk){
-      const savedMsg = state.isSelfTransfer ? `Transfer saved · ${savedId}` : `Saved · ${savedId}`;
-      showToast(savedMsg);
-      fullReset();
-      refreshOpenYIds();
-    } else {
-      // Leave the form filled in so nothing typed is lost, and say plainly
-      // that it did not save — no more false "Saved" toasts.
-      const reasonText = lastFail && lastFail.reason && lastFail.reason.startsWith('http-')
-        ? `Webhook error (${lastFail.reason.replace('http-','status ')})`
-        : 'Could not reach the webhook — check your connection';
-      showToast(reasonText, 3800);
-      $('ctaMainText').textContent = 'Retry Save';
-    }
+    showToast(state.isSelfTransfer ? `Transfer added · ${savedId}` : `Added · ${savedId}`);
+    fullReset();
+ 
+    // enqueue() already rearmed the timers. Whether this goes now or waits
+    // for company is scheduleSync's call — either way it is safe on the
+    // device the moment it was added.
   });
-
+ 
+  function newUid(){
+    return Date.now().toString(36) + randomSuffix(4);
+  }
+ 
+  // ---------- HISTORY VIEW ----------
+  function money(n){
+    return Number(n).toLocaleString('en-IN', {
+      minimumFractionDigits: Number.isInteger(Number(n)) ? 0 : 2,
+      maximumFractionDigits: 2
+    });
+  }
+  function dayLabel(iso){
+    if(iso === isoToday(0)) return 'Today';
+    if(iso === isoToday(-1)) return 'Yesterday';
+    const d = new Date(iso + 'T00:00:00');
+    const sameYear = d.getFullYear() === new Date().getFullYear();
+    return d.toLocaleDateString('en-GB', sameYear
+      ? { weekday:'short', day:'numeric', month:'short' }
+      : { day:'numeric', month:'short', year:'numeric' });
+  }
+  const esc = (t) => String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ 
+  // A self transfer is two rows in the sheet but one thing that happened, so
+  // the pair is folded back into a single line. Both legs were written by one
+  // submit, which is why they share an id and a timestamp.
+  function foldTransfers(rows){
+    const out = [];
+    const used = new Set();
+    rows.forEach((r, i) => {
+      if(used.has(i)) return;
+      const j = rows.findIndex((o, k) => k > i && !used.has(k) &&
+        o.id === r.id && o.at === r.at &&
+        Number(o.debit || 0) === Number(r.credit || 0) &&
+        Number(o.credit || 0) === Number(r.debit || 0));
+      if(j > -1){
+        used.add(i); used.add(j);
+        const from = r.debit ? r : rows[j];
+        const to   = r.debit ? rows[j] : r;
+        out.push({ ...from, transfer:true, toAccount: to.account, amount: Number(from.debit) });
+      } else {
+        used.add(i);
+        out.push({ ...r, amount: Number(r.debit || r.credit || 0), isOut: !!r.debit });
+      }
+    });
+    return out;
+  }
+ 
+  function txnRow(r){
+    const tile = r.transfer ? 'tile transfer' : 'tile acct-' + esc(r.account);
+    const name = r.transfer
+      ? 'Self transfer'
+      : esc(r.expenseName) + (r.moreInfo ? ' · ' + esc(r.moreInfo) : '');
+    const where = r.transfer ? `${esc(r.account)} → ${esc(r.toAccount)}` : esc(r.account);
+    const held = r.sent ? '' : ' · <span class="held">on this device</span>';
+    const amt = r.transfer
+      ? `<div class="amt flat">₹${money(r.amount)}</div>`
+      : `<div class="amt ${r.isOut ? 'out' : 'in'}">${r.isOut ? '−' : '+'} ₹${money(r.amount)}</div>`;
+    return `<div class="txn">
+      <div class="${tile}"></div>
+      <div class="body">
+        <div class="name">${name}</div>
+        <div class="meta">${where} · ${esc(r.txnType)}${held}</div>
+      </div>
+      ${amt}
+    </div>`;
+  }
+ 
+  // Local entries and pulled-back sheet rows are the same history seen from
+  // two sides. Where a month has been pulled back, the sheet is the truth for
+  // anything it already contained — a local entry sent before that snapshot
+  // would otherwise appear twice. Anything sent since, or not sent at all,
+  // still shows.
+  function allRows(){
+    const cache = loadSheetCache();
+    const out = [];
+    const snapshotAt = {};
+    Object.keys(cache).forEach(m => {
+      snapshotAt[m] = cache[m].at;
+      out.push(...cache[m].rows);
+    });
+    state.history.forEach(h => {
+      const m = h.dateISO ? monthNamesFor(h.dateISO).sheet : null;
+      if(m && snapshotAt[m] && h.sent && (h.sentAt || h.at) <= snapshotAt[m]) return;
+      out.push(h);
+    });
+    return out;
+  }
+ 
+  function renderRecent(){
+    const pane = $('recentPane');
+    const all = allRows().sort((a,b) => b.at - a.at);
+    $('recentCount').textContent = all.length ? `(${all.length})` : '';
+ 
+    let html = '';
+    if(!all.length){
+      html = `<div class="ledger-card"><div class="stats-empty">
+        <h2>Nothing here yet</h2>
+        <p>Add an entry, or pull a month back from the sheet.</p>
+      </div></div>` + importFooter();
+      pane.innerHTML = html;
+      wireFooter();
+      return;
+    }
+ 
+    const shown = all.slice(0, state.historyShown);
+    // Newest day first; inside a day, newest entry first.
+    const days = [];
+    const byDay = {};
+    shown.forEach(r => {
+      if(!byDay[r.dateISO]){ byDay[r.dateISO] = []; days.push(r.dateISO); }
+      byDay[r.dateISO].push(r);
+    });
+    days.sort((a,b) => a < b ? 1 : -1);
+ 
+    days.forEach(iso => {
+      const rows = foldTransfers(byDay[iso]);
+      const net = rows.reduce((n, r) => n + (r.transfer ? 0 : (r.isOut ? -r.amount : r.amount)), 0);
+      const netText = net === 0 ? '' :
+        (net > 0 ? '+ ₹' : '− ₹') + money(Math.abs(net));
+      html += `<div class="ledger-card">
+        <div class="day-head"><span class="day">${dayLabel(iso)}</span><span class="net">${netText}</span></div>
+        ${rows.map(txnRow).join('')}
+      </div>`;
+    });
+    html += all.length > state.historyShown
+      ? `<button type="button" class="show-more" id="showMoreBtn">Show earlier entries</button>`
+      : importFooter();
+    pane.innerHTML = html;
+    wireFooter();
+  }
+ 
+  function importFooter(){
+    const nxt = nextImportMonth();
+    if(!nxt) return '';
+    return `<button type="button" class="show-more" id="importMonthBtn" data-sheet="${nxt.sheet}" data-table="${nxt.table}">Get ${nxt.sheet} from the sheet</button>
+      <div class="field-hint" style="text-align:center;">Reads that month once and keeps it · 3 Make operations</div>`;
+  }
+ 
+  function wireFooter(){
+    const more = $('showMoreBtn');
+    if(more) more.addEventListener('click', () => { state.historyShown += 40; renderRecent(); });
+ 
+    const imp = $('importMonthBtn');
+    if(imp) imp.addEventListener('click', async () => {
+      const { sheet, table } = imp.dataset;
+      imp.disabled = true;
+      imp.textContent = `Reading ${sheet}…`;
+      const r = await importMonth(sheet, table);
+      if(!r.ok){
+        imp.disabled = false;
+        imp.textContent = `Get ${sheet} from the sheet`;
+        showToast(r.why, 3600);
+        return;
+      }
+      // Show what just arrived rather than making them tap again.
+      state.historyShown += Math.max(r.count, 40);
+      renderRecent();
+      showToast(r.count === 0 ? `${sheet} is empty` : `${sheet} added · ${r.count} entries`);
+    });
+  }
+ 
+  function renderDues(){
+    const pane = $('duesPane');
+    const open = computeOpenYIds();
+    $('duesBadge').style.display = open.length ? 'inline-block' : 'none';
+    $('duesBadge').textContent = open.length;
+ 
+    if(!open.length){
+      const seen = Object.keys(loadSheetCache()).length;
+      pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
+        <h2>Nothing outstanding</h2>
+        <p>Entries you mark Y show up here until the money comes back.</p>
+      </div></div>` + (seen ? '' : `<div class="field-hint" style="text-align:center;padding:0 8px;">Only this device has been checked. Pull earlier months in Recent to search them too.</div>`);
+      return;
+    }
+    // Most recent write of each open ID carries the details worth showing.
+    const rows = open.map(id => {
+      const hits = allRows().filter(h => h.id === id).sort((a,b) => b.at - a.at);
+      return { id, e: hits[0] || null };
+    }).sort((a,b) => (b.e ? b.e.at : 0) - (a.e ? a.e.at : 0));
+ 
+    const loaded = Object.keys(loadSheetCache());
+    const scope = loaded.length
+      ? `Counted across this device and ${loaded.length === 1 ? loaded[0] : loaded.length + ' months'} read from the sheet.`
+      : 'Counted from this device only. Pull earlier months in Recent to include them.';
+ 
+    pane.innerHTML = '<div class="ledger-card">' + rows.map(({ id, e }) => {
+      if(!e) return `<div class="txn due">
+        <div class="tile transfer"></div>
+        <div class="body"><div class="name">${esc(id)}</div>
+        <div class="meta">Opened before this device had a record of it</div></div>
+      </div>`;
+      const amount = Number(e.debit || e.credit || 0);
+      const days = daysAgo(e.dateISO);
+      const age = days === 0 ? 'opened today' : days === 1 ? 'open since yesterday' : `open ${days} days`;
+      return `<div class="txn due">
+        <div class="tile acct-${esc(e.account)}"></div>
+        <div class="body">
+          <div class="name">${esc(e.expenseName)}</div>
+          <div class="meta">${esc(e.account)} · ${esc(id)} · ${age}</div>
+        </div>
+        <div class="amt">₹${money(amount)}</div>
+      </div>`;
+    }).join('') + '</div>' + `<div class="field-hint" style="text-align:center;padding:0 8px;">${scope}</div>`;
+  }
+ 
+  function renderStats(){
+    const recent = state.subTab === 'recent';
+    $('recentPane').style.display = recent ? 'block' : 'none';
+    $('duesPane').style.display = recent ? 'none' : 'block';
+    document.querySelectorAll('.sub-tab').forEach(t => {
+      const on = t.dataset.sub === state.subTab;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    renderRecent();
+    renderDues();
+  }
+ 
+  document.querySelectorAll('.sub-tab').forEach(t => {
+    t.addEventListener('click', () => { state.subTab = t.dataset.sub; renderStats(); });
+  });
+ 
+  // ---------- BACKUP ----------
+  // Nothing stored in a browser is permanent: clearing site data, uninstalling
+  // the app or resetting the phone all take it. persist() asks the browser not
+  // to evict it to reclaim space, which covers the accidental case. The file
+  // export covers the rest, by putting a copy somewhere this app cannot reach.
+  if(navigator.storage && navigator.storage.persist){
+    navigator.storage.persist().catch(() => {});
+  }
+ 
+  function backupPayload(){
+    return {
+      app: 'ledger',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      counts: { history: state.history.length, queue: state.queue.length, openYIds: state.openYIds.length },
+      history: state.history,
+      queue: state.queue,
+      openYIds: state.openYIds,
+      sent: loadSent(),
+      syncMode: state.syncMode
+    };
+  }
+ 
+  async function exportBackup(){
+    const data = JSON.stringify(backupPayload(), null, 2);
+    const name = `ledger-backup-${isoToday(0)}.json`;
+    const file = new File([data], name, { type:'application/json' });
+ 
+    // Sharing beats downloading on a phone: the file can go straight to Drive
+    // or a chat, rather than into a Downloads folder that is itself on the
+    // device that might be the thing that fails.
+    try{
+      if(navigator.canShare && navigator.canShare({ files:[file] })){
+        await navigator.share({ files:[file], title:name });
+        noteBackupDone();
+        return;
+      }
+    }catch(e){
+      if(e && e.name === 'AbortError') return;   // user cancelled the share sheet
+    }
+ 
+    const url = URL.createObjectURL(new Blob([data], { type:'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    noteBackupDone();
+  }
+ 
+  function noteBackupDone(){
+    lsSet(LS_BACKUP, Date.now());
+    hideBackupBar();
+    renderBackupStatus();
+    showToast('Backup saved');
+  }
+ 
+  function importBackup(text){
+    let data;
+    try{ data = JSON.parse(text); }
+    catch(e){ showToast('That file could not be read', 3200); return; }
+    if(!data || data.app !== 'ledger' || !Array.isArray(data.history)){
+      showToast('That is not a Ledger backup', 3200); return;
+    }
+ 
+    const seenH = new Set(state.history.map(h => h.uid));
+    let addedH = 0;
+    (data.history || []).forEach(h => { if(h.uid && !seenH.has(h.uid)){ state.history.push(h); seenH.add(h.uid); addedH++; } });
+    state.history.sort((a,b) => (a.at||0) - (b.at||0));
+    saveHistory();
+ 
+    const seenQ = new Set(state.queue.map(e => e.uid));
+    let addedQ = 0;
+    (data.queue || []).forEach(e => { if(e.uid && !seenQ.has(e.uid)){ state.queue.push(e); seenQ.add(e.uid); addedQ++; } });
+    saveQueue();
+ 
+    const ids = new Set([...state.openYIds, ...(data.openYIds || [])]);
+    state.openYIds = [...ids];
+    lsSet(LS_YIDS, state.openYIds);
+ 
+    renderAccountScreen();
+    if(state.subTab) renderStats();
+    showToast(addedH + addedQ === 0
+      ? 'Everything in that file was already here'
+      : `Restored ${addedH} ${addedH === 1 ? 'entry' : 'entries'}${addedQ ? `, ${addedQ} still to send` : ''}`, 3600);
+  }
+ 
+  function renderBackupStatus(){
+    const last = lsGet(LS_BACKUP, 0);
+    const n = state.history.length;
+    $('backupStatus').textContent = !last
+      ? `${n} ${n === 1 ? 'entry' : 'entries'} on this device, never backed up`
+      : `${n} ${n === 1 ? 'entry' : 'entries'} on this device · last backup ${new Date(last).toLocaleString('en-GB', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`;
+  }
+ 
+  // The most recent 10pm that has already gone past.
+  function lastBackupCutoff(){
+    const now = new Date();
+    const cut = new Date(now);
+    cut.setHours(BACKUP_HOUR, 0, 0, 0);
+    if(cut > now) cut.setDate(cut.getDate() - 1);
+    return cut.getTime();
+  }
+  const BACKUP_WINDOW_MS = 12 * 60 * 60 * 1000;
+  function backupDue(){
+    if(!state.history.length) return false;
+    const cut = lastBackupCutoff();
+    // Only nudge inside a window that opens at 10pm and closes at 10am. Past
+    // that it would stop being a nightly reminder and become a permanent
+    // banner, which is the fastest way to make someone ignore it.
+    if(Date.now() - cut > BACKUP_WINDOW_MS) return false;
+    return lsGet(LS_BACKUP, 0) < cut && lsGet(LS_SNOOZE, 0) < cut;
+  }
+  function hideBackupBar(){ $('backupBar').style.display = 'none'; }
+  function renderBackupBar(){
+    $('backupBar').style.display = backupDue() ? 'flex' : 'none';
+  }
+ 
+  // A page cannot wake itself at 10pm — that needs a push server. So the bar
+  // is shown whenever the app is open past the cutoff: live if it is already
+  // open, otherwise the next time it is opened.
+  let backupTimer = null;
+  function scheduleBackupCheck(){
+    clearTimeout(backupTimer);
+    renderBackupBar();
+    const next = new Date();
+    next.setHours(BACKUP_HOUR, 0, 5, 0);
+    if(next <= new Date()) next.setDate(next.getDate() + 1);
+    backupTimer = setTimeout(() => { renderBackupBar(); scheduleBackupCheck(); },
+                             Math.min(next - Date.now(), 6 * 60 * 60 * 1000));
+  }
+ 
+  $('backupNowBtn').addEventListener('click', exportBackup);
+  $('exportBtn').addEventListener('click', exportBackup);
+  $('backupLaterBtn').addEventListener('click', () => {
+    lsSet(LS_SNOOZE, Date.now());
+    hideBackupBar();
+  });
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = () => importBackup(String(r.result));
+    r.onerror = () => showToast('That file could not be read', 3200);
+    r.readAsText(f);
+    e.target.value = '';
+  });
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible'){ renderBackupBar(); renderMonthBar(); }
+  });
+ 
+  // ---------- PULLING A MONTH BACK FROM THE SHEET ----------
+  // The app only knows what this device typed. Everything older lives in the
+  // sheet, so it is fetched a month at a time and kept — one read each, never
+  // repeated.
+  async function importMonth(sheet, table){
+    const res = await callLedger({ MODE:'read', SHEET: sheet, TABLE: table, ROWS:'[]' });
+    if(!res.ok) return { ok:false, why: failureText(res) };
+ 
+    let values = null;
+    try{
+      const data = JSON.parse(res.text);
+      values = Array.isArray(data) ? null : (data.values || (data.body && data.body.values));
+    }catch(e){
+      return { ok:false, why:'The sheet sent back something unreadable' };
+    }
+    if(!values) return { ok:false, why:`No ${sheet} sheet found` };
+ 
+    const col = {};
+    COLUMN_ORDER.forEach((k, i) => col[k] = i);
+    const rows = [];
+    values.slice(1).forEach((r, i) => {
+      const serial = Number(r[col.DATE]);
+      if(!serial || !isFinite(serial)) return;              // header leftovers, blanks
+      const debit = Number(r[col.DEBIT]) || 0;
+      const credit = Number(r[col.CREDIT]) || 0;
+      if(!debit && !credit) return;                          // spacer rows
+      const dateISO = excelSerialToIso(serial);
+      rows.push({
+        uid: `sheet:${sheet}:${i}`,
+        src: 'sheet',
+        at: Date.parse(dateISO + 'T00:00:00') + i,           // keeps the sheet's own order
+        dateISO,
+        id: String(r[col.ID] || ''),
+        account: String(r[col.ACCOUNT] || ''),
+        expenseName: String(r[col.EXPENSE] || ''),
+        moreInfo: String(r[col.INFO] || ''),
+        txnType: String(r[col.TYPE] || ''),
+        debit: debit || '',
+        credit: credit || '',
+        sent: true
+      });
+    });
+ 
+    const cache = loadSheetCache();
+    cache[sheet] = { at: Date.now(), rows };
+    saveSheetCache(cache);
+    return { ok:true, count: rows.length };
+  }
+ 
+  // ---------- NEW MONTH REMINDER ----------
+  // A month's entries can only land in that month's sheet, and the app cannot
+  // create one. Without this, the first failure of the month is silent: the
+  // entries queue, the send fails, and nothing says why.
+  function renderMonthBar(){
+    const { sheet, table } = monthNamesFor(isoToday(0));
+    const due = new Date().getDate() <= 5 && lsGet(LS_MONTHACK, '') !== sheet;
+    $('monthBar').style.display = due ? 'flex' : 'none';
+    if(due){
+      $('monthLabel').textContent = `New month — make the ${sheet} sheet and the ${table} table in Excel`;
+    }
+  }
+  $('monthAckBtn').addEventListener('click', () => {
+    lsSet(LS_MONTHACK, monthNamesFor(isoToday(0)).sheet);
+    $('monthBar').style.display = 'none';
+  });
+ 
+  // ---------- WRITE CONFIRMATION ----------
+  function setRequireConfirm(on){
+    state.requireConfirm = !!on;
+    lsSet(LS_CONFIRM, state.requireConfirm);
+    $('confirmToggle').checked = state.requireConfirm;
+  }
+  $('confirmToggle').addEventListener('change', (e) => setRequireConfirm(e.target.checked));
+ 
   // ---------- SCREEN NAVIGATION (Add Payment / Stats / Account) ----------
   function showScreen(name){
     $('entryForm').style.display = name === 'add' ? 'flex' : 'none';
     $('statsScreen').style.display = name === 'stats' ? 'block' : 'none';
-    $('accountScreen').style.display = name === 'account' ? 'block' : 'none';
+    $('accountScreen').style.display = name === 'account' ? 'flex' : 'none';
+    // The sync bar belongs to the entry flow — on the account screen the same
+    // information is already on the page in full, so showing both would just
+    // say it twice.
+    $('syncBar').style.display = (name === 'add' && state.queue.length) ? 'flex' : 'none';
+    if(name === 'account'){ renderAccountScreen(); renderBackupStatus(); }
+    if(name === 'stats'){ state.historyShown = 40; renderStats(); }
     document.querySelectorAll('.top-tab').forEach(b => {
-      b.classList.toggle('active', b.dataset.tab === name);
+      const on = b.dataset.tab === name;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
   }
-
+ 
   document.querySelectorAll('.top-tab').forEach(btn => {
     btn.addEventListener('click', () => showScreen(btn.dataset.tab));
   });
-
-  // The account icon no longer opens a Settings modal — the webhook URLs
-  // are hardcoded (see ADD_ENTRY_URL/LIST_ROWS_URL above) and were never
-  // meant to be user-editable, so there's nothing left to configure here.
+ 
+  // The account icon opens the sync settings — how often entries are pushed
+  // to the sheet, what's still waiting, and a manual re-read.
   $('openSettings').addEventListener('click', () => showScreen('account'));
-
+ 
+  // ---------- SYNC CONTROLS ----------
+  $('syncNowBtn').addEventListener('click', () => syncQueue());
+  $('sendAllBtn').addEventListener('click', () => syncQueue());
+  // Make answering OK is not the same as Excel holding the row. If a send
+  // reported success but nothing appeared, this puts that batch back.
+  $('requeueBtn').addEventListener('click', () => {
+    const archive = loadSent();
+    const last = archive.pop();
+    if(!last) return;
+    lsSet(LS_SENT, archive);
+    const at = Date.now();
+    last.entries.forEach(e => state.queue.push({ ...e, at }));
+    markHistorySent(last.entries.map(e => e.uid), false);
+    saveQueue();
+    renderAccountScreen();
+    showToast(last.entries.length === 1 ? '1 entry back in the queue' : `${last.entries.length} entries back in the queue`);
+  });
+ 
+  $('refreshBtn').addEventListener('click', async () => {
+    $('refreshBtn').disabled = true;
+    $('refreshBtn').textContent = 'Reading…';
+    await refreshOpenYIds();
+    $('refreshBtn').disabled = false;
+    $('refreshBtn').textContent = 'Read the sheet again';
+    renderAccountScreen();
+  });
+ 
+  // Older builds stored a number here (1 / 2 / 4 / 999).
+  function loadSyncMode(){
+    const raw = lsGet(LS_MODE, 'smart');
+    if(raw === 'smart' || raw === 'instant' || raw === 'manual') return raw;
+    const n = Number(raw);
+    if(n === 1) return 'instant';
+    if(n >= 999) return 'manual';
+    return 'smart';
+  }
+ 
+  function setSyncMode(mode){
+    state.syncMode = mode;
+    lsSet(LS_MODE, mode);
+    document.querySelectorAll('#syncModeChips .chip').forEach(c => {
+      const on = c.dataset.val === mode;
+      c.classList.toggle('selected', on);
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    $('syncModeHint').textContent =
+      mode === 'instant'
+        ? 'Each entry goes straight to the sheet on its own. Uses the most Make operations.'
+      : mode === 'manual'
+        ? 'Entries stay on this device until you tap send. Uses the fewest.'
+        : `${BATCH_FULL} or more go together about ${Math.round(SETTLE_MS/1000)} seconds after you stop adding. Fewer than that wait for company, but never longer than an hour.`;
+    scheduleSync();
+    renderAccountScreen();
+  }
+  document.querySelectorAll('#syncModeChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => setSyncMode(chip.dataset.val));
+  });
+ 
+  function whenText(){
+    const n = state.queue.length;
+    if(!n) return 'Nothing waiting';
+    const count = n === 1 ? '1 entry' : `${n} entries`;
+    if(!navigator.onLine) return `${count} · offline, going when you are back`;
+    if(state.syncing) return `${count} · sending`;
+    if(state.syncMode === 'manual') return `${count} · waiting for you to tap send`;
+    if(state.syncMode === 'instant') return `${count} · retrying`;
+    if(n >= BATCH_FULL) return `${count} · going shortly`;
+    const by = new Date(deadline()).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    const more = BATCH_FULL - n;
+    return `${count} · going by ${by}, or as soon as you add ${more === 1 ? '1 more' : more + ' more'}`;
+  }
+ 
+  function renderAccountScreen(){
+    const n = state.queue.length;
+    $('queueSummary').textContent = whenText();
+ 
+    const archive = loadSent();
+    const last = archive[archive.length - 1];
+    $('lastSendField').style.display = last ? 'flex' : 'none';
+    if(last){
+      const when = new Date(last.at).toLocaleString('en-GB', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+      const c = last.entries.length;
+      $('lastSendSummary').textContent = `${c === 1 ? '1 entry' : c + ' entries'} · ${when}`;
+    }
+    const blocked = n === 0 || state.syncing || !navigator.onLine;
+    $('sendAllBtn').disabled = blocked;
+    $('sendAllBtn').style.opacity = blocked ? '0.5' : '1';
+    $('sendAllBtn').textContent = !navigator.onLine && n > 0
+      ? 'Offline — these go across when you are back'
+      : 'Send everything now';
+ 
+    const { sheet, table } = monthNamesFor(isoToday(0));
+    const open = computeOpenYIds().length;
+    $('monthSummary').textContent =
+      `Writing to ${sheet}, table ${table}. ${open === 0 ? 'No open IDs.' : open === 1 ? '1 open ID.' : open + ' open IDs.'}`;
+  }
+ 
   // ---------- INIT ----------
+  loadQueue();
+  loadOpenYIds();
+  loadHistory();
+  setSyncMode(loadSyncMode());   // also arms the timers for anything already queued
+  renderSyncState();
+  renderBackupStatus();
+  scheduleBackupCheck();
+  setRequireConfirm(lsGet(LS_CONFIRM, false));
+  renderMonthBar();
   setIdKind('N');
   updateAmountWidth();
   updateCTA();
+ 
+  // Timers stop when the app closes, so launch is where an expired ceiling
+  // actually gets noticed. A full batch that has been sitting goes now too;
+  // anything smaller and still inside its hour is left to wait for company,
+  // otherwise opening the app would defeat the batching entirely.
+  if(state.queue.length && navigator.onLine && state.syncMode !== 'manual'){
+    if(overdue() || state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
+  }
+ 
+  // Backgrounding is the last reliable moment before the timers die with the
+  // page. Same test as launch, so a half-full batch inside its hour is not
+  // flushed just because you switched apps.
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'hidden') return;
+    if(!state.queue.length || !navigator.onLine || state.syncMode === 'manual') return;
+    if(overdue() || state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
+  });
+ 
+  // Coming back online is the moment a retry is most likely to succeed.
+  window.addEventListener('online', () => {
+    renderSyncState();
+    if(state.queue.length && state.syncMode !== 'manual') syncQueue({ silent:true });
+  });
+  window.addEventListener('offline', renderSyncState);
   // The webfont loads asynchronously, so the very first measurement above
   // may have used a fallback font's metrics — re-measure once it's ready.
   if(document.fonts && document.fonts.ready){
     document.fonts.ready.then(updateAmountWidth);
   }
-
-  // ---------- SERVICE WORKER (required by Chrome/Android for installability) ----------
+ 
+  // ---------- SERVICE WORKER ----------
+  // The worker caches the shell so the app opens with no signal, and reports
+  // back when a newer build has landed. Updates are offered, never applied
+  // silently — swapping the page out mid-entry would lose whatever was typed.
+  let updateOffered = false;
+  let updateAccepted = false;
+  let reloadStarted = false;
+ 
+  function doReload(){
+    if(reloadStarted) return;
+    reloadStarted = true;
+    location.reload();
+  }
+ 
+  function offerUpdate(){
+    if(updateOffered) return;
+    updateOffered = true;
+    $('updateBar').style.display = 'flex';
+  }
+ 
+  $('updateBtn').addEventListener('click', async () => {
+    $('updateBtn').disabled = true;
+    $('updateBtn').textContent = 'Reloading…';
+    // Anything still queued is on the device and survives a reload, but
+    // sending first means a reload can't be what delays it.
+    if(state.queue.length && navigator.onLine) await syncQueue({ silent:true });
+ 
+    const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
+    if(reg && reg.waiting){
+      // A new worker is installed and waiting. Let it take over, then reload
+      // once it does.
+      updateAccepted = true;
+      reg.waiting.postMessage({ type:'SKIP_WAITING' });
+      setTimeout(doReload, 1200); // in case controllerchange never fires
+    } else {
+      // Same worker, new page — the cache already holds it, so a plain
+      // reload is enough.
+      doReload();
+    }
+  });
+ 
   if('serviceWorker' in navigator){
+    // controllerchange also fires the very first time a worker claims the
+    // page, which must not reload anything.
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if(updateAccepted) doReload();
+    });
+ 
+    // The worker sends this when the page it just fetched differs from the
+    // page it had cached.
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if(e.data && e.data.type === 'UPDATE_READY') offerUpdate();
+    });
+ 
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(err => {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        if(reg.waiting) offerUpdate();
+        reg.addEventListener('updatefound', () => {
+          const incoming = reg.installing;
+          if(!incoming) return;
+          incoming.addEventListener('statechange', () => {
+            // A worker that reaches "installed" while something is already
+            // controlling the page is an update, not a first install.
+            if(incoming.state === 'installed' && navigator.serviceWorker.controller) offerUpdate();
+          });
+        });
+        // Check on launch, and again whenever the app is brought back to the
+        // foreground — an installed PWA can sit open for days.
+        const check = () => reg.update().catch(() => {});
+        check();
+        document.addEventListener('visibilitychange', () => {
+          if(document.visibilityState === 'visible') check();
+        });
+      }).catch(err => {
         console.warn('Service worker registration failed:', err);
       });
     });
@@ -1376,3 +2895,4 @@
 </script>
 </body>
 </html>
+ 
