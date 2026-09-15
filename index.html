@@ -400,17 +400,41 @@
   .date-box-input:focus{border-color:var(--green);}
   #txnFreqChips .chip{padding:12px 8px;font-size:12px;font-weight:700;}
 
-  /* Shrink-to-fit and left-aligned under the input, so a warning is a line of
-     text sitting beside the field rather than a full-width band of its own.
-     It still reserves its line, so nothing jumps when it appears. */
+  /* Lifted out of the field's column entirely and hung under the right end of
+     the row, in the gap the card already leaves between fields. It reserves
+     no space in either state, so the Date field is exactly as tall as every
+     other field and Expense name never moves. Right aligned because the left
+     of that band is where the next label sits — the two share it without
+     meeting, as long as the message stays short. */
+  .date-field{position:relative;}
   .date-hint{
-    align-self:flex-start;
-    width:auto;max-width:100%;
-    text-align:left;
-    font-size:11px;line-height:13px;
-    min-height:13px;
-    margin-top:-4px;margin-bottom:-6px;
+    position:absolute;
+    top:100%;right:0;
+    margin-top:4px;
+    max-width:72%;
+    text-align:right;
+    white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;
+    font-size:11px;line-height:12px;
+    pointer-events:none;
+    z-index:1;
     transition:color .15s;
+  }
+  /* The ID hint hangs the same way: out of the column, right-aligned into the
+     gap the card already leaves, so the row closes on 14px like every other
+     field and nothing below it moves when the hint swaps between N and Y. */
+  .id-field{position:relative;}
+  #idHint{
+    position:absolute;
+    top:100%;right:0;
+    margin-top:4px;
+    max-width:100%;
+    text-align:right;
+    white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;
+    font-size:11px;line-height:12px;
+    pointer-events:none;
+    z-index:1;
   }
   .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
   .date-hint.is-error{color:var(--red);font-weight:600;}
@@ -899,7 +923,7 @@
     <div class="group">
     <div class="group-title">What and when</div>
 
-    <div class="field">
+    <div class="field date-field">
       <label for="dateTextInput">Date</label>
       <div class="date-row">
         <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
@@ -956,7 +980,7 @@
     <div class="group">
     <div class="group-title">How it's tracked</div>
 
-    <div class="field">
+    <div class="field id-field">
       <div class="field-label" id="idLabel">Transaction ID</div>
       <div class="id-row" role="group" aria-labelledby="idLabel" aria-describedby="idHint">
         <div class="segmented" id="idSegment" role="group" aria-label="ID type">
@@ -972,7 +996,7 @@
           </svg>
         </button>
       </div>
-      <div class="field-hint" id="idHint">N = one-way payment, auto-generates a new ID</div>
+      <div class="field-hint" id="idHint">N = one-way, new ID each time</div>
     </div>
 
     <div id="txnTypeSection">
@@ -1622,9 +1646,9 @@
     $('idBoxSelect').style.display = interactiveY ? 'block' : 'none';
 
     if(kind === 'N'){
-      $('idHint').textContent = 'N = one-way payment, auto-generates a new ID';
+      $('idHint').textContent = 'N = one-way, new ID each time';
     } else {
-      $('idHint').textContent = 'Y = to be returned, new ID or closes an old one';
+      $('idHint').textContent = 'Y = returned later, new or old ID';
     }
     regenerateId();
     updateCTA();
