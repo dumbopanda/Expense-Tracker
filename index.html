@@ -744,6 +744,55 @@
   .txn .amt.in{color:var(--green);}
   .txn .amt.flat{color:var(--text-muted);}
 
+  /* A row is the way into the entry behind it, so it has to look and feel
+     like something you can press. */
+  .txn.tappable{cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .txn.tappable:active{background:var(--canvas-light);}
+  .txn .meta .edited{color:#8A6D1F;font-weight:700;}
+
+  /* EDIT MODE — the entry form doing a second job. Without a permanent,
+     unmissable marker it looks exactly like the add form, and Save would
+     quietly overwrite something instead of adding. */
+  .edit-banner{
+    display:flex;align-items:center;gap:12px;
+    margin:0 20px 2px;
+    padding:12px 16px;
+    border-radius:var(--radius-card);
+    background:var(--amber);
+  }
+  .edit-banner .eb-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .edit-banner .eb-title{font-size:14px;font-weight:800;color:#6E571A;}
+  .edit-banner .eb-sub{
+    font-size:12px;font-weight:600;color:#8A6D1F;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .edit-banner .eb-cancel{
+    flex-shrink:0;
+    padding:9px 16px;
+    border-radius:var(--radius-pill);
+    border:none;background:var(--text-dark);color:var(--lime);
+    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
+  }
+
+  /* Edits waiting to go to the sheet. Kept separate from the entry queue
+     because they cost differently and can fail for their own reason. */
+  .edits-bar{
+    display:flex;align-items:center;gap:12px;
+    padding:13px 16px;
+    border-radius:var(--radius-card);
+    background:var(--white);
+    border:1px solid var(--border);
+  }
+  .edits-bar .eb-label{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--text-dark);}
+  .edits-bar .eb-hint{display:block;font-size:12px;font-weight:500;color:var(--text-muted);margin-top:2px;}
+  .edits-bar .eb-push{
+    flex-shrink:0;padding:10px 16px;
+    border-radius:var(--radius-pill);
+    border:none;background:var(--text-dark);color:var(--lime);
+    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .edits-bar .eb-push:disabled{opacity:.6;}
+
   .due .body .name{font-weight:700;}
   .due .amt{color:var(--text-dark);}
 
@@ -924,6 +973,14 @@
 
   <!-- ADD PAYMENT SCREEN -->
   <form id="entryForm">
+
+    <div class="edit-banner" id="editBanner" style="display:none;" role="status">
+      <div class="eb-text">
+        <span class="eb-title">Editing an entry</span>
+        <span class="eb-sub" id="editBannerSub">—</span>
+      </div>
+      <button type="button" class="eb-cancel" id="editCancelBtn">Cancel</button>
+    </div>
 
     <div class="group">
     <div class="group-title">What and when</div>
@@ -1188,6 +1245,23 @@
     <div class="sheet-actions">
       <button type="button" class="btn btn-outline" id="confirmEditBtn">Edit entry</button>
       <button type="button" class="btn btn-save" id="confirmAddBtn">Add entry</button>
+      <!-- text swapped in edit mode by openConfirmSheet -->
+    </div>
+  </div>
+</div>
+
+<!-- ENTRY DETAIL — what a tap on a row in the history opens. Everything the
+     row had to leave out, plus the one thing you came for: a way to change it. -->
+<div class="modal-overlay" id="detailSheet" role="dialog" aria-modal="true" aria-labelledby="detailTitleText">
+  <div class="modal">
+    <button type="button" class="sheet-close" id="detailCloseBtn" aria-label="Close">✕</button>
+    <div class="sheet-title" id="detailTitleText">Entry</div>
+    <p class="sheet-line" id="detailLine">—</p>
+    <div class="sheet-note" id="detailNote" style="display:none;"></div>
+    <div class="sheet-props" id="detailProps"></div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-outline" id="detailDismissBtn">Close</button>
+      <button type="button" class="btn btn-save" id="detailEditBtn">Edit</button>
     </div>
   </div>
 </div>
@@ -1214,7 +1288,18 @@
     subTab: 'recent',
     historyShown: 40,
     requireConfirm: false,
-    pending: null
+    pending: null,
+    // Edits made on this device to rows that are already in the sheet,
+    // waiting to be pushed. Separate from `queue`, which only ever holds
+    // whole entries that have never been written.
+    edits: [],
+    // The entry currently loaded into the form for editing, or null when
+    // the form is doing its normal job of adding.
+    editing: null,
+    pushingEdits: false,
+    // Rebuilt on every render of the list: the key on a row maps back to the
+    // folded entry it was drawn from, so a tap knows what it opened.
+    rowIndex: {}
   };
 
   const $ = (id) => document.getElementById(id);
@@ -1264,6 +1349,10 @@
   // what has not gone across yet, so it cannot answer "what did I spend on
   // Tuesday" — this can, with no Make operations and no connection.
   const LS_HIST  = 'ledger.history.v1';
+  // Changes to rows that are already in the sheet, waiting to be pushed.
+  // An edit cannot be appended like a new entry — the row has to be found and
+  // patched in place — so it is held here rather than in the entry queue.
+  const LS_EDITS = 'ledger.edits.v1';
   // Months pulled back from the sheet, so older history can be read in the app
   // without paying for it again. { "AUG26": { at, rows } }
   const LS_SHEET = 'ledger.sheetCache.v1';
@@ -2056,11 +2145,12 @@
     // An amount of zero is "not typed yet", not a real figure — printing
     // "₹0.00" on the button from the first paint makes the number stop
     // meaning anything, so it only appears once there is one.
+    const verb = state.editing ? 'Save Changes' : 'Add Entry';
     if(state.isSelfTransfer){
-      $('ctaMainText').textContent = raw ? `Add Entry • ₹${amt} Transfer` : 'Add Entry';
+      $('ctaMainText').textContent = raw ? `${verb} • ₹${amt} Transfer` : verb;
     } else {
       const dir = state.debit ? 'Out' : 'In';
-      $('ctaMainText').textContent = raw ? `Add Entry • ₹${amt} ${dir}` : 'Add Entry';
+      $('ctaMainText').textContent = raw ? `${verb} • ₹${amt} ${dir}` : verb;
     }
 
     // The caption's only remaining job is saying why a tap will not work.
@@ -2111,6 +2201,12 @@
 
   // ---------- RESET (runs automatically after a successful save) ----------
   function fullReset(){
+    // Leaving edit mode is part of clearing the form, not a separate step —
+    // otherwise a blank form could still be sitting under an Editing banner,
+    // pointed at a row it no longer describes.
+    state.editing = null;
+    const eb = $('editBanner');
+    if(eb) eb.style.display = 'none';
     $('entryForm').reset();
     exitTxnTypeCustomMode();
     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
@@ -2202,13 +2298,30 @@
     if(state.history.length > HIST_MAX) state.history = state.history.slice(-HIST_MAX);
     lsSet(LS_HIST, state.history);
   }
+  // The history copy used to drop txnFreq, sheet and table, because nothing
+  // read them back. Editing does — an entry cannot be reloaded into the form
+  // without its frequency, and a patch cannot find its row without knowing
+  // which table the row is in. Older records simply lack them; editEntryFrom()
+  // fills the gaps from the date.
   function recordHistory(entries){
     entries.forEach(e => state.history.push({
       uid: e.uid, at: e.at, dateISO: e.dateISO, id: e.id,
       account: e.account, expenseName: e.expenseName, moreInfo: e.moreInfo,
-      txnType: e.txnType, debit: e.debit, credit: e.credit, sent: false
+      txnType: e.txnType, txnFreq: e.txnFreq,
+      debit: e.debit, credit: e.credit,
+      sheet: e.sheet, table: e.table,
+      sent: false
     }));
     saveHistory();
+  }
+
+  // ---------- PENDING EDITS ----------
+  function loadEdits(){
+    const e = lsGet(LS_EDITS, []);
+    state.edits = Array.isArray(e) ? e : [];
+  }
+  function saveEdits(){
+    lsSet(LS_EDITS, state.edits);
   }
   function markHistorySent(uids, sent){
     const set = new Set(uids);
@@ -2461,11 +2574,38 @@
   $('entryForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // An edit rewrites rows that already exist, so two things are settled
+    // before any field is looked at. Both are refusals about the shape of
+    // the change rather than about a value, and checking them here is what
+    // makes the message name the real problem: turning the transfer switch
+    // off also empties the name field, so left any later this would come
+    // back as "add an expense name".
+    if(state.editing && state.isSelfTransfer !== state.editing.isTransfer){
+      showToast(state.editing.isTransfer
+        ? 'A transfer is two rows and an entry is one — cancel and add a new one instead'
+        : 'An entry is one row and a transfer is two — cancel and add a new one instead', 4600);
+      return;
+    }
+
     if(!state.selectedDateISO){
       showToast('Pick a date first');
       flagInvalid($('dateTextInput'));
       $('dateTextInput').focus();
       return;
+    }
+
+    // A row can only be patched inside the table it already sits in, so an
+    // entry that has reached the sheet can move its date within its month
+    // but not out of it.
+    if(state.editing){
+      const written = state.editing.members.filter(o => !state.queue.some(q => q.uid === o.uid));
+      const home = written.map(o => o.sheet || monthNamesFor(o.dateISO).sheet);
+      const moving = monthNamesFor(state.selectedDateISO).sheet;
+      if(home.some(s => s !== moving)){
+        showToast(`That row is in ${home[0]} and has to stay there — pick a date in ${home[0]}`, 4600);
+        flagInvalid($('dateTextInput'));
+        return;
+      }
     }
 
     // Sent to the webhook as an Excel serial number (see toExcelSerial), not
@@ -2530,10 +2670,22 @@
       ];
     }
 
+    // The new values have to be carried on the same identities — same uid,
+    // same timestamp — or the app would end up holding the entry twice and
+    // the sheet would never be told which row to change. The shared
+    // timestamp is also what keeps a transfer's two legs folded together.
+    if(state.editing){
+      const originals = state.editing.members;
+      entries = entries.map((e, i) => originals[i]
+        ? { ...e, uid: originals[i].uid, at: originals[i].at }
+        : e);
+    }
+
     // Nothing is written yet. The form is left exactly as it is, so Edit
     // entry is a close rather than a restore.
     state.pending = {
       entries, savedId, amount,
+      editing: state.editing,
       isSelfTransfer: state.isSelfTransfer,
       account: state.account,
       toAccount: state.toAccount,
@@ -2603,6 +2755,13 @@
       ];
     }
 
+    // The same read-back serves both jobs; only the words on the buttons say
+    // whether tapping adds a row or rewrites one.
+    const editing = !!p.editing;
+    $('confirmTitleText').textContent = editing ? 'Save these changes?' : 'Add this entry?';
+    $('confirmAddBtn').textContent = editing ? 'Save changes' : 'Add entry';
+    $('confirmEditBtn').textContent = editing ? 'Keep editing' : 'Edit entry';
+
     $('confirmLine').textContent = line;
     $('confirmProps').innerHTML = rows.map(r => propRow(r[0], r[1])).join('');
 
@@ -2625,6 +2784,8 @@
     if(!p) return;
     state.pending = null;
     closeConfirmSheet();
+
+    if(p.editing){ commitEdit(p); return; }
 
     enqueue(p.entries);
     // enqueue() stamps `at`; the history copy has to carry the same stamp,
@@ -2655,7 +2816,11 @@
     if(e.target === $('confirmSheet')) dismissConfirm();
   });
   document.addEventListener('keydown', (e) => {
-    if(e.key === 'Escape' && $('confirmSheet').classList.contains('open')) dismissConfirm();
+    if(e.key !== 'Escape') return;
+    // Only one is ever open, and the confirm sheet sits on top when both
+    // could be, so it gets first refusal.
+    if($('confirmSheet').classList.contains('open')) dismissConfirm();
+    else if($('detailSheet').classList.contains('open')) closeDetail();
   });
 
   function newUid(){
@@ -2697,13 +2862,24 @@
         used.add(i); used.add(j);
         const from = r.debit ? r : rows[j];
         const to   = r.debit ? rows[j] : r;
-        out.push({ ...from, transfer:true, toAccount: to.account, amount: Number(from.debit) });
+        // `members` keeps the two underlying rows. The list only needs the
+        // folded line, but editing has to change both legs, and each leg is
+        // its own row in the sheet.
+        out.push({ ...from, transfer:true, toAccount: to.account, amount: Number(from.debit),
+                   members:[from, to] });
       } else {
         used.add(i);
-        out.push({ ...r, amount: Number(r.debit || r.credit || 0), isOut: !!r.debit });
+        out.push({ ...r, amount: Number(r.debit || r.credit || 0), isOut: !!r.debit,
+                   members:[r] });
       }
     });
     return out;
+  }
+
+  // True while a row has been changed on this device but the sheet still
+  // holds the old values.
+  function hasPendingEdit(row){
+    return state.edits.some(e => e.uid === row.uid);
   }
 
   function txnRow(r){
@@ -2714,14 +2890,16 @@
       : esc(r.expenseName) + (r.moreInfo ? ' · ' + esc(r.moreInfo) : '');
     const where = r.transfer ? `${esc(r.account)} → ${esc(r.toAccount)}` : esc(r.account);
     const held = r.sent ? '' : ' · <span class="held">on this device</span>';
+    const edited = (r.members || []).some(hasPendingEdit)
+      ? ' · <span class="edited">edited</span>' : '';
     const amt = r.transfer
       ? `<div class="amt flat">₹${money(r.amount)}</div>`
       : `<div class="amt ${r.isOut ? 'out' : 'in'}">${r.isOut ? '−' : '+'} ₹${money(r.amount)}</div>`;
-    return `<div class="txn">
+    return `<div class="txn tappable" data-key="${esc(r.uid)}" role="button" tabindex="0">
       <div class="${tile}">${mark}</div>
       <div class="body">
         <div class="name">${name}</div>
-        <div class="meta">${where} · ${esc(r.txnType)}${held}</div>
+        <div class="meta">${where} · ${esc(r.txnType)}${held}${edited}</div>
       </div>
       ${amt}
     </div>`;
@@ -2795,8 +2973,9 @@
       return;
     }
 
-    html = monthSummaryCard(all);
+    html = editsBar() + monthSummaryCard(all);
 
+    state.rowIndex = {};
     const shown = all.slice(0, state.historyShown);
     // Newest day first; inside a day, newest entry first.
     const days = [];
@@ -2809,6 +2988,7 @@
 
     days.forEach(iso => {
       const rows = foldTransfers(byDay[iso]);
+      rows.forEach(r => { state.rowIndex[r.uid] = r; });
       const net = rows.reduce((n, r) => n + (r.transfer ? 0 : (r.isOut ? -r.amount : r.amount)), 0);
       const netText = net === 0 ? '' :
         (net > 0 ? '+ ₹' : '− ₹') + money(Math.abs(net));
@@ -2823,6 +3003,409 @@
       : importFooter();
     pane.innerHTML = html;
     wireFooter();
+    wireRows(pane);
+    wireEditsBar(pane);
+  }
+
+  function wireRows(pane){
+    pane.querySelectorAll('.txn.tappable').forEach(el => {
+      const open = () => openDetail(el.dataset.key);
+      el.addEventListener('click', open);
+      el.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); }
+      });
+    });
+  }
+
+  // ---------- EDITS WAITING TO GO ----------
+  // A new entry is appended, which one call does for any number of rows. An
+  // edit has to be found first, and finding it means reading the month it
+  // sits in — so the price is one read per month plus one write per row, and
+  // it is stated rather than quietly spent.
+  function editsOpsCost(){
+    const months = new Set(state.edits.map(e => e.sheet)).size;
+    return months * 3 + state.edits.length * 2;
+  }
+  function editsBar(){
+    const n = state.edits.length;
+    if(!n) return '';
+    return `<div class="edits-bar">
+      <div class="eb-label">${n === 1 ? '1 edit' : n + ' edits'} not in the sheet yet
+        <span class="eb-hint">Shown here already · pushing costs ${editsOpsCost()} Make operations</span>
+      </div>
+      <button type="button" class="eb-push" id="pushEditsBtn">Push</button>
+    </div>`;
+  }
+  function wireEditsBar(pane){
+    const btn = pane.querySelector('#pushEditsBtn');
+    if(!btn) return;
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Pushing…';
+      const r = await pushEdits();
+      renderRecent();
+      showToast(r.msg, 4200);
+    });
+  }
+
+  // ---------- ENTRY DETAIL ----------
+  function statusOf(row){
+    const members = row.members || [row];
+    if(members.some(hasPendingEdit)) return 'Changed here — the sheet still has the old version';
+    if(members.some(m => !m.sent)) return 'On this device, waiting to be sent';
+    return 'In the sheet';
+  }
+
+  function openDetail(key){
+    const r = state.rowIndex[key];
+    if(!r) return;
+    state.detailKey = key;
+    const m = r.members || [r];
+    const amt = Number(r.amount).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    const when = formatDisplayDate(r.dateISO);
+
+    let line, rows;
+    if(r.transfer){
+      line = `₹${amt} moved from your ${r.account} account to your ${r.toAccount} account on ${when}. `
+           + `Two rows in the sheet, one thing that happened.`;
+      rows = [
+        ['Date', formatConfirmDate(r.dateISO)],
+        ['From account', r.account],
+        ['To account', r.toAccount],
+        ['Expense name', r.expenseName],
+        ['More info', r.moreInfo],
+        ['Sent leg type', m[0].txnType],
+        ['Received leg type', m[1] ? m[1].txnType : ''],
+        ['Frequency', m[0].txnFreq || 'Not recorded'],
+        ['Amount', `₹${amt} moved`],
+        ['Transaction ID', r.id],
+        ['Status', statusOf(r)]
+      ];
+    } else {
+      line = r.isOut
+        ? `₹${amt} left your ${r.account} account on ${when} for ${r.expenseName}.`
+        : `₹${amt} came into your ${r.account} account on ${when} from ${r.expenseName}.`;
+      rows = [
+        ['Date', formatConfirmDate(r.dateISO)],
+        ['Account', r.account],
+        ['Expense name', r.expenseName],
+        ['More info', r.moreInfo],
+        ['Transaction type', r.txnType],
+        ['Frequency', r.txnFreq || 'Not recorded'],
+        ['Amount', `₹${amt} ${r.isOut ? 'out' : 'in'}`],
+        ['Transaction ID', r.id],
+        ['Status', statusOf(r)]
+      ];
+    }
+
+    $('detailTitleText').textContent = r.transfer ? 'Self transfer' : (r.expenseName || 'Entry');
+    $('detailLine').textContent = line;
+    $('detailProps').innerHTML = rows.map(x => propRow(x[0], x[1])).join('');
+
+    // Anything already written can only be corrected in place, and Graph can
+    // only patch a row inside the table it is in — so the month is fixed for
+    // as long as the row exists.
+    const sent = m.every(x => x.sent);
+    $('detailNote').textContent = sent
+      ? 'Already in the sheet — an edit is held here until you push it'
+      : '';
+    $('detailNote').style.display = sent ? 'block' : 'none';
+
+    $('detailSheet').classList.add('open');
+  }
+
+  function closeDetail(){
+    $('detailSheet').classList.remove('open');
+    state.detailKey = null;
+  }
+  $('detailCloseBtn').addEventListener('click', closeDetail);
+  $('detailDismissBtn').addEventListener('click', closeDetail);
+  $('detailSheet').addEventListener('click', (e) => { if(e.target === $('detailSheet')) closeDetail(); });
+  $('detailEditBtn').addEventListener('click', () => {
+    const r = state.rowIndex[state.detailKey];
+    if(r) beginEdit(r);
+  });
+
+  // ---------- EDIT MODE ----------
+  // The entry form does both jobs rather than a second form being built
+  // alongside it. One set of fields, one set of rules, one place a change to
+  // either has to be made — and no chance of the two drifting apart.
+  function beginEdit(row){
+    closeDetail();
+    state.editing = {
+      key: row.uid,
+      isTransfer: !!row.transfer,
+      // The originals, frozen. What the sheet is asked to find later is this,
+      // not whatever the form ends up holding.
+      members: (row.members || [row]).map(m => ({ ...m }))
+    };
+    showScreen('add');
+    fillFormFrom(row);
+    $('editBanner').style.display = 'flex';
+    $('editBannerSub').textContent =
+      `${row.id} · ${formatDisplayDate(row.dateISO)} · ₹${money(row.amount)}`;
+    updateCTA();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function cancelEdit(){
+    fullReset();
+    showToast('Edit cancelled — nothing changed');
+  }
+  $('editCancelBtn').addEventListener('click', cancelEdit);
+
+  // A stored type may be one someone typed themselves, in which case the
+  // select has no option for it and the custom box has to be opened instead.
+  function setSingleType(value){
+    const v = value || 'Payment';
+    if([...txnTypeSelect.options].some(o => o.value === v)){
+      txnTypeSelect.value = v;
+      exitTxnTypeCustomMode();
+    } else {
+      txnTypeSelect.value = 'Custom';
+      txnTypeWrap.classList.add('custom-mode');
+      txnTypeCustomInput.style.display = 'block';
+      txnTypeCustomInput.value = v;
+    }
+  }
+  function setSplitType(sel, customInput, value){
+    const v = value || 'Payment';
+    if([...sel.options].some(o => o.value === v)){ sel.value = v; customInput.value = ''; }
+    else { sel.value = 'Custom'; customInput.value = v; }
+  }
+
+  // The ID must survive being loaded. setIdKind regenerates on every call,
+  // so the real one is written back over the fresh one afterwards.
+  function forceId(id){
+    if(!state.isSelfTransfer) setIdKind(String(id || '').startsWith('Y') ? 'Y' : 'N');
+    const interactiveY = (state.kind === 'Y' && !state.isSelfTransfer);
+    if(!interactiveY){
+      $('idBoxDisplay').textContent = id;
+      return;
+    }
+    const sel = $('idBoxSelect');
+    if(![...sel.options].some(o => o.value === id)){
+      const opt = document.createElement('option');
+      opt.value = id; opt.textContent = id;
+      sel.insertBefore(opt, sel.firstChild);
+    }
+    sel.value = id;
+  }
+
+  function fillFormFrom(row){
+    const m = row.members || [row];
+
+    // This has to run first: it rewrites the name, the types, the frequency
+    // and the ID on its way through, and everything below is what should
+    // survive.
+    state.isSelfTransfer = !!row.transfer;
+    applySelfTransferMode();
+
+    setDate(row.dateISO, null);
+    $('expenseName').value = row.expenseName || '';
+    $('moreInfo').value = row.moreInfo || '';
+    setTxnFreq(m[0].txnFreq === 'One Off' ? 'One Off' : 'Monthly');
+
+    amountInput.value = formatAmountString(String(Number(row.amount)));
+    amountInput.placeholder = amountInput.dataset.placeholderBackup || '00.00';
+    state.confirmAmount = null;
+    updateAmountWidth();
+
+    if(row.transfer){
+      state.account = m[0].account;
+      state.toAccount = m[1] ? m[1].account : state.toAccount;
+      selectChip('accountChips', state.account);
+      selectChip('toChips', state.toAccount);
+      setSplitType($('txnTypeFrom'), $('customTypeFromInput'), m[0].txnType);
+      setSplitType($('txnTypeTo'), $('customTypeToInput'), m[1] ? m[1].txnType : '');
+      updateSplitCustomVisibility();
+    } else {
+      state.account = row.account;
+      selectChip('accountChips', state.account);
+      state.debit = !!row.isOut;
+      state.credit = !row.isOut;
+      renderKindButtons(false);
+      setSingleType(row.txnType);
+    }
+
+    forceId(row.id);
+    updateCTA();
+  }
+
+  // ---------- SAVING AN EDIT ----------
+  const COL = {};
+  COLUMN_ORDER.forEach((k, i) => COL[k] = i);
+
+  // Everything the sheet will be asked to match on, taken before anything
+  // changes. Frozen on the first edit: editing the same row twice before a
+  // push changes what gets written, not what gets looked for.
+  function stageEdit(original, updated){
+    const sheet = original.sheet || monthNamesFor(original.dateISO).sheet;
+    const table = original.table || monthNamesFor(original.dateISO).table;
+    const existing = state.edits.find(x => x.uid === original.uid);
+    const target = existing ? existing.target : {
+      id: original.id,
+      dateSerial: original.dateSerial != null ? original.dateSerial : toExcelSerial(original.dateISO),
+      account: original.account,
+      debit: original.debit === '' || original.debit == null ? null : Number(original.debit),
+      credit: original.credit === '' || original.credit == null ? null : Number(original.credit)
+    };
+    const rec = { uid: original.uid, at: Date.now(), sheet, table, target, values: toRowArray(updated) };
+    if(existing) Object.assign(existing, rec);
+    else state.edits.push(rec);
+  }
+
+  // Writes the new values into whichever local store holds that row, so the
+  // app shows the change immediately whether or not the sheet has it yet.
+  function applyLocal(row){
+    const h = state.history.find(x => x.uid === row.uid);
+    if(h) Object.assign(h, row);
+    const cache = loadSheetCache();
+    let touched = false;
+    Object.keys(cache).forEach(mo => {
+      const i = cache[mo].rows.findIndex(x => x.uid === row.uid);
+      if(i > -1){ cache[mo].rows[i] = { ...cache[mo].rows[i], ...row }; touched = true; }
+    });
+    if(touched) saveSheetCache(cache);
+  }
+
+  // An ID can be renamed by an edit. The open list is only a fallback for IDs
+  // with no row anywhere, so an abandoned name left in it would go on
+  // reading as outstanding for good.
+  function pruneOpenYIds(){
+    const seen = new Set(allRows().map(r => r.id));
+    const before = state.openYIds.length;
+    state.openYIds = state.openYIds.filter(id => seen.has(id) || state.queue.some(q => q.id === id));
+    if(state.openYIds.length !== before) lsSet(LS_YIDS, state.openYIds);
+  }
+
+  function commitEdit(p){
+    const originals = p.editing.members;
+    let queued = 0, staged = 0;
+
+    p.entries.forEach((e, i) => {
+      const o = originals[i];
+      if(!o) return;
+
+      const qi = state.queue.findIndex(q => q.uid === o.uid);
+      if(qi > -1){
+        // Never written, so there is nothing to correct — the thing that is
+        // about to be sent is simply rewritten. Costs no operations.
+        state.queue[qi] = { ...e, uid: o.uid, at: state.queue[qi].at };
+        queued++;
+      } else {
+        stageEdit(o, e);
+        staged++;
+      }
+
+      applyLocal({
+        uid: o.uid,
+        dateISO: e.dateISO,
+        dateSerial: e.dateSerial,
+        id: e.id,
+        account: e.account,
+        expenseName: e.expenseName,
+        moreInfo: e.moreInfo,
+        txnType: e.txnType,
+        txnFreq: e.txnFreq,
+        debit: e.debit,
+        credit: e.credit,
+        sheet: e.sheet,
+        table: e.table
+      });
+    });
+
+    if(queued) saveQueue();
+    saveHistory();
+    saveEdits();
+    pruneOpenYIds();
+
+    fullReset();
+    showScreen('stats');
+    renderStats();
+
+    showToast(staged
+      ? (staged === 1 ? 'Updated here · push it to reach the sheet'
+                      : `Updated here · ${staged} rows to push`)
+      : 'Updated — it had not been sent yet');
+  }
+
+  // ---------- PUSHING EDITS ----------
+  // An index is only meaningful in the snapshot it came from: the nightly
+  // sort reorders the whole table at 23:50, so a cached index is right only
+  // by luck. Every push therefore reads the month first and patches against
+  // that read, which is what makes it safe rather than merely usually right.
+  function findTargetRow(rows, t){
+    const num = v => (v === '' || v == null) ? null : Number(v);
+    const sameAmount = r => num(r.debit) === num(t.debit) && num(r.credit) === num(t.credit);
+    const exact = rows.filter(r => r.id === t.id && sameAmount(r)
+      && Number(r.dateSerial) === Number(t.dateSerial) && r.account === t.account);
+    if(exact.length) return exact[0];
+    // The sheet may have been edited in Excel since. ID plus which side the
+    // money was on plus the figure still picks one row out of a month.
+    const loose = rows.filter(r => r.id === t.id && sameAmount(r));
+    return loose.length === 1 ? loose[0] : null;
+  }
+
+  async function pushEdits(){
+    if(state.pushingEdits) return { ok:false, msg:'Already pushing' };
+    if(!state.edits.length) return { ok:true, msg:'Nothing to push' };
+    state.pushingEdits = true;
+
+    const groups = {};
+    state.edits.forEach(e => {
+      const k = e.sheet + '|' + e.table;
+      (groups[k] = groups[k] || []).push(e);
+    });
+
+    let done = 0;
+    const problems = [];
+
+    for(const list of Object.values(groups)){
+      const { sheet, table } = list[0];
+      const read = await readTable(sheet, table);
+      if(!read.ok){ problems.push(`${sheet}: ${read.why}`); continue; }
+
+      for(const ed of list){
+        const row = findTargetRow(read.rows, ed.target);
+        if(!row){
+          problems.push(`${ed.target.id} is not in ${sheet} any more`);
+          continue;
+        }
+
+        const res = await callLedger({
+          MODE: 'update',
+          SHEET: sheet,
+          TABLE: table,
+          INDEX: row.index,
+          ROWS: JSON.stringify([ed.values])
+        });
+
+        if(!res.ok){ problems.push(`${sheet}: ${failureText(res)}`); break; }
+        if(state.requireConfirm && !String(res.text || '').includes(CONFIRM_TOKEN)){
+          problems.push(`${sheet}: the sheet did not confirm`); break;
+        }
+
+        state.edits = state.edits.filter(x => x.uid !== ed.uid);
+        // The snapshot is now one row out of date. Keeping it current matters
+        // when two edits in the same month have to be matched against it.
+        row.dateSerial = Number(ed.values[COL.DATE]);
+        row.id = ed.values[COL.ID];
+        row.account = ed.values[COL.ACCOUNT];
+        row.expenseName = ed.values[COL.EXPENSE];
+        row.debit = ed.values[COL.DEBIT] == null ? '' : Number(ed.values[COL.DEBIT]);
+        row.credit = ed.values[COL.CREDIT] == null ? '' : Number(ed.values[COL.CREDIT]);
+        done++;
+      }
+      saveEdits();
+    }
+
+    state.pushingEdits = false;
+    const msg = done
+      ? `${done} ${done === 1 ? 'edit' : 'edits'} written to the sheet`
+        + (problems.length ? ` · ${problems.length} did not go` : '')
+      : (problems[0] || 'Nothing changed');
+    return { ok: !problems.length, msg };
   }
 
   function importFooter(){
@@ -2934,6 +3517,7 @@
       counts: { history: state.history.length, queue: state.queue.length, openYIds: state.openYIds.length },
       history: state.history,
       queue: state.queue,
+      edits: state.edits,
       openYIds: state.openYIds,
       sent: loadSent(),
       syncMode: state.syncMode
@@ -2991,6 +3575,10 @@
     let addedQ = 0;
     (data.queue || []).forEach(e => { if(e.uid && !seenQ.has(e.uid)){ state.queue.push(e); seenQ.add(e.uid); addedQ++; } });
     saveQueue();
+
+    const seenE = new Set(state.edits.map(e => e.uid));
+    (data.edits || []).forEach(e => { if(e.uid && !seenE.has(e.uid)){ state.edits.push(e); seenE.add(e.uid); } });
+    saveEdits();
 
     const ids = new Set([...state.openYIds, ...(data.openYIds || [])]);
     state.openYIds = [...ids];
@@ -3072,7 +3660,14 @@
   // The app only knows what this device typed. Everything older lives in the
   // sheet, so it is fetched a month at a time and kept — one read each, never
   // repeated.
-  async function importMonth(sheet, table){
+  // One read of one month's table, parsed into rows. Costs 3 operations.
+  //
+  // `index` is the row's position in the table body, which is the only
+  // handle Graph offers for changing a row in place. It is read here rather
+  // than derived later because it has to come from the same response the
+  // rest of the row came from — an index from an older snapshot may point at
+  // a different row entirely once the nightly sort has run.
+  async function readTable(sheet, table){
     const res = await callLedger({ MODE:'read', SHEET: sheet, TABLE: table, ROWS:'[]' });
     if(!res.ok) return { ok:false, why: failureText(res) };
 
@@ -3098,23 +3693,32 @@
       rows.push({
         uid: `sheet:${sheet}:${i}`,
         src: 'sheet',
+        index: i,                                            // position in the table body
         at: Date.parse(dateISO + 'T00:00:00') + i,           // keeps the sheet's own order
         dateISO,
+        dateSerial: serial,
         id: String(r[col.ID] || ''),
         account: String(r[col.ACCOUNT] || ''),
         expenseName: String(r[col.EXPENSE] || ''),
         moreInfo: String(r[col.INFO] || ''),
         txnType: String(r[col.TYPE] || ''),
+        txnFreq: String(r[col.KIND] || ''),
         debit: debit || '',
         credit: credit || '',
+        sheet, table,
         sent: true
       });
     });
+    return { ok:true, rows };
+  }
 
+  async function importMonth(sheet, table){
+    const r = await readTable(sheet, table);
+    if(!r.ok) return r;
     const cache = loadSheetCache();
-    cache[sheet] = { at: Date.now(), rows };
+    cache[sheet] = { at: Date.now(), rows: r.rows };
     saveSheetCache(cache);
-    return { ok:true, count: rows.length };
+    return { ok:true, count: r.rows.length };
   }
 
   // ---------- NEW MONTH REMINDER ----------
@@ -3272,6 +3876,7 @@
   loadQueue();
   loadOpenYIds();
   loadHistory();
+  loadEdits();
   setSyncMode(loadSyncMode());   // also arms the timers for anything already queued
   renderSyncState();
   renderBackupStatus();
