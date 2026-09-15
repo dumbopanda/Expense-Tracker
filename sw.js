@@ -13,8 +13,8 @@
 // Nothing here touches the Make webhook: those are POSTs, and the fetch
 // handler ignores every method except GET.
 
-const SHELL_CACHE = 'ledger-shell-v1';
-const FONT_CACHE  = 'ledger-fonts-v1';
+const SHELL_CACHE = 'ledger-shell-v2';
+const FONT_CACHE  = 'ledger-fonts-v2';
 
 // The page is always cached and served under one key, whatever URL the
 // navigation actually used ("/", "/index.html", "/index.html?x=1").
