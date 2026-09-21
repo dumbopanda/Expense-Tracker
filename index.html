@@ -217,9 +217,10 @@
   }
 
   /* FORM */
-  /* The form is three cards, not nine loose fields: when & where, what for,
-     how much. A shared border is what makes "these belong together" visible
-     without anyone having to read the labels to work it out. */
+  /* The form is four cards, not nine loose fields: how much, which account,
+     what it was, and whether it comes back. A shared border is what makes
+     "these belong together" visible without anyone having to read the
+     labels to work it out. */
   form{padding:14px 20px 20px;display:flex;flex-direction:column;gap:14px;}
 
   .group{
@@ -231,7 +232,7 @@
   }
   /* Title hierarchy, largest to smallest:
        L1  app title      22 / 800 / dark
-       L2  section title  15 / 700 / dark      ← this
+       L2  section title  16 / 700 / dark      ← this
        L3  field label    13 / 600 / muted
        L4  hint           12 / 500 / grey
      Size, weight and colour all step down together, so the level is
@@ -264,11 +265,9 @@
   .group input[type="date"],
   .group select,
   .group .date-box-input,
-  .group .id-box,
-  .group .segmented,
-  .group .reuse-btn,
   .group .quick-date-btn:not(.active),
   .group .btn-outline,
+  .group .kind-btn:not(.on),
   .group .chip:not(.selected){
     background-color:var(--canvas-light);
   }
@@ -313,12 +312,12 @@
     padding-right:38px;
   }
 
-  /* Transaction type combo: a real <select> normally (identical to every
-     other dropdown in the app), which shrinks down to an invisible strip
-     over just the arrow once Custom is chosen — the visible custom text
-     input takes over underneath it. Tapping that strip still opens the
-     browser's real native picker (not a fake popup), because it's a
-     genuine, un-modified <select> receiving a direct tap the whole time. */
+  /* Category combo: a real <select> normally (identical to every other
+     dropdown in the app), which shrinks down to an invisible strip over
+     just the arrow once Custom is chosen — the visible custom text input
+     takes over underneath it. Tapping that strip still opens the browser's
+     real native picker (not a fake popup), because it's a genuine,
+     un-modified <select> receiving a direct tap the whole time. */
   .combo-wrap{position:relative;}
   .combo-wrap select#txnType{width:100%;}
   .combo-wrap.custom-mode select#txnType{
@@ -386,7 +385,7 @@
     .to-slot{transition:none;}
   }
 
-  /* txn type + frequency wrapper */
+  /* category wrapper */
   #txnTypeSection{display:flex;flex-direction:column;gap:18px;}
 
   /* DATE FIELD */
@@ -403,14 +402,11 @@
   }
   .date-box-input::placeholder{color:var(--text-muted);font-weight:500;}
   .date-box-input:focus{border-color:var(--green);}
-  #txnFreqChips .chip{padding:12px 8px;font-size:12px;font-weight:700;}
 
   /* Lifted out of the field's column entirely and hung under the right end of
      the row, in the gap the card already leaves between fields. It reserves
      no space in either state, so the Date field is exactly as tall as every
-     other field and Expense name never moves. Right aligned because the left
-     of that band is where the next label sits — the two share it without
-     meeting, as long as the message stays short. */
+     other field and nothing below it moves. */
   .date-field{position:relative;}
   .date-hint{
     position:absolute;
@@ -424,22 +420,6 @@
     pointer-events:none;
     z-index:1;
     transition:color .15s;
-  }
-  /* The ID hint hangs the same way: out of the column, right-aligned into the
-     gap the card already leaves, so the row closes on 14px like every other
-     field and nothing below it moves when the hint swaps between N and Y. */
-  .id-field{position:relative;}
-  #idHint{
-    position:absolute;
-    top:100%;right:0;
-    margin-top:4px;
-    max-width:100%;
-    text-align:right;
-    white-space:nowrap;
-    overflow:hidden;text-overflow:ellipsis;
-    font-size:11px;line-height:12px;
-    pointer-events:none;
-    z-index:1;
   }
   .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
   .date-hint.is-error{color:var(--red);font-weight:600;}
@@ -461,11 +441,7 @@
   }
   .quick-date-btn.active{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);font-style:normal;}
 
-  /* The resolved date used to sit under the field as a full line of its own,
-     where it read as a heading for whatever came next. Beside the label it
-     is plainly a readout of the field it belongs to. */
-
-  /* toggle switch (self-transfer) */
+  /* toggle switch (settings) */
   .switch-row{
     display:flex;align-items:center;justify-content:space-between;
     background:var(--white);
@@ -495,55 +471,6 @@
   .switch input:checked + .slider{background:var(--green);}
   .switch input:checked + .slider::before{transform:translateX(18px);}
 
-  /* segmented control (Y/N id kind) */
-  .segmented{
-    display:flex;
-    background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--radius-pill);
-    padding:4px;
-    gap:4px;
-    flex-shrink:0;
-  }
-  .segmented button{
-    width:44px;
-    border:none;background:transparent;
-    padding:12px 0;
-    border-radius:var(--radius-pill);
-    font-family:var(--font);font-size:14px;font-weight:700;
-    color:var(--text-muted);
-    cursor:pointer;
-  }
-  .segmented button.active-seg{background:var(--text-dark);color:var(--lime);}
-
-  .id-row{display:flex;align-items:center;gap:8px;}
-  .id-box{
-    flex:1;
-    padding:14px 16px;
-    border-radius:var(--radius-pill);
-    border:1px solid var(--border);
-    background:var(--white);
-    font-size:14px;font-weight:700;
-    color:var(--text-dark);
-    letter-spacing:0.3px;
-  }
-  select.id-box{
-    cursor:pointer;
-    padding-right:34px;
-  }
-  .reuse-btn{
-    padding:0;
-    width:44px;height:44px;
-    flex-shrink:0;
-    border-radius:50%;
-    background:var(--white);
-    border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-  }
-  .reuse-btn svg{width:19px;height:19px;stroke:var(--text-dark);transition:transform .3s;}
-  .reuse-btn:active svg{transform:rotate(180deg);}
-
   /* account / from-to chips */
   .chip-group{display:flex;gap:8px;flex-wrap:wrap;}
   .chip-group.vertical{flex-direction:column;flex-wrap:nowrap;}
@@ -559,7 +486,8 @@
   }
   .chip.selected{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
 
-  /* amount card */
+  /* amount card — first thing on the form, so it keeps its own larger
+     treatment rather than becoming one more field in a group. */
   .amount-card{
     background:var(--white);
     border:1px solid var(--border);
@@ -618,6 +546,7 @@
     border:1px solid var(--border);
     background:var(--white);
     font-family:var(--font);font-size:12px;font-weight:700;
+    color:var(--text-dark);
     cursor:pointer;
   }
   /* Same selected treatment as every other choice in the app — dark fill,
@@ -647,9 +576,28 @@
     margin-top:-8px;
   }
 
-  /* bottom nav */
-  /* ---------- STATS / HISTORY ---------- */
+  /* ---------- HISTORY / STATS ---------- */
   .stats-screen{padding:14px 20px 32px;display:flex;flex-direction:column;gap:14px;}
+
+  /* MONTH TOGGLE — present so the shape of the screen is right, wired to
+     nothing yet. Drawn disabled rather than live, so it never looks like a
+     control that is simply failing to respond. */
+  .month-toggle{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill);
+    padding:5px;
+  }
+  .mt-arrow{
+    width:38px;height:38px;
+    border-radius:var(--radius-pill);
+    border:none;background:transparent;
+    font-family:var(--font);font-size:18px;font-weight:700;
+    color:var(--text-muted);cursor:pointer;
+  }
+  .mt-arrow:disabled{opacity:.35;cursor:default;}
+  .mt-label{font-size:14px;font-weight:700;color:var(--text-dark);}
 
   /* A second dark pill directly under the dark top nav read as two navs of
      equal rank. This track is light instead, so the level is obvious before
@@ -710,9 +658,9 @@
 
   .txn{
     display:flex;align-items:center;gap:14px;
-    /* Set in 6px from the day header above it, so the header reads as the
+    /* Set in 10px from the day header above it, so the header reads as the
        edge of the box and the rows read as what is inside it. */
-    padding:14px 18px 14px 24px;
+    padding:14px 18px 14px 28px;
     border-bottom:1px solid var(--border);
   }
   .txn:last-child{border-bottom:none;}
@@ -814,6 +762,31 @@
     color:var(--text-dark);cursor:pointer;
   }
 
+  /* STAT TILES — one balance per account, same card language as everything
+     else on the page. The swatch keys each tile to the same colour its rows
+     carry in the history list. */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .stat-tile{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    padding:16px;
+  }
+  .stat-tile.wide{grid-column:1 / -1;}
+  .st-key{
+    display:flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:600;color:var(--text-muted);
+  }
+  .st-dot{width:10px;height:10px;border-radius:50%;background:var(--mint);flex-shrink:0;}
+  .st-dot.acct-International{background:var(--amber);}
+  .st-dot.acct-Cash{background:#EAE5D8;}
+  .st-val{
+    font-size:22px;font-weight:800;
+    letter-spacing:-0.3px;
+    margin-top:6px;color:var(--text-dark);
+  }
+  .st-val.out{color:var(--red);}
+
   /* MONTH SUMMARY — the one number-shaped question the list cannot answer
      at a glance: where did this month land. Self transfers are folded out
      first, so moving money between your own accounts never shows up as
@@ -833,6 +806,7 @@
   .month-title{font-size:16px;font-weight:700;letter-spacing:-0.2px;color:var(--text-dark);}
   .month-count{font-size:12px;font-weight:600;color:var(--text-muted);}
   .month-grid{display:grid;grid-template-columns:1fr 1fr 1fr;}
+  .month-grid.two{grid-template-columns:1fr 1fr;}
   .ms-cell{padding:14px 10px;text-align:center;border-right:1px solid var(--border);}
   .ms-cell:last-child{border-right:none;}
   .ms-cell .ms-key{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:0.4px;text-transform:uppercase;}
@@ -963,6 +937,7 @@
   <div class="top-tabs-wrap">
     <div class="top-tabs" role="tablist" aria-label="Screens">
       <button type="button" class="top-tab active" data-tab="add" role="tab" aria-selected="true">Add Payment</button>
+      <button type="button" class="top-tab" data-tab="history" role="tab" aria-selected="false">History</button>
       <button type="button" class="top-tab" data-tab="stats" role="tab" aria-selected="false">Stats</button>
     </div>
   </div>
@@ -973,7 +948,10 @@
     <button type="button" class="sync-btn" id="syncNowBtn">Send to sheet</button>
   </div>
 
-  <!-- ADD PAYMENT SCREEN -->
+  <!-- ADD PAYMENT SCREEN
+       Order is the order the entry is actually thought about: how much,
+       out of which account, what it was, and only then whether it comes
+       back. -->
   <form id="entryForm">
 
     <div class="edit-banner" id="editBanner" style="display:none;" role="status">
@@ -984,33 +962,23 @@
       <button type="button" class="eb-cancel" id="editCancelBtn">Cancel</button>
     </div>
 
-    <div class="group">
-    <div class="group-title">What and when</div>
-
-    <div class="field date-field">
-      <label for="dateTextInput">Date</label>
-      <div class="date-row">
-        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
-        <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
-        <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
+    <!-- 1 · AMOUNT -->
+    <div class="amount-card">
+      <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">₹ INR</span></div>
+      <div class="amt-display-wrap">
+        <span class="rupee" id="rupeeSymbol" aria-hidden="true">₹</span>
+        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00">
       </div>
-      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
+      <div class="amt-note" id="amountNote" style="display:none;" role="status"></div>
+      <div class="kind-toggle">
+        <button type="button" class="kind-btn credit" id="creditBtn">Credit</button>
+        <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
+      </div>
     </div>
 
-    <div class="field">
-      <label for="expenseName">Expense name</label>
-      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc">
-    </div>
-
-    <div class="field">
-      <label for="moreInfo">More info <span style="font-weight:500;">(optional)</span></label>
-      <input type="text" id="moreInfo" placeholder="Notes">
-    </div>
-    </div><!-- /group: what and when -->
-
-    <!-- The accounts and the one switch that reshapes them. Turning the pill
-         on opens a second row underneath; nothing above it moves and no chip
-         changes size or position. -->
+    <!-- 2 · ACCOUNT — the accounts and the one switch that reshapes them.
+         Turning the pill on opens a second row underneath; nothing above it
+         moves and no chip changes size or position. -->
     <div class="group account-group">
     <div class="group-title">Which account</div>
     <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
@@ -1041,32 +1009,14 @@
     </div>
     </div><!-- /group: which account -->
 
+    <!-- 3 · WHAT IT WAS — category, name, note, date -->
     <div class="group">
-    <div class="group-title">How it's tracked</div>
-
-    <div class="field id-field">
-      <div class="field-label" id="idLabel">Transaction ID</div>
-      <div class="id-row" role="group" aria-labelledby="idLabel" aria-describedby="idHint">
-        <div class="segmented" id="idSegment" role="group" aria-label="ID type">
-          <button type="button" data-kind="Y" id="btnY" aria-pressed="false">Y</button>
-          <button type="button" data-kind="N" id="btnN" aria-pressed="true">N</button>
-        </div>
-        <div class="id-box" id="idBoxDisplay" role="status" aria-label="Transaction ID">N9f8s3d</div>
-        <select class="id-box" id="idBoxSelect" style="display:none;" aria-label="Transaction ID"></select>
-        <button type="button" class="reuse-btn" id="regenBtn" title="Generate new ID" aria-label="Generate a new ID">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-        </button>
-      </div>
-      <div class="field-hint" id="idHint">N = one-way, new ID each time</div>
-    </div>
+    <div class="group-title">What it was</div>
 
     <div id="txnTypeSection">
       <!-- single mode (default) -->
       <div class="field" id="singleTypeField">
-        <label for="txnType">Transaction type</label>
+        <label for="txnType">Category</label>
         <div class="combo-wrap" id="txnTypeWrap">
           <select id="txnType">
             <option>Payment</option>
@@ -1078,14 +1028,14 @@
             <option>Received Transfer</option>
             <option value="Custom" style="font-style:italic;">Custom…</option>
           </select>
-          <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter Custom Transaction Type" autocomplete="off" aria-label="Custom transaction type">
+          <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter a category of your own" autocomplete="off" aria-label="Custom category">
         </div>
       </div>
 
-      <!-- self-transfer mode: type splits into the two legs -->
+      <!-- self-transfer mode: the category splits into the two legs -->
       <div class="row-2" id="splitTypeFields" style="display:none;">
         <div class="field">
-          <label for="txnTypeFrom">Sent leg type</label>
+          <label for="txnTypeFrom">Sent leg category</label>
           <select id="txnTypeFrom">
             <option>Payment</option>
             <option>Refund</option>
@@ -1098,7 +1048,7 @@
           </select>
         </div>
         <div class="field">
-          <label for="txnTypeTo">Received leg type</label>
+          <label for="txnTypeTo">Received leg category</label>
           <select id="txnTypeTo">
             <option>Payment</option>
             <option>Refund</option>
@@ -1124,26 +1074,53 @@
     </div>
 
     <div class="field">
-      <div class="field-label" id="txnFreqLabel">Frequency</div>
-      <div class="chip-group" id="txnFreqChips" role="group" aria-labelledby="txnFreqLabel">
-        <button type="button" class="chip" data-val="One Off" aria-pressed="false" style="flex:1;text-align:center;">One Off</button>
-        <button type="button" class="chip selected" data-val="Monthly" aria-pressed="true" style="flex:1;text-align:center;">Monthly</button>
-      </div>
+      <label for="expenseName">Transaction name</label>
+      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc">
     </div>
-    </div><!-- /group: how it's tracked -->
 
-    <div class="amount-card">
-      <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">₹ INR</span></div>
-      <div class="amt-display-wrap">
-        <span class="rupee" id="rupeeSymbol" aria-hidden="true">₹</span>
-        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00">
-      </div>
-      <div class="amt-note" id="amountNote" style="display:none;" role="status"></div>
-      <div class="kind-toggle">
-        <button type="button" class="kind-btn credit" id="creditBtn">Credit</button>
-        <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
-      </div>
+    <div class="field">
+      <label for="moreInfo">Note <span style="font-weight:500;">(optional)</span></label>
+      <input type="text" id="moreInfo" placeholder="Notes">
     </div>
+
+    <div class="field date-field">
+      <label for="dateTextInput">Date</label>
+      <div class="date-row">
+        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
+        <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
+        <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
+      </div>
+      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
+    </div>
+    </div><!-- /group: what it was -->
+
+    <!-- 4 · WILL I GET THIS BACK — replaces the raw transaction-ID field.
+         The ID still exists underneath; it is simply never typed. -->
+    <div class="group" id="backGroup">
+    <div class="group-title">Will I get this back?</div>
+
+    <div class="field">
+      <div class="kind-toggle" id="backToggle" role="group" aria-label="Will I get this back">
+        <button type="button" class="kind-btn" data-back="Y" aria-pressed="false">Yes</button>
+        <button type="button" class="kind-btn on" data-back="N" aria-pressed="true">No</button>
+      </div>
+      <div class="field-hint" id="backHint">One-way payment — nothing is expected back.</div>
+    </div>
+
+    <div class="field" id="backKindField" style="display:none;">
+      <label for="backKind">Which one</label>
+      <select id="backKind">
+        <option value="new">New — I am lending or paying out now</option>
+        <option value="old">Old — this is money coming back</option>
+      </select>
+    </div>
+
+    <div class="field" id="openItemField" style="display:none;">
+      <label for="openItemSelect">Which open item</label>
+      <select id="openItemSelect"></select>
+      <div class="field-hint" id="openItemHint"></div>
+    </div>
+    </div><!-- /group: will I get this back -->
 
     <button type="submit" class="cta-save" id="saveBtn">
       <span class="cta-dot"></span>
@@ -1152,8 +1129,13 @@
     <div class="cta-caption" id="ctaCaption">Fill in the details above</div>
   </form>
 
-  <!-- STATS / HISTORY -->
-  <div class="stats-screen" id="statsScreen" style="display:none;">
+  <!-- HISTORY -->
+  <div class="stats-screen" id="historyScreen" style="display:none;">
+    <div class="month-toggle" role="group" aria-label="Month">
+      <button type="button" class="mt-arrow" id="monthPrevBtn" disabled aria-label="Previous month">‹</button>
+      <span class="mt-label" id="monthToggleLabel">—</span>
+      <button type="button" class="mt-arrow" id="monthNextBtn" disabled aria-label="Next month">›</button>
+    </div>
     <div class="sub-tabs" role="tablist" aria-label="History">
       <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
         <span>Recent</span><span class="count" id="recentCount" style="display:none;">0</span>
@@ -1164,6 +1146,12 @@
     </div>
     <div id="recentPane"></div>
     <div id="duesPane" style="display:none;"></div>
+  </div>
+
+  <!-- STATS — five live tiles, computed on the device from what it holds.
+       Nothing is cached and there is nothing to refresh. -->
+  <div class="stats-screen" id="statsScreen" style="display:none;">
+    <div id="statsPane"></div>
   </div>
 
   <!-- ACCOUNT / SYNC SCREEN -->
@@ -1224,7 +1212,7 @@
       <div class="group-title">The sheet</div>
 
       <div class="field">
-        <div class="field-label">Open IDs</div>
+        <div class="field-label">Open items</div>
         <div class="field-hint">The app tracks these itself. Read the sheet again if you have edited it in Excel directly.</div>
         <button type="button" class="btn btn-outline" id="refreshBtn">Read the sheet again</button>
       </div>
@@ -1274,10 +1262,14 @@
   // ---------- STATE ----------
   const state = {
     kind: 'N',
+    // The Yes/No answer and, when it is Yes, whether this opens a new item
+    // or closes an old one. The transaction ID is derived from these and
+    // never typed — idValue is what actually gets written.
+    back: 'N',
+    idValue: '',
     isSelfTransfer: false,
     account: 'Domestic',
     toAccount: 'International',
-    txnFreq: 'Monthly',
     debit: true,
     credit: false,
     openYIds: [],
@@ -1319,7 +1311,11 @@
   // structured columns left to right (B through K). Getting this wrong writes
   // every field one column off with no error from Graph, so it is defined
   // once here and never rebuilt inline.
-  const COLUMN_ORDER = ['DATE','ID','ACCOUNT','EXPENSE','INFO','TYPE','KIND','DEBIT','CREDIT','FORMULA'];
+  //
+  // Nine columns, B through J, matching the sheet as it stands after the
+  // frequency column was deleted. Adding or removing one here without doing
+  // the same in Excel writes every field one column off with no error.
+  const COLUMN_ORDER = ['DATE','ID','ACCOUNT','EXPENSE','INFO','TYPE','DEBIT','CREDIT','FORMULA'];
   const ROW_FORMULA = '=[@[CREDIT AMOUNT]]-[@[DEBIT AMOUNT]]';
 
   // Storage keys. Everything the app needs to survive a reload lives under
@@ -1359,6 +1355,10 @@
   // without paying for it again. { "AUG26": { at, rows } }
   const LS_SHEET = 'ledger.sheetCache.v1';
   const SHEET_CACHE_MONTHS = 12;
+  // The sheet's own totals (B5:J5), read once after the nightly sort. It is
+  // the only number the device cannot work out for itself — rollovers and
+  // anything entered straight into Excel live there and nowhere else.
+  const LS_STATS = 'ledger.statsSnapshot.v1';
   const LS_BACKUP = 'ledger.lastBackup.v1';
   const LS_SNOOZE = 'ledger.backupSnooze.v1';
   const BACKUP_HOUR = 22;   // the nightly nudge
@@ -1638,14 +1638,16 @@
     if(on) exitTxnTypeCustomMode();
     $('splitTypeFields').style.display = on ? 'grid' : 'none';
 
+    // Moving your own money is never something that comes back to you, so
+    // the question is not asked — the pair is tracked with a Y ID under the
+    // hood exactly as before.
+    $('backGroup').style.display = on ? 'none' : 'flex';
+
     if(on){
-      $('idSegment').style.pointerEvents = 'none';
-      $('idSegment').style.opacity = '0.6';
-      $('btnY').disabled = true; $('btnN').disabled = true;
-      setIdKind('Y');
+      state.kind = 'Y';
+      state.idValue = generateId('Y');
 
       $('expenseName').value = 'Self Transfer';
-      setTxnFreq('Monthly');
       $('txnTypeFrom').value = 'Sent Transfer';
       $('txnTypeTo').value = 'Received Transfer';
       updateSplitCustomVisibility();
@@ -1665,16 +1667,12 @@
         selectChip('toChips', alt);
       }
     } else {
-      $('idSegment').style.pointerEvents = 'auto';
-      $('idSegment').style.opacity = '1';
-      $('btnY').disabled = false; $('btnN').disabled = false;
       $('debitBtn').classList.remove('locked');
       $('creditBtn').classList.remove('locked');
       state.credit = false; state.debit = true;
       renderKindButtons(false);
       if($('expenseName').value === 'Self Transfer') $('expenseName').value = '';
-      setTxnFreq('Monthly');
-      setIdKind('N');
+      setBack('N');
       $('splitCustomFields').style.display = 'none';
     }
     updateCTA();
@@ -1729,49 +1727,109 @@
     state.toAccount = v;
   }, 1);
 
-  // ---------- ID Y/N SEGMENTED CONTROL ----------
-  function setIdKind(kind){
-    state.kind = kind;
-    $('btnY').classList.toggle('active-seg', kind === 'Y');
-    $('btnN').classList.toggle('active-seg', kind === 'N');
-    $('btnY').setAttribute('aria-pressed', kind === 'Y' ? 'true' : 'false');
-    $('btnN').setAttribute('aria-pressed', kind === 'N' ? 'true' : 'false');
-
-    const interactiveY = (kind === 'Y' && !state.isSelfTransfer);
-    $('idBoxDisplay').style.display = interactiveY ? 'none' : 'block';
-    $('idBoxSelect').style.display = interactiveY ? 'block' : 'none';
-
-    if(kind === 'N'){
-      $('idHint').textContent = 'N = one-way, new ID each time';
+  // ---------- WILL I GET THIS BACK ----------
+  // The raw alphanumeric ID field is gone. The same two kinds of entry it
+  // encoded are now asked for in words: No writes an N id, Yes + New writes
+  // a fresh Y id, and Yes + Old reuses the Y id of whichever open item is
+  // picked — chosen by its name, never by its code.
+  //
+  // keepId is set when an existing entry is being loaded into the form:
+  // the answer has to be shown without a new ID being minted over the one
+  // the row already has.
+  function setBack(v, keepId){
+    state.back = v;
+    state.kind = v;
+    document.querySelectorAll('#backToggle .kind-btn').forEach(b => {
+      const on = b.dataset.back === v;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    $('backHint').textContent = v === 'Y'
+      ? 'Kept under Owed to me until the other half is entered.'
+      : 'One-way payment — nothing is expected back.';
+    $('backKindField').style.display = v === 'Y' ? 'flex' : 'none';
+    if(v === 'Y'){
+      applyBackMode(keepId);
     } else {
-      $('idHint').textContent = 'Y = returned later, new or old ID';
+      $('openItemField').style.display = 'none';
+      if(!keepId) state.idValue = generateId('N');
     }
-    regenerateId();
     updateCTA();
   }
-  $('btnY').addEventListener('click', () => setIdKind('Y'));
-  $('btnN').addEventListener('click', () => setIdKind('N'));
-  $('regenBtn').addEventListener('click', () => regenerateId());
 
-  function regenerateId(){
-    const newId = generateId(state.kind);
-    const interactiveY = (state.kind === 'Y' && !state.isSelfTransfer);
-    if(!interactiveY){
-      $('idBoxDisplay').textContent = newId;
-    } else {
-      const sel = $('idBoxSelect');
-      sel.innerHTML = '';
-      const optNew = document.createElement('option');
-      optNew.value = newId; optNew.textContent = newId;
-      sel.appendChild(optNew);
-      computeOpenYIds().forEach(id => {
-        const opt = document.createElement('option');
-        opt.value = id; opt.textContent = id;
-        sel.appendChild(opt);
-      });
-      sel.value = newId;
+  function applyBackMode(keepId){
+    const old = $('backKind').value === 'old';
+    $('openItemField').style.display = old ? 'flex' : 'none';
+    if(!old){
+      if(!keepId) state.idValue = generateId('Y');
+      return;
     }
+    const items = renderOpenItems();
+    if(!items.length){
+      // Nothing is open, so there is nothing to close. Say so rather than
+      // leaving an empty dropdown that looks broken.
+      if(!keepId) state.idValue = generateId('Y');
+      return;
+    }
+    if(!keepId) applyOpenItem($('openItemSelect').value);
   }
+
+  // Every currently-open item, newest first, described by its name rather
+  // than its ID — the ID is still the handle underneath.
+  function openItems(){
+    const rows = allRows();
+    return computeOpenYIds().map(id => {
+      const hits = rows.filter(r => r.id === id).sort((a,b) => b.at - a.at);
+      const e = hits[0] || null;
+      return {
+        id,
+        name: e && e.expenseName ? e.expenseName : id,
+        account: e ? e.account : '',
+        amount: e ? Number(e.debit || e.credit || 0) : null,
+        dateISO: e ? e.dateISO : null,
+        at: e ? e.at : 0
+      };
+    }).sort((a,b) => b.at - a.at);
+  }
+
+  function renderOpenItems(){
+    const items = openItems();
+    const sel = $('openItemSelect');
+    const keep = sel.value;
+    sel.innerHTML = '';
+    items.forEach(it => {
+      const opt = document.createElement('option');
+      opt.value = it.id;
+      const money = it.amount ? ` · ₹${it.amount.toLocaleString('en-IN')}` : '';
+      const when = it.dateISO ? ` · ${formatDisplayDate(it.dateISO)}` : '';
+      opt.textContent = it.name + money + when;
+      sel.appendChild(opt);
+    });
+    if(items.some(i => i.id === keep)) sel.value = keep;
+    $('openItemHint').textContent = items.length
+      ? 'Picking one marks it as settled once this entry is saved.'
+      : 'Nothing is open yet — this will be saved as a new one instead.';
+    return items;
+  }
+
+  // Choosing an open item carries its name across, so the returning half of
+  // a pair is labelled the same as the half that opened it. Anything already
+  // typed is left alone.
+  function applyOpenItem(id){
+    if(!id) return;
+    state.idValue = id;
+    const it = openItems().find(i => i.id === id);
+    if(it && !$('expenseName').value.trim() && it.name !== id){
+      $('expenseName').value = it.name;
+    }
+    updateCTA();
+  }
+
+  document.querySelectorAll('#backToggle .kind-btn').forEach(b => {
+    b.addEventListener('click', () => setBack(b.dataset.back));
+  });
+  $('backKind').addEventListener('change', () => applyBackMode(false));
+  $('openItemSelect').addEventListener('change', (e) => applyOpenItem(e.target.value));
 
   // ---------- ID GENERATION ----------
   function randomSuffix(len=6){
@@ -1823,9 +1881,6 @@
     lsSet(LS_YIDS, state.openYIds);
   }
 
-  // Reads the current month's table back from the sheet and rebuilds the open
-  // Y-ID list from what's actually there. Costs 3 operations, so it's on a
-  // button rather than on every save.
   // Re-reads the current month and folds it back in. It deliberately does not
   // rebuild the open list from that one month — doing so used to erase every
   // ID opened in any other month.
@@ -1842,11 +1897,10 @@
     const open = computeOpenYIds();
     state.openYIds = open;
     lsSet(LS_YIDS, open);
-    if(state.kind === 'Y' && !state.isSelfTransfer) regenerateId();
-    if(!silent) showToast(`Read ${sheet} · ${open.length === 1 ? '1 open ID' : open.length + ' open IDs'}`);
+    if(state.back === 'Y' && !state.isSelfTransfer) applyBackMode(true);
+    if(!silent) showToast(`Read ${sheet} · ${open.length === 1 ? '1 open item' : open.length + ' open items'}`);
     return true;
   }
-
 
   // ---------- AMOUNT INPUT (masked, comma-formatted, 2-decimal cap) ----------
   // Two guards against a stray zero, which is the one typo this form cannot
@@ -2071,7 +2125,7 @@
   });
   renderKindButtons(false);
 
-  // ---------- TRANSACTION TYPE (single mode combo) ----------
+  // ---------- CATEGORY (single mode combo) ----------
   const txnTypeWrap = $('txnTypeWrap');
   const txnTypeSelect = $('txnType');
   const txnTypeCustomInput = $('txnTypeCustomInput');
@@ -2100,14 +2154,14 @@
   // Same "placeholder vanishes the instant you tap in" treatment as the
   // amount field — clearing the attribute itself, not just its color.
   txnTypeCustomInput.addEventListener('focus', (e) => {
-    e.target.dataset.placeholderBackup = e.target.placeholder || 'Enter Custom Transaction Type';
+    e.target.dataset.placeholderBackup = e.target.placeholder || 'Enter a category of your own';
     e.target.placeholder = '';
   });
   txnTypeCustomInput.addEventListener('blur', (e) => {
-    if(e.target.value === '') e.target.placeholder = e.target.dataset.placeholderBackup || 'Enter Custom Transaction Type';
+    if(e.target.value === '') e.target.placeholder = e.target.dataset.placeholderBackup || 'Enter a category of your own';
   });
 
-  // ---------- TRANSACTION TYPE (self-transfer split mode) ----------
+  // ---------- CATEGORY (self-transfer split mode) ----------
   function updateSplitCustomVisibility(){
     const fromCustom = $('txnTypeFrom').value === 'Custom';
     const toCustom = $('txnTypeTo').value === 'Custom';
@@ -2117,22 +2171,6 @@
   }
   $('txnTypeFrom').addEventListener('change', updateSplitCustomVisibility);
   $('txnTypeTo').addEventListener('change', updateSplitCustomVisibility);
-
-  // ---------- FREQUENCY ----------
-  // Two values do not need a dropdown. As a <select> this cost a tap, a
-  // native picker and a second tap on every entry; as two chips it costs
-  // one tap and shows the current value without being opened.
-  function setTxnFreq(v){
-    state.txnFreq = v;
-    document.querySelectorAll('#txnFreqChips .chip').forEach(c => {
-      const on = c.dataset.val === v;
-      c.classList.toggle('selected', on);
-      c.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-  }
-  document.querySelectorAll('#txnFreqChips .chip').forEach(c => {
-    c.addEventListener('click', () => setTxnFreq(c.dataset.val));
-  });
 
   // ---------- CTA (single Save button + live caption) ----------
   function formattedAmount(){
@@ -2160,9 +2198,9 @@
     // where it is a sentence rather than three fields joined by bullets.
     const cap = $('ctaCaption');
     const missing = [];
-    if(!state.selectedDateISO) missing.push('a date');
-    if(!$('expenseName').value.trim()) missing.push('a name');
     if(!raw) missing.push('an amount');
+    if(!$('expenseName').value.trim()) missing.push('a name');
+    if(!state.selectedDateISO) missing.push('a date');
     if(missing.length){
       const list = missing.length === 1 ? missing[0]
         : missing.slice(0, -1).join(', ') + ' and ' + missing[missing.length - 1];
@@ -2218,7 +2256,8 @@
     setDate(isoToday(0), 'today');
     state.isSelfTransfer = false;
     applySelfTransferMode();
-    setIdKind('N');
+    $('backKind').value = 'new';
+    setBack('N');
     selectChip('accountChips', 'Domestic');
     state.account = 'Domestic';
     $('splitCustomFields').style.display = 'none';
@@ -2236,8 +2275,7 @@
 
   // ---------- SUBMIT ----------
   function currentId(){
-    if(state.kind === 'Y' && !state.isSelfTransfer) return $('idBoxSelect').value;
-    return $('idBoxDisplay').textContent;
+    return state.idValue || generateId(state.kind);
   }
 
   async function callLedger(payload){
@@ -2300,16 +2338,13 @@
     if(state.history.length > HIST_MAX) state.history = state.history.slice(-HIST_MAX);
     lsSet(LS_HIST, state.history);
   }
-  // The history copy used to drop txnFreq, sheet and table, because nothing
-  // read them back. Editing does — an entry cannot be reloaded into the form
-  // without its frequency, and a patch cannot find its row without knowing
-  // which table the row is in. Older records simply lack them; editEntryFrom()
-  // fills the gaps from the date.
+  // The history copy carries the sheet and table names because a patch
+  // cannot find its row without knowing which table the row is in.
   function recordHistory(entries){
     entries.forEach(e => state.history.push({
       uid: e.uid, at: e.at, dateISO: e.dateISO, id: e.id,
       account: e.account, expenseName: e.expenseName, moreInfo: e.moreInfo,
-      txnType: e.txnType, txnFreq: e.txnFreq,
+      txnType: e.txnType,
       debit: e.debit, credit: e.credit,
       sheet: e.sheet, table: e.table,
       sent: false
@@ -2442,7 +2477,6 @@
       EXPENSE: e.expenseName,
       INFO: e.moreInfo,
       TYPE: e.txnType,
-      KIND: e.txnFreq,
       // Graph writes an empty string as a text cell, which then poisons the
       // SUMIFS totals on row 5. null leaves the cell genuinely blank.
       DEBIT: e.debit === '' ? null : e.debit,
@@ -2468,8 +2502,7 @@
   // Pushes everything currently queued. Make replies "Accepted" before the
   // Graph write actually runs — there is no success string to wait for — so
   // a batch is cleared from the queue once the request itself is accepted,
-  // and the sheet is the source of truth from then on. Pull to refresh
-  // reconciles anything that slipped through.
+  // and the sheet is the source of truth from then on.
   async function syncQueue({ silent = false } = {}){
     if(state.syncing) return { ok:true, sent:0 };
     if(state.queue.length === 0) return { ok:true, sent:0 };
@@ -2581,7 +2614,7 @@
     // the change rather than about a value, and checking them here is what
     // makes the message name the real problem: turning the transfer switch
     // off also empties the name field, so left any later this would come
-    // back as "add an expense name".
+    // back as "add a transaction name".
     if(state.editing && state.isSelfTransfer !== state.editing.isTransfer){
       showToast(state.editing.isTransfer
         ? 'A transfer is two rows and an entry is one — cancel and add a new one instead'
@@ -2620,35 +2653,30 @@
     const { table: targetTable } = monthNamesFor(state.selectedDateISO);
     const expenseName = $('expenseName').value.trim();
     const moreInfo = $('moreInfo').value.trim();
-    const txnFreq = state.txnFreq;
     const amount = amountRawNumber();
 
     // Each missing field gets its own message and its own focus. `required`
     // used to fire the browser's native bubble first, which meant the
-    // expense-name branch of the old combined toast could never run.
-    if(!expenseName){
-      showToast('Add an expense name');
-      flagInvalid($('expenseName'));
-      $('expenseName').focus();
-      return;
-    }
+    // name branch of the old combined toast could never run.
     if(!amount || amount <= 0){
       showToast('Add an amount');
       flagInvalid(amountInput);
       amountInput.focus();
       return;
     }
-
-    // The large-amount double-tap lived here because nothing else asked
-    // before writing. The confirm sheet asks about every entry now, and it
-    // reads the figure back in lakhs, so the second tap moved there.
+    if(!expenseName){
+      showToast('Add a transaction name');
+      flagInvalid($('expenseName'));
+      $('expenseName').focus();
+      return;
+    }
 
     const { sheet: targetSheet } = monthNamesFor(state.selectedDateISO);
     const savedId = currentId();
     const base = {
       dateSerial: dateForSheet,
       id: savedId,
-      expenseName, moreInfo, txnFreq,
+      expenseName, moreInfo,
       dateISO: state.selectedDateISO,
       sheet: targetSheet,
       table: targetTable
@@ -2692,9 +2720,10 @@
       account: state.account,
       toAccount: state.toAccount,
       kind: state.kind,
+      backMode: $('backKind').value,
       debit: state.debit,
       dateISO: state.selectedDateISO,
-      expenseName, moreInfo, txnFreq
+      expenseName, moreInfo
     };
     openConfirmSheet();
   });
@@ -2727,15 +2756,14 @@
       line = `₹${amt} moves from your ${p.account} account to your ${p.toAccount} account on ${when}. `
            + `It is your own money changing hands, so it is recorded as two rows but counts as neither spending nor income.`;
       rows = [
-        ['Date', whenFull],
+        ['Amount', `₹${amt} moved`],
         ['From account', p.account],
         ['To account', p.toAccount],
-        ['Expense name', p.expenseName],
-        ['More info', p.moreInfo],
-        ['Sent leg type', p.entries[0].txnType],
-        ['Received leg type', p.entries[1].txnType],
-        ['Frequency', p.txnFreq],
-        ['Amount', `₹${amt} moved`],
+        ['Sent leg category', p.entries[0].txnType],
+        ['Received leg category', p.entries[1].txnType],
+        ['Transaction name', p.expenseName],
+        ['Note', p.moreInfo],
+        ['Date', whenFull],
         ['Transaction ID', p.savedId]
       ];
     } else {
@@ -2743,16 +2771,18 @@
         ? `₹${amt} leaves your ${p.account} account on ${when} for ${p.expenseName}. `
         : `₹${amt} comes into your ${p.account} account on ${when} from ${p.expenseName}. `;
       line += p.kind === 'Y'
-        ? 'It is marked to be returned, so it stays under Owed to me until the other half is entered.'
+        ? (p.backMode === 'old'
+            ? 'It closes an open item, so it drops off Owed to me once it is saved.'
+            : 'It is marked to be returned, so it stays under Owed to me until the other half is entered.')
         : 'It is a one-way payment, so nothing is expected back.';
       rows = [
-        ['Date', whenFull],
-        ['Account', p.account],
-        ['Expense name', p.expenseName],
-        ['More info', p.moreInfo],
-        ['Transaction type', p.entries[0].txnType],
-        ['Frequency', p.txnFreq],
         ['Amount', `₹${amt} ${p.debit ? 'out' : 'in'}`],
+        ['Account', p.account],
+        ['Category', p.entries[0].txnType],
+        ['Transaction name', p.expenseName],
+        ['Note', p.moreInfo],
+        ['Date', whenFull],
+        ['Will I get this back', p.kind === 'Y' ? (p.backMode === 'old' ? 'Yes · closing an open one' : 'Yes · a new one') : 'No'],
         ['Transaction ID', p.savedId]
       ];
     }
@@ -3071,15 +3101,14 @@
       line = `₹${amt} moved from your ${r.account} account to your ${r.toAccount} account on ${when}. `
            + `Two rows in the sheet, one thing that happened.`;
       rows = [
-        ['Date', formatConfirmDate(r.dateISO)],
+        ['Amount', `₹${amt} moved`],
         ['From account', r.account],
         ['To account', r.toAccount],
-        ['Expense name', r.expenseName],
-        ['More info', r.moreInfo],
-        ['Sent leg type', m[0].txnType],
-        ['Received leg type', m[1] ? m[1].txnType : ''],
-        ['Frequency', m[0].txnFreq || 'Not recorded'],
-        ['Amount', `₹${amt} moved`],
+        ['Sent leg category', m[0].txnType],
+        ['Received leg category', m[1] ? m[1].txnType : ''],
+        ['Transaction name', r.expenseName],
+        ['Note', r.moreInfo],
+        ['Date', formatConfirmDate(r.dateISO)],
         ['Transaction ID', r.id],
         ['Status', statusOf(r)]
       ];
@@ -3088,13 +3117,13 @@
         ? `₹${amt} left your ${r.account} account on ${when} for ${r.expenseName}.`
         : `₹${amt} came into your ${r.account} account on ${when} from ${r.expenseName}.`;
       rows = [
-        ['Date', formatConfirmDate(r.dateISO)],
-        ['Account', r.account],
-        ['Expense name', r.expenseName],
-        ['More info', r.moreInfo],
-        ['Transaction type', r.txnType],
-        ['Frequency', r.txnFreq || 'Not recorded'],
         ['Amount', `₹${amt} ${r.isOut ? 'out' : 'in'}`],
+        ['Account', r.account],
+        ['Category', r.txnType],
+        ['Transaction name', r.expenseName],
+        ['Note', r.moreInfo],
+        ['Date', formatConfirmDate(r.dateISO)],
+        ['Will I get this back', String(r.id || '').startsWith('Y') ? 'Yes' : 'No'],
         ['Transaction ID', r.id],
         ['Status', statusOf(r)]
       ];
@@ -3156,7 +3185,7 @@
   }
   $('editCancelBtn').addEventListener('click', cancelEdit);
 
-  // A stored type may be one someone typed themselves, in which case the
+  // A stored category may be one someone typed themselves, in which case the
   // select has no option for it and the custom box has to be opened instead.
   function setSingleType(value){
     const v = value || 'Payment';
@@ -3176,37 +3205,28 @@
     else { sel.value = 'Custom'; customInput.value = v; }
   }
 
-  // The ID must survive being loaded. setIdKind regenerates on every call,
-  // so the real one is written back over the fresh one afterwards.
+  // The ID must survive being loaded. The Yes/No answer is read back off the
+  // ID itself, and keepId stops a fresh one being minted over it.
   function forceId(id){
-    if(!state.isSelfTransfer) setIdKind(String(id || '').startsWith('Y') ? 'Y' : 'N');
-    const interactiveY = (state.kind === 'Y' && !state.isSelfTransfer);
-    if(!interactiveY){
-      $('idBoxDisplay').textContent = id;
-      return;
+    if(!state.isSelfTransfer){
+      const isY = String(id || '').startsWith('Y');
+      $('backKind').value = 'new';
+      setBack(isY ? 'Y' : 'N', true);
     }
-    const sel = $('idBoxSelect');
-    if(![...sel.options].some(o => o.value === id)){
-      const opt = document.createElement('option');
-      opt.value = id; opt.textContent = id;
-      sel.insertBefore(opt, sel.firstChild);
-    }
-    sel.value = id;
+    state.idValue = id;
   }
 
   function fillFormFrom(row){
     const m = row.members || [row];
 
-    // This has to run first: it rewrites the name, the types, the frequency
-    // and the ID on its way through, and everything below is what should
-    // survive.
+    // This has to run first: it rewrites the name, the categories and the ID
+    // on its way through, and everything below is what should survive.
     state.isSelfTransfer = !!row.transfer;
     applySelfTransferMode();
 
     setDate(row.dateISO, null);
     $('expenseName').value = row.expenseName || '';
     $('moreInfo').value = row.moreInfo || '';
-    setTxnFreq(m[0].txnFreq === 'One Off' ? 'One Off' : 'Monthly');
 
     amountInput.value = formatAmountString(String(Number(row.amount)));
     amountInput.placeholder = amountInput.dataset.placeholderBackup || '00.00';
@@ -3309,7 +3329,6 @@
         expenseName: e.expenseName,
         moreInfo: e.moreInfo,
         txnType: e.txnType,
-        txnFreq: e.txnFreq,
         debit: e.debit,
         credit: e.credit,
         sheet: e.sheet,
@@ -3323,8 +3342,7 @@
     pruneOpenYIds();
 
     fullReset();
-    showScreen('stats');
-    renderStats();
+    showScreen('history');
 
     showToast(staged
       ? (staged === 1 ? 'Updated here · push it to reach the sheet'
@@ -3442,50 +3460,44 @@
 
   function renderDues(){
     const pane = $('duesPane');
-    const open = computeOpenYIds();
-    $('duesBadge').style.display = open.length ? 'inline-block' : 'none';
-    $('duesBadge').textContent = open.length;
+    const items = openItems();
+    $('duesBadge').style.display = items.length ? 'inline-block' : 'none';
+    $('duesBadge').textContent = items.length;
 
-    if(!open.length){
+    if(!items.length){
       const seen = Object.keys(loadSheetCache()).length;
       pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
         <h2>Nothing outstanding</h2>
-        <p>Entries you mark Y show up here until the money comes back.</p>
+        <p>Anything you mark "Yes, I'll get this back" shows up here until the money comes back.</p>
       </div></div>` + (seen ? '' : `<div class="field-hint" style="text-align:center;padding:0 8px;">Only this device has been checked. Pull earlier months in Recent to search them too.</div>`);
       return;
     }
-    // Most recent write of each open ID carries the details worth showing.
-    const rows = open.map(id => {
-      const hits = allRows().filter(h => h.id === id).sort((a,b) => b.at - a.at);
-      return { id, e: hits[0] || null };
-    }).sort((a,b) => (b.e ? b.e.at : 0) - (a.e ? a.e.at : 0));
 
     const loaded = Object.keys(loadSheetCache());
     const scope = loaded.length
       ? `Counted across this device and ${loaded.length === 1 ? loaded[0] : loaded.length + ' months'} read from the sheet.`
       : 'Counted from this device only. Pull earlier months in Recent to include them.';
 
-    pane.innerHTML = '<div class="ledger-card">' + rows.map(({ id, e }) => {
-      if(!e) return `<div class="txn due">
+    pane.innerHTML = '<div class="ledger-card">' + items.map(it => {
+      if(!it.dateISO) return `<div class="txn due">
         <div class="tile transfer"></div>
-        <div class="body"><div class="name">${esc(id)}</div>
+        <div class="body"><div class="name">${esc(it.name)}</div>
         <div class="meta">Opened before this device had a record of it</div></div>
       </div>`;
-      const amount = Number(e.debit || e.credit || 0);
-      const days = daysAgo(e.dateISO);
+      const days = daysAgo(it.dateISO);
       const age = days === 0 ? 'opened today' : days === 1 ? 'open since yesterday' : `open ${days} days`;
       return `<div class="txn due">
-        <div class="tile acct-${esc(e.account)}">${esc(String(e.account || '?').charAt(0).toUpperCase())}</div>
+        <div class="tile acct-${esc(it.account)}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
         <div class="body">
-          <div class="name">${esc(e.expenseName)}</div>
-          <div class="meta">${esc(e.account)} · ${esc(id)} · ${age}</div>
+          <div class="name">${esc(it.name)}</div>
+          <div class="meta">${esc(it.account)} · ${age}</div>
         </div>
-        <div class="amt">₹${money(amount)}</div>
+        <div class="amt">₹${money(it.amount || 0)}</div>
       </div>`;
     }).join('') + '</div>' + `<div class="field-hint" style="text-align:center;padding:0 8px;">${scope}</div>`;
   }
 
-  function renderStats(){
+  function renderHistory(){
     const recent = state.subTab === 'recent';
     $('recentPane').style.display = recent ? 'block' : 'none';
     $('duesPane').style.display = recent ? 'none' : 'block';
@@ -3494,13 +3506,194 @@
       t.classList.toggle('active', on);
       t.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+    $('monthToggleLabel').textContent =
+      new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
     renderRecent();
     renderDues();
   }
 
   document.querySelectorAll('.sub-tab').forEach(t => {
-    t.addEventListener('click', () => { state.subTab = t.dataset.sub; renderStats(); });
+    t.addEventListener('click', () => { state.subTab = t.dataset.sub; renderHistory(); });
   });
+
+  // ---------- STATS ----------
+  // Five tiles, worked out on the device every time the screen is opened.
+  // There is nothing cached and nothing to refresh: the same rows the
+  // history list is drawn from are the rows these numbers come from.
+  const ACCOUNTS = ['Domestic', 'International', 'Cash'];
+
+  // Balance is simply what came in less what went out, per account. A self
+  // transfer debits one side and credits the other, so it nets to nothing
+  // across the three without needing to be special-cased here.
+  function accountBalances(){
+    const bal = {};
+    ACCOUNTS.forEach(a => bal[a] = 0);
+    allRows().forEach(r => {
+      const a = r.account;
+      if(!a) return;
+      if(!(a in bal)) bal[a] = 0;
+      bal[a] += (Number(r.credit) || 0) - (Number(r.debit) || 0);
+    });
+    return bal;
+  }
+
+  // Spending is the one figure a transfer must be kept out of, so the rows
+  // are folded first — exactly as the history list folds them.
+  function totalSpent(){
+    let out = 0;
+    foldTransfers(allRows()).forEach(r => {
+      if(!r.transfer && r.isOut) out += r.amount;
+    });
+    return out;
+  }
+
+  function statTile(name, value, wide){
+    const cls = value < 0 ? 'st-val out' : 'st-val';
+    return `<div class="stat-tile${wide ? ' wide' : ''}">
+      <div class="st-key"><span class="st-dot acct-${esc(name)}"></span>${esc(name)}</div>
+      <div class="${cls}">${value < 0 ? '−' : ''}₹${money(Math.abs(value))}</div>
+    </div>`;
+  }
+
+  // ---------- THE SHEET'S OWN TOTALS ----------
+  // B5:J5 in order: Domestic, International, Cash, Net amount, (blank),
+  // (blank), Domestic expenses, Cash expenses, Net expenses.
+  const STATS_CELLS = ['domestic','international','cash','have',null,null,'domesticExp','cashExp','spent'];
+
+  async function readStats(){
+    const { sheet, table } = monthNamesFor(isoToday(0));
+    const res = await callLedger({ MODE:'stats', SHEET: sheet, TABLE: table, ROWS:'[]' });
+    if(!res.ok) return { ok:false, why: failureText(res) };
+    let row = null;
+    try{
+      const data = JSON.parse(res.text);
+      const values = data.values || (data.body && data.body.values);
+      row = values && values[0];
+    }catch(e){
+      return { ok:false, why:'The sheet sent back something unreadable' };
+    }
+    if(!row) return { ok:false, why:`No ${sheet} sheet found` };
+    const snap = { at: Date.now(), sheet };
+    STATS_CELLS.forEach((k, i) => { if(k) snap[k] = Number(row[i]) || 0; });
+    lsSet(LS_STATS, snap);
+    return { ok:true, snap };
+  }
+
+  // A snapshot only describes the month it was taken from, so it is dropped
+  // rather than carried into the next one.
+  function statsSnapshot(){
+    const s = lsGet(LS_STATS, null);
+    return (s && s.sheet === monthNamesFor(isoToday(0)).sheet) ? s : null;
+  }
+  // The sheet re-sorts and recomputes at 23:50. A snapshot older than the
+  // most recent one of those has been overtaken.
+  function statsStale(){
+    const s = statsSnapshot();
+    if(!s) return true;
+    const cut = new Date();
+    cut.setHours(23, 50, 0, 0);
+    if(cut > new Date()) cut.setDate(cut.getDate() - 1);
+    return s.at < cut.getTime();
+  }
+  async function ensureStats(){
+    if(!statsStale() || !navigator.onLine) return false;
+    const r = await readStats();
+    return r.ok;
+  }
+
+  // Everything this device has recorded since the snapshot was taken. The
+  // sheet already contains the rest, so only these are added on top.
+  function statsDelta(since){
+    const rows = allRows().filter(r => (r.at || 0) > since);
+    const bal = {};
+    rows.forEach(r => {
+      const a = r.account;
+      if(!a) return;
+      bal[a] = (bal[a] || 0) + (Number(r.credit) || 0) - (Number(r.debit) || 0);
+    });
+    let spent = 0;
+    foldTransfers(rows).forEach(r => { if(!r.transfer && r.isOut) spent += r.amount; });
+    return { bal, spent, count: rows.length };
+  }
+
+  function renderStats(){
+    const pane = $('statsPane');
+    const snap = statsSnapshot();
+
+    let bal, spent, have, scope;
+    if(snap){
+      const d = statsDelta(snap.at);
+      bal = {
+        Domestic: snap.domestic + (d.bal.Domestic || 0),
+        International: snap.international + (d.bal.International || 0),
+        Cash: snap.cash + (d.bal.Cash || 0)
+      };
+      Object.keys(d.bal).forEach(k => { if(!(k in bal)) bal[k] = d.bal[k]; });
+      spent = snap.spent + d.spent;
+      have = snap.have + Object.keys(d.bal).reduce((n, k) => n + d.bal[k], 0);
+      const when = new Date(snap.at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      scope = `${snap.sheet} totals read ${when}`
+            + (d.count ? ` · plus ${d.count === 1 ? '1 entry' : d.count + ' entries'} added here since` : '');
+    } else {
+      // No snapshot yet, so the device adds up everything it holds. That
+      // misses rollovers and anything typed straight into Excel.
+      bal = accountBalances();
+      spent = totalSpent();
+      have = Object.keys(bal).reduce((n, k) => n + bal[k], 0);
+      scope = 'Added up on this device — read the sheet to include rollovers.';
+    }
+
+    if(!snap && !allRows().length){
+      pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
+        <h2>No numbers yet</h2>
+        <p>Balances appear as soon as there is something to add up.</p>
+      </div></div>` + statsFooter();
+      wireStatsFooter();
+      return;
+    }
+
+    // The three fixed accounts first, then anything else that turns up — an
+    // account renamed in Excel still gets a tile rather than being silently
+    // left out of the totals.
+    const names = ACCOUNTS.concat(Object.keys(bal).filter(k => !ACCOUNTS.includes(k)));
+    const tiles = names.map((n, i) =>
+      statTile(n, bal[n] || 0, i === names.length - 1 && names.length % 2 === 1)).join('');
+
+    pane.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="stat-grid">${tiles}</div>
+      <div class="month-card">
+        <div class="month-grid two">
+          <div class="ms-cell"><div class="ms-key">Total spent</div><div class="ms-val out">₹${money(spent)}</div></div>
+          <div class="ms-cell"><div class="ms-key">Total have</div><div class="ms-val ${have < 0 ? 'out' : 'net'}">${have < 0 ? '−' : ''}₹${money(Math.abs(have))}</div></div>
+        </div>
+      </div>
+      <div class="field-hint" style="text-align:center;padding:0 8px;">${esc(scope)}</div>
+      ${statsFooter()}
+    </div>`;
+    wireStatsFooter();
+  }
+
+  function statsFooter(){
+    return `<button type="button" class="show-more" id="statsRefreshBtn">Read totals from the sheet</button>
+      <div class="field-hint" style="text-align:center;">Done once a night on its own · 3 Make operations</div>`;
+  }
+  function wireStatsFooter(){
+    const btn = $('statsRefreshBtn');
+    if(!btn) return;
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Reading…';
+      const r = await readStats();
+      if(!r.ok){
+        btn.disabled = false;
+        btn.textContent = 'Read totals from the sheet';
+        showToast(r.why, 3600);
+        return;
+      }
+      renderStats();
+      showToast('Totals updated from the sheet');
+    });
+  }
 
   // ---------- BACKUP ----------
   // Nothing stored in a browser is permanent: clearing site data, uninstalling
@@ -3587,7 +3780,8 @@
     lsSet(LS_YIDS, state.openYIds);
 
     renderAccountScreen();
-    if(state.subTab) renderStats();
+    renderHistory();
+    renderStats();
     showToast(addedH + addedQ === 0
       ? 'Everything in that file was already here'
       : `Restored ${addedH} ${addedH === 1 ? 'entry' : 'entries'}${addedQ ? `, ${addedQ} still to send` : ''}`, 3600);
@@ -3662,7 +3856,6 @@
   // The app only knows what this device typed. Everything older lives in the
   // sheet, so it is fetched a month at a time and kept — one read each, never
   // repeated.
-  // One read of one month's table, parsed into rows. Costs 3 operations.
   //
   // `index` is the row's position in the table body, which is the only
   // handle Graph offers for changing a row in place. It is read here rather
@@ -3704,7 +3897,6 @@
         expenseName: String(r[col.EXPENSE] || ''),
         moreInfo: String(r[col.INFO] || ''),
         txnType: String(r[col.TYPE] || ''),
-        txnFreq: String(r[col.KIND] || ''),
         debit: debit || '',
         credit: credit || '',
         sheet, table,
@@ -3748,20 +3940,22 @@
   }
   $('confirmToggle').addEventListener('change', (e) => setRequireConfirm(e.target.checked));
 
-  // ---------- SCREEN NAVIGATION (Add Payment / Stats / Account) ----------
+  // ---------- SCREEN NAVIGATION (Add Payment / History / Stats / Account) ----------
   function showScreen(name){
     $('entryForm').style.display = name === 'add' ? 'flex' : 'none';
-    $('statsScreen').style.display = name === 'stats' ? 'block' : 'none';
+    $('historyScreen').style.display = name === 'history' ? 'flex' : 'none';
+    $('statsScreen').style.display = name === 'stats' ? 'flex' : 'none';
     $('accountScreen').style.display = name === 'account' ? 'flex' : 'none';
     // The sync bar belongs to the entry flow — on the account screen the same
     // information is already on the page in full, so showing both would just
     // say it twice.
     $('syncBar').style.display = (name === 'add' && state.queue.length) ? 'flex' : 'none';
-    // Neither top tab is active on the account screen, which left nothing on
+    // No top tab is active on the account screen, which left nothing on
     // the page saying where you were. The gear it was opened from does.
     $('openSettings').classList.toggle('active', name === 'account');
     if(name === 'account'){ renderAccountScreen(); renderBackupStatus(); }
-    if(name === 'stats'){ state.historyShown = 40; renderStats(); }
+    if(name === 'history'){ state.historyShown = 40; renderHistory(); }
+    if(name === 'stats'){ renderStats(); ensureStats().then(ok => { if(ok) renderStats(); }); }
     document.querySelectorAll('.top-tab').forEach(b => {
       const on = b.dataset.tab === name;
       b.classList.toggle('active', on);
@@ -3871,7 +4065,7 @@
     const { sheet, table } = monthNamesFor(isoToday(0));
     const open = computeOpenYIds().length;
     $('monthSummary').textContent =
-      `Writing to ${sheet}, table ${table}. ${open === 0 ? 'No open IDs.' : open === 1 ? '1 open ID.' : open + ' open IDs.'}`;
+      `Writing to ${sheet}, table ${table}. ${open === 0 ? 'Nothing open.' : open === 1 ? '1 item open.' : open + ' items open.'}`;
   }
 
   // ---------- INIT ----------
@@ -3885,8 +4079,7 @@
   scheduleBackupCheck();
   setRequireConfirm(lsGet(LS_CONFIRM, false));
   renderMonthBar();
-  setIdKind('N');
-  setTxnFreq('Monthly');
+  setBack('N');
   setDate(isoToday(0), 'today');
   updateAmountWidth();
   updateCTA();
