@@ -963,6 +963,7 @@
   .sheet-prop .k{font-size:13px;font-weight:600;color:var(--text-muted);flex-shrink:0;}
   .sheet-prop .v{font-size:14px;font-weight:700;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
   .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px;}
+  .sheet-actions.cols-3{grid-template-columns:1fr 1fr 1fr;}
   .btn{
     padding:16px 0;
     border-radius:var(--radius-pill);
@@ -971,6 +972,7 @@
     cursor:pointer;
   }
   .btn-save{background:var(--green);color:var(--white);}
+  .btn-danger{background:var(--white);border:1px solid var(--red);color:var(--red);}
   .toast{
     position:fixed;bottom:110px;left:50%;transform:translateX(-50%);
     background:var(--text-dark);color:var(--white);
@@ -1340,7 +1342,8 @@
     <p class="sheet-line" id="detailLine">—</p>
     <div class="sheet-note" id="detailNote" style="display:none;"></div>
     <div class="sheet-props" id="detailProps"></div>
-    <div class="sheet-actions">
+    <div class="sheet-actions cols-3">
+      <button type="button" class="btn btn-danger" id="detailDeleteBtn">Delete</button>
       <button type="button" class="btn btn-outline" id="detailDismissBtn">Close</button>
       <button type="button" class="btn btn-save" id="detailEditBtn">Edit</button>
     </div>
@@ -3138,6 +3141,62 @@
     const r = state.rowIndex[state.detailKey];
     if(r) beginEdit(r);
   });
+  $('detailDeleteBtn').addEventListener('click', () => {
+    const key = state.detailKey;
+    if(key && confirm('Delete this entry? This cannot be undone.')) deleteEntry(key);
+  });
+
+  // ---------- DELETE ----------
+  // A self transfer is two rows sharing one id — both legs go together.
+  async function deleteEntry(key){
+    const r = state.rowIndex[key];
+    if(!r) return;
+    const members = r.members || [r];
+    closeDetail();
+
+    const queued = new Set(members.filter(m => !m.sent).map(m => m.uid));
+    if(queued.size){
+      state.queue = state.queue.filter(q => !queued.has(q.uid));
+      saveQueue();
+    }
+
+    const sent = members.filter(m => m.sent);
+    if(sent.length){
+      const groups = {};
+      sent.forEach(m => (groups[m.sheet + '|' + m.table] = groups[m.sheet + '|' + m.table] || []).push(m));
+      for(const list of Object.values(groups)){
+        const { sheet, table } = list[0];
+        const read = await readTable(sheet, table);
+        if(!read.ok){ showToast(`Could not reach ${sheet} — try again`); return; }
+        const targets = list.map(m => findTargetRow(read.rows, {
+          id: m.id,
+          dateSerial: m.dateSerial != null ? m.dateSerial : toExcelSerial(m.dateISO),
+          account: m.account,
+          debit: m.debit === '' || m.debit == null ? null : Number(m.debit),
+          credit: m.credit === '' || m.credit == null ? null : Number(m.credit)
+        })).filter(Boolean);
+        // Highest index first — deleting a row shifts every later index down by one.
+        targets.sort((a, b) => b.index - a.index);
+        for(const t of targets){
+          const res = await callLedger({ MODE:'delete', SHEET: sheet, TABLE: table, INDEX: t.index, ROWS:'[]' });
+          if(!res.ok){ showToast(`${sheet}: ${failureText(res)}`); return; }
+        }
+      }
+    }
+
+    const uids = new Set(members.map(m => m.uid));
+    state.history = state.history.filter(h => !uids.has(h.uid));
+    saveHistory();
+    state.edits = state.edits.filter(e => !uids.has(e.uid));
+    saveEdits();
+    const cache = loadSheetCache();
+    Object.keys(cache).forEach(mo => { cache[mo].rows = cache[mo].rows.filter(x => !uids.has(x.uid)); });
+    saveSheetCache(cache);
+    pruneOpenYIds();
+
+    renderRecent();
+    showToast('Deleted');
+  }
 
   // ---------- EDIT MODE ----------
   function beginEdit(row){
