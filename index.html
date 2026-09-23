@@ -24,6 +24,9 @@
     --text-dark:#181C1A;
     --text-muted:#78756E;
     --border:#E5E3DB;
+    /* A second, darker rule for the one place a border has to separate two
+       whole objects rather than two rows inside one. */
+    --border-strong:#D4D0C4;
     --radius-card:22px;
     --radius-input:14px;
     --radius-pill:9999px;
@@ -71,8 +74,7 @@
   }
   /* Three layers, same as a tab sitting in the nav track: a black outer
      fill, a lime ring inside it, and an inner fill that is what actually
-     changes. Unselected the inner fill is black with a grey glyph;
-     selected it is lime with a black glyph. */
+     changes. */
   .gear-btn{
     padding:6px;
     width:52px;height:52px;
@@ -160,7 +162,7 @@
     background:var(--green);flex-shrink:0;
   }
   /* Offline is a normal state here, not a failure — the entry is already
-     safe on the device. The bar says so without turning red about it. */
+     safe on the device. */
   .sync-bar.is-offline{background:var(--canvas-light);border:1px solid var(--border);}
   .sync-bar.is-offline .sync-dot{background:var(--text-muted);}
   .sync-label{
@@ -179,7 +181,7 @@
 
   .account-screen{
     padding:14px 20px 32px;
-    display:flex;flex-direction:column;gap:18px;
+    display:flex;flex-direction:column;gap:14px;
   }
   .btn-outline{
     background:var(--white);
@@ -218,9 +220,7 @@
 
   /* FORM */
   /* The form is four cards, not nine loose fields: how much, which account,
-     what it was, and whether it comes back. A shared border is what makes
-     "these belong together" visible without anyone having to read the
-     labels to work it out. */
+     what it was, and whether it comes back. */
   form{padding:14px 20px 20px;display:flex;flex-direction:column;gap:14px;}
 
   .group{
@@ -232,19 +232,11 @@
   }
   /* Title hierarchy, largest to smallest:
        L1  app title      22 / 800 / dark
-       L2  section title  16 / 700 / dark      ← this
+       L2  section title  16 / 700 / dark
        L3  field label    13 / 600 / muted
-       L4  hint           12 / 500 / grey
-     Size, weight and colour all step down together, so the level is
-     readable without comparing two things side by side. */
-  /* Everything inside a card is nudged 5px right of its header, so the
-     header reads as the level above rather than the first item in the list. */
+       L4  hint           12 / 500 / grey */
   .group > *{padding-left:5px;}
   .group > .group-title{padding-left:0;}
-  /* The pill is no longer a sibling in the title's row — it is pinned to the
-     card's own top-right corner, on the same 16px inset every other first
-     element sits on. Its position can then be tuned without the title, the
-     chips or anything under them moving by a pixel. */
   .account-group{position:relative;}
   .account-group > .toggle-pill{
     position:absolute;
@@ -259,8 +251,7 @@
   }
 
   /* Inside a card, white fields on a white surface would vanish — so the
-     fill and the page swap: cream controls on white, rather than white
-     controls on cream. Selected states are untouched. */
+     fill and the page swap: cream controls on white. */
   .group input[type="text"],
   .group input[type="date"],
   .group select,
@@ -272,8 +263,6 @@
     background-color:var(--canvas-light);
   }
 
-  /* The toggle already reads as its own object; boxing it again inside the
-     card just stacks borders. A rule above it does the same job. */
   .group .switch-row{
     background:transparent;
     border:none;
@@ -285,9 +274,6 @@
   .field{display:flex;flex-direction:column;gap:8px;}
   .field label, .field .field-label{font-size:13px;font-weight:600;color:var(--text-muted);}
   .field-hint{font-size:12px;color:#6B6861;font-weight:500;margin-top:-2px;}
-  /* Red border on whatever the save button just complained about, cleared
-     the moment it is edited. The toast alone is 2 seconds at the far end of
-     the screen from the field it refers to. */
   .is-invalid{border-color:var(--red) !important;}
   .amount-card.is-invalid{border-color:var(--red) !important;}
 
@@ -312,15 +298,12 @@
     padding-right:38px;
   }
 
-  /* Category combo: a real <select> normally (identical to every other
-     dropdown in the app), which shrinks down to an invisible strip over
-     just the arrow once Custom is chosen — the visible custom text input
-     takes over underneath it. Tapping that strip still opens the browser's
-     real native picker (not a fake popup), because it's a genuine,
-     un-modified <select> receiving a direct tap the whole time. */
+  /* Combo: a real <select> normally, which shrinks down to an invisible
+     strip over just the arrow once Custom is chosen — the visible custom
+     text input takes over underneath it. */
   .combo-wrap{position:relative;}
-  .combo-wrap select#txnType{width:100%;}
-  .combo-wrap.custom-mode select#txnType{
+  .combo-wrap > select{width:100%;}
+  .combo-wrap.custom-mode > select{
     position:absolute;
     top:0; right:0;
     width:44px; height:100%;
@@ -339,12 +322,7 @@
   /* row of two */
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-  /* ACCOUNT BLOCK — the self-transfer switch and the accounts it governs.
-     Both account rows are the same full-width row of three chips in both
-     states, so turning the switch on never re-flows or resizes a chip. The
-     second row is always in the DOM at zero height and slides open, which
-     is a reveal rather than a jump: everything above it holds still and
-     only the form below it moves down. */
+  /* ACCOUNT BLOCK */
   .account-block{display:flex;flex-direction:column;}
   .account-block .chip-group{display:flex;flex-direction:row;gap:8px;}
   .account-block .chip{flex:1;width:auto;text-align:center;padding:12px 8px;font-size:12px;font-weight:700;}
@@ -361,8 +339,6 @@
     color:var(--text-muted);
     cursor:pointer;flex-shrink:0;
   }
-  /* Smaller than the account chips it modifies, but still a 44px target —
-     the extra reach is invisible rather than drawn. */
   .toggle-pill::after{content:"";position:absolute;inset:-6px -4px;}
   .toggle-pill .swap{font-size:13px;line-height:1;}
   .toggle-pill[aria-pressed="true"]{
@@ -385,7 +361,6 @@
     .to-slot{transition:none;}
   }
 
-  /* category wrapper */
   #txnTypeSection{display:flex;flex-direction:column;gap:18px;}
 
   /* DATE FIELD */
@@ -403,10 +378,6 @@
   .date-box-input::placeholder{color:var(--text-muted);font-weight:500;}
   .date-box-input:focus{border-color:var(--green);}
 
-  /* Lifted out of the field's column entirely and hung under the right end of
-     the row, in the gap the card already leaves between fields. It reserves
-     no space in either state, so the Date field is exactly as tall as every
-     other field and nothing below it moves. */
   .date-field{position:relative;}
   .date-hint{
     position:absolute;
@@ -423,8 +394,6 @@
   }
   .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
   .date-hint.is-error{color:var(--red);font-weight:600;}
-  /* Input and its two shortcuts on one line. The input takes whatever is
-     left, which is always more than a date needs. */
   .date-row{display:flex;gap:8px;align-items:stretch;}
   .date-row .date-box-input{flex:1 1 auto;min-width:0;padding:14px 12px;}
   .quick-date-row{display:flex;gap:8px;}
@@ -443,7 +412,7 @@
 
   /* toggle switch (settings) */
   .switch-row{
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
     background:var(--white);
     border:1px solid var(--border);
     border-radius:var(--radius-input);
@@ -486,8 +455,7 @@
   }
   .chip.selected{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
 
-  /* amount card — first thing on the form, so it keeps its own larger
-     treatment rather than becoming one more field in a group. */
+  /* amount card */
   .amount-card{
     background:var(--white);
     border:1px solid var(--border);
@@ -549,8 +517,6 @@
     color:var(--text-dark);
     cursor:pointer;
   }
-  /* Same selected treatment as every other choice in the app — dark fill,
-     lime label — so there is one thing to learn rather than two. */
   .amount-card .kind-btn:not(.on){background:var(--canvas-light);color:var(--text-dark);}
   .kind-btn.on{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
   .kind-btn.locked{opacity:0.85;cursor:default;}
@@ -577,32 +543,33 @@
   }
 
   /* ---------- HISTORY / STATS ---------- */
-  .stats-screen{padding:14px 20px 32px;display:flex;flex-direction:column;gap:14px;}
+  .stats-screen{padding:14px 20px 32px;display:flex;flex-direction:column;gap:16px;}
 
-  /* MONTH TOGGLE — present so the shape of the screen is right, wired to
-     nothing yet. Drawn disabled rather than live, so it never looks like a
-     control that is simply failing to respond. */
+  /* MONTH TOGGLE — live. Next is disabled at the current month because
+     there is no such thing as a future entry; Prev keeps going back and the
+     pane underneath says what it found there. */
   .month-toggle{
     display:flex;align-items:center;justify-content:space-between;
     background:var(--white);
-    border:1px solid var(--border);
+    border:1px solid var(--border-strong);
     border-radius:var(--radius-pill);
     padding:5px;
   }
   .mt-arrow{
-    width:38px;height:38px;
+    width:40px;height:40px;
     border-radius:var(--radius-pill);
-    border:none;background:transparent;
+    border:none;background:var(--canvas-light);
     font-family:var(--font);font-size:18px;font-weight:700;
-    color:var(--text-muted);cursor:pointer;
+    color:var(--text-dark);cursor:pointer;
+    flex-shrink:0;
   }
-  .mt-arrow:disabled{opacity:.35;cursor:default;}
-  .mt-label{font-size:14px;font-weight:700;color:var(--text-dark);}
+  .mt-arrow:disabled{opacity:.3;cursor:default;background:transparent;}
+  .mt-center{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;}
+  .mt-label{font-size:15px;font-weight:800;letter-spacing:-0.2px;color:var(--text-dark);}
+  .mt-sub{font-size:11px;font-weight:600;color:var(--text-muted);}
 
   /* A second dark pill directly under the dark top nav read as two navs of
-     equal rank. This track is light instead, so the level is obvious before
-     either label is read — and the selected tab keeps the same dark + lime
-     treatment used for every other choice in the app. */
+     equal rank. This track is light instead. */
   .sub-tabs{
     display:flex;
     background:var(--white);
@@ -634,75 +601,100 @@
   }
   .sub-tab.active .count{background:#2C312E;color:#9EAD9C;}
 
+  /* A day is one object. It gets the darker rule and a shadow so it lifts
+     off the cream page, and the rows inside it get the lighter one — so the
+     boundary between two days is plainly heavier than the boundary between
+     two entries. */
   .ledger-card{
     background:var(--white);
-    border:1px solid var(--border);
+    border:1px solid var(--border-strong);
     border-radius:var(--radius-card);
     overflow:hidden;
+    box-shadow:0 1px 2px rgba(24,28,26,.05), 0 6px 16px -10px rgba(24,28,26,.18);
   }
+  /* The gap between days is bigger than any gap inside one. */
+  .day-list{display:flex;flex-direction:column;gap:18px;}
 
   .day-head{
     display:flex;align-items:baseline;justify-content:space-between;
-    padding:14px 18px 10px;
-    background:var(--canvas-light);
-    border-bottom:1px solid var(--border);
+    padding:13px 18px;
+    background:var(--canvas-dark);
   }
   .day-head .day{
     font-size:12px;font-weight:800;
-    letter-spacing:0.5px;text-transform:uppercase;
-    color:var(--text-muted);
+    letter-spacing:0.6px;text-transform:uppercase;
+    color:var(--lime);
   }
-  .day-head .net{font-size:13px;font-weight:700;color:var(--text-muted);}
-  .day-head .net.out{color:var(--red);}
-  .day-head .net.in{color:var(--green);}
+  .day-head .net{font-size:13px;font-weight:700;color:#9EAD9C;}
+  .day-head .net.out{color:#FF9B9B;}
+  .day-head .net.in{color:var(--lime);}
 
+  /* TRANSACTION ROW
+     Two lines instead of one. The amount shares the top line with the name
+     so neither has to be squeezed, and everything that used to be crushed
+     into one ellipsised strip — account, category, note, status — wraps
+     across the line below instead of being cut off. */
   .txn{
-    display:flex;align-items:center;gap:14px;
-    /* Set in 10px from the day header above it, so the header reads as the
-       edge of the box and the rows read as what is inside it. */
-    padding:14px 18px 14px 28px;
+    display:flex;align-items:flex-start;gap:13px;
+    padding:14px 16px;
     border-bottom:1px solid var(--border);
   }
   .txn:last-child{border-bottom:none;}
-  /* One letter turns the colour swatch into a label you can key against. */
   .txn .tile{
-    width:42px;height:42px;flex-shrink:0;
-    border-radius:14px;
+    width:38px;height:38px;flex-shrink:0;
+    border-radius:12px;
     background:var(--mint);
     display:flex;align-items:center;justify-content:center;
     font-size:15px;font-weight:800;color:var(--text-dark);
+    margin-top:1px;
   }
   .txn .tile.acct-International{background:var(--amber);}
   .txn .tile.acct-Cash{background:#EAE5D8;}
-  .txn .tile.transfer{background:var(--white);border:1.5px solid var(--border);}
-  .txn .body{flex:1;min-width:0;}
+  .txn .tile.transfer{background:var(--white);border:1.5px solid var(--border-strong);}
+  .txn .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+  .txn .line1{display:flex;align-items:flex-start;gap:10px;}
   .txn .name{
-    font-size:15px;font-weight:700;color:var(--text-dark);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    flex:1;min-width:0;
+    font-size:15px;font-weight:700;line-height:1.3;
+    color:var(--text-dark);
+    /* Two lines, then ellipsis — a long name is readable rather than
+       chopped after four words. */
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;overflow-wrap:anywhere;
   }
-  .txn .meta{
-    font-size:13px;font-weight:500;color:var(--text-muted);
-    margin-top:2px;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .txn .meta .held{color:#8A6D1F;font-weight:700;}
   .txn .amt{
     font-size:15px;font-weight:800;flex-shrink:0;
-    text-align:right;
+    text-align:right;white-space:nowrap;
+    line-height:1.3;
   }
   .txn .amt.out{color:var(--red);}
   .txn .amt.in{color:var(--green);}
   .txn .amt.flat{color:var(--text-muted);}
 
-  /* A row is the way into the entry behind it, so it has to look and feel
-     like something you can press. */
+  /* The second line is a row of tags that wraps, so nothing is ever cut. */
+  .txn .tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{
+    padding:3px 9px;
+    border-radius:var(--radius-pill);
+    background:var(--canvas-light);
+    font-size:11px;font-weight:700;
+    color:var(--text-muted);
+    white-space:nowrap;
+  }
+  .tag.acct{background:var(--mint);color:#14614A;}
+  .tag.acct-International{background:var(--amber);color:#6E571A;}
+  .tag.acct-Cash{background:#EAE5D8;color:#6B6045;}
+  .tag.held{background:var(--amber);color:#6E571A;}
+  .tag.edited{background:#FFE9C9;color:#8A5A0F;}
+  .txn .note{
+    font-size:12.5px;font-weight:500;color:var(--text-muted);
+    line-height:1.35;overflow-wrap:anywhere;
+  }
+
   .txn.tappable{cursor:pointer;-webkit-tap-highlight-color:transparent;}
   .txn.tappable:active{background:var(--canvas-light);}
-  .txn .meta .edited{color:#8A6D1F;font-weight:700;}
 
-  /* EDIT MODE — the entry form doing a second job. Without a permanent,
-     unmissable marker it looks exactly like the add form, and Save would
-     quietly overwrite something instead of adding. */
+  /* EDIT MODE */
   .edit-banner{
     display:flex;align-items:center;gap:12px;
     margin:0 20px 2px;
@@ -724,14 +716,12 @@
     font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
   }
 
-  /* Edits waiting to go to the sheet. Kept separate from the entry queue
-     because they cost differently and can fail for their own reason. */
   .edits-bar{
     display:flex;align-items:center;gap:12px;
     padding:13px 16px;
     border-radius:var(--radius-card);
     background:var(--white);
-    border:1px solid var(--border);
+    border:1px solid var(--border-strong);
   }
   .edits-bar .eb-label{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--text-dark);}
   .edits-bar .eb-hint{display:block;font-size:12px;font-weight:500;color:var(--text-muted);margin-top:2px;}
@@ -747,76 +737,177 @@
   .due .amt{color:var(--text-dark);}
 
   .stats-empty{
-    padding:44px 24px;text-align:center;
+    padding:40px 24px;text-align:center;
   }
   .stats-empty h2{font-size:17px;font-weight:700;margin:0 0 6px;color:var(--text-dark);}
-  .stats-empty p{font-size:14px;margin:0;font-weight:500;color:var(--text-muted);}
+  .stats-empty p{font-size:14px;margin:0;font-weight:500;color:var(--text-muted);line-height:1.5;}
+  .stats-empty .why{
+    display:inline-block;margin-top:12px;
+    padding:6px 12px;border-radius:var(--radius-pill);
+    background:var(--amber);color:#6E571A;
+    font-size:12px;font-weight:700;
+  }
 
   .show-more{
     width:100%;
     padding:15px 0;
-    border:1px solid var(--border);
+    border:1px solid var(--border-strong);
     background:var(--white);
     border-radius:var(--radius-pill);
     font-family:var(--font);font-size:14px;font-weight:700;
     color:var(--text-dark);cursor:pointer;
   }
+  .show-more:disabled{opacity:.6;}
 
-  /* STAT TILES — one balance per account, same card language as everything
-     else on the page. The swatch keys each tile to the same colour its rows
-     carry in the history list. */
+  /* STAT TILES */
   .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .stat-tile{
     background:var(--white);
-    border:1px solid var(--border);
+    border:1px solid var(--border-strong);
     border-radius:var(--radius-card);
-    padding:16px;
+    padding:15px 16px;
   }
   .stat-tile.wide{grid-column:1 / -1;}
+  .stat-tile.dark{background:var(--canvas-dark);border-color:var(--canvas-dark);}
+  .stat-tile.dark .st-key{color:#9EAD9C;}
+  .stat-tile.dark .st-val{color:var(--lime);}
   .st-key{
     display:flex;align-items:center;gap:8px;
-    font-size:13px;font-weight:600;color:var(--text-muted);
+    font-size:12px;font-weight:700;color:var(--text-muted);
+    letter-spacing:0.2px;
   }
   .st-dot{width:10px;height:10px;border-radius:50%;background:var(--mint);flex-shrink:0;}
   .st-dot.acct-International{background:var(--amber);}
   .st-dot.acct-Cash{background:#EAE5D8;}
   .st-val{
-    font-size:22px;font-weight:800;
-    letter-spacing:-0.3px;
+    font-size:21px;font-weight:800;
+    letter-spacing:-0.4px;
     margin-top:6px;color:var(--text-dark);
   }
   .st-val.out{color:var(--red);}
+  .st-sub{font-size:11px;font-weight:600;color:var(--text-muted);margin-top:3px;}
 
-  /* MONTH SUMMARY — the one number-shaped question the list cannot answer
-     at a glance: where did this month land. Self transfers are folded out
-     first, so moving money between your own accounts never shows up as
-     both an expense and income. */
-  .month-card{
+  /* BREAKDOWN — one card, three ways of cutting the same spending. */
+  .panel{
     background:var(--white);
-    border:1px solid var(--border);
+    border:1px solid var(--border-strong);
     border-radius:var(--radius-card);
     overflow:hidden;
   }
-  .month-head{
-    display:flex;align-items:baseline;justify-content:space-between;
-    padding:14px 18px 12px;
+  .panel-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:14px 16px 12px;
+  }
+  .panel-title{font-size:15px;font-weight:800;letter-spacing:-0.2px;color:var(--text-dark);}
+  .panel-note{font-size:12px;font-weight:600;color:var(--text-muted);}
+  .seg{
+    display:flex;gap:4px;margin:0 16px 12px;
     background:var(--canvas-light);
+    border-radius:var(--radius-pill);
+    padding:4px;
+  }
+  .seg button{
+    flex:1;border:none;background:transparent;
+    padding:8px 0;border-radius:var(--radius-pill);
+    font-family:var(--font);font-size:12px;font-weight:700;
+    color:var(--text-muted);cursor:pointer;
+  }
+  .seg button.on{background:var(--text-dark);color:var(--lime);}
+
+  .brk{padding:0 16px 8px;display:flex;flex-direction:column;gap:12px;}
+  .brk-row{display:flex;flex-direction:column;gap:6px;}
+  .brk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+  .brk-name{
+    font-size:13.5px;font-weight:700;color:var(--text-dark);
+    min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .brk-val{font-size:13.5px;font-weight:800;color:var(--text-dark);flex-shrink:0;}
+  .brk-meta{font-size:11px;font-weight:600;color:var(--text-muted);}
+  .brk-bar{height:7px;border-radius:var(--radius-pill);background:var(--canvas-light);overflow:hidden;}
+  .brk-fill{height:100%;border-radius:var(--radius-pill);background:var(--green);}
+  .brk-row:nth-child(1) .brk-fill{background:var(--text-dark);}
+  .panel-foot{
+    border-top:1px solid var(--border);
+    padding:12px 16px;
+    display:flex;justify-content:center;
+  }
+  .panel-foot button{
+    border:none;background:transparent;
+    font-family:var(--font);font-size:13px;font-weight:700;
+    color:var(--green);cursor:pointer;
+  }
+
+  /* FACTS — the small derived numbers that do not deserve a tile each. */
+  .facts{
+    background:var(--white);
+    border:1px solid var(--border-strong);
+    border-radius:var(--radius-card);
+    overflow:hidden;
+  }
+  .fact{
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+    padding:12px 16px;
     border-bottom:1px solid var(--border);
   }
-  .month-title{font-size:16px;font-weight:700;letter-spacing:-0.2px;color:var(--text-dark);}
-  .month-count{font-size:12px;font-weight:600;color:var(--text-muted);}
-  .month-grid{display:grid;grid-template-columns:1fr 1fr 1fr;}
-  .month-grid.two{grid-template-columns:1fr 1fr;}
-  .ms-cell{padding:14px 10px;text-align:center;border-right:1px solid var(--border);}
-  .ms-cell:last-child{border-right:none;}
-  .ms-cell .ms-key{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:0.4px;text-transform:uppercase;}
-  .ms-cell .ms-val{font-size:17px;font-weight:800;margin-top:4px;}
-  .ms-val.out{color:var(--red);}
-  .ms-val.in{color:var(--green);}
-  .ms-val.net{color:var(--text-dark);}
+  .fact:last-child{border-bottom:none;}
+  .fact .k{font-size:13px;font-weight:600;color:var(--text-muted);}
+  .fact .v{font-size:13.5px;font-weight:800;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
+
+  .scope-note{font-size:11.5px;font-weight:600;color:var(--text-muted);text-align:center;padding:0 8px;line-height:1.5;}
 
   .gear-btn.active .gear-inner{background:var(--lime);}
   .gear-btn.active svg{stroke:var(--text-dark);}
+
+  /* ACCOUNT SCREEN — one line per thing, and everything that is only ever
+     touched when something has gone wrong folded away behind a summary. */
+  .acct-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .acct-row:last-child{border-bottom:none;}
+  .acct-row .k{font-size:14px;font-weight:600;color:var(--text-dark);}
+  .acct-row .s{font-size:12px;font-weight:500;color:var(--text-muted);margin-top:2px;}
+  .acct-row .grow{flex:1;min-width:0;}
+  .mini-btn{
+    flex-shrink:0;
+    padding:9px 15px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border-strong);
+    background:var(--canvas-light);
+    font-family:var(--font);font-size:13px;font-weight:700;
+    color:var(--text-dark);cursor:pointer;
+  }
+  .mini-btn.primary{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
+  .mini-btn:disabled{opacity:.55;}
+  .mini-btn.primary:disabled{background:var(--canvas-light);border-color:var(--border);color:var(--text-muted);}
+  details.fold{
+    background:var(--white);
+    border:1px solid var(--border-strong);
+    border-radius:var(--radius-card);
+    overflow:hidden;
+  }
+  details.fold > summary{
+    list-style:none;cursor:pointer;
+    padding:15px 16px;
+    font-size:14px;font-weight:700;color:var(--text-dark);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  details.fold > summary::-webkit-details-marker{display:none;}
+  details.fold > summary::after{content:"⌄";color:var(--text-muted);font-weight:800;}
+  details.fold[open] > summary::after{content:"⌃";}
+  details.fold[open] > summary{border-bottom:1px solid var(--border);}
+  .fold-body{padding:4px 0;}
+  .seg-chips{display:flex;gap:6px;padding:0 16px 14px;}
+  .seg-chips button{
+    flex:1;padding:11px 4px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
+    background:var(--canvas-light);
+    font-family:var(--font);font-size:12px;font-weight:700;
+    color:var(--text-dark);cursor:pointer;
+  }
+  .seg-chips button.on{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
 
   /* modal */
   .modal-overlay{
@@ -837,9 +928,6 @@
   .modal h2{margin:0 0 4px;font-size:18px;}
   .modal .close{align-self:flex-end;font-size:13px;color:var(--text-muted);font-weight:700;cursor:pointer;}
 
-  /* CONFIRM SHEET — the entry read back in a sentence before it is saved.
-     The form can only ever show the settings; this shows what they add up
-     to, which is the thing actually worth checking. */
   .sheet-close{
     position:absolute;top:18px;right:18px;
     width:32px;height:32px;
@@ -948,10 +1036,7 @@
     <button type="button" class="sync-btn" id="syncNowBtn">Send to sheet</button>
   </div>
 
-  <!-- ADD PAYMENT SCREEN
-       Order is the order the entry is actually thought about: how much,
-       out of which account, what it was, and only then whether it comes
-       back. -->
+  <!-- ADD PAYMENT SCREEN -->
   <form id="entryForm">
 
     <div class="edit-banner" id="editBanner" style="display:none;" role="status">
@@ -976,9 +1061,7 @@
       </div>
     </div>
 
-    <!-- 2 · ACCOUNT — the accounts and the one switch that reshapes them.
-         Turning the pill on opens a second row underneath; nothing above it
-         moves and no chip changes size or position. -->
+    <!-- 2 · ACCOUNT -->
     <div class="group account-group">
     <div class="group-title">Which account</div>
     <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
@@ -1009,9 +1092,35 @@
     </div>
     </div><!-- /group: which account -->
 
-    <!-- 3 · WHAT IT WAS — category, name, note, date -->
+    <!-- 3 · WHAT IT WAS -->
     <div class="group">
     <div class="group-title">What it was</div>
+
+    <!-- The name is picked, not typed. Free text is what splits "Rapido"
+         from "rapido" and makes spend-by-name meaningless, so the list is
+         the field and adding to it is a deliberate, one-time act. -->
+    <div class="field">
+      <label for="expenseName">Transaction name</label>
+      <div class="combo-wrap" id="expenseNameWrap">
+        <select id="expenseName"></select>
+        <input type="text" id="expenseNameCustomInput" class="combo-custom-input" style="display:none;" placeholder="Name this one" autocomplete="off" aria-label="New transaction name">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="moreInfo">Note <span style="font-weight:500;">(optional)</span></label>
+      <input type="text" id="moreInfo" placeholder="Notes">
+    </div>
+
+    <div class="field date-field">
+      <label for="dateTextInput">Date</label>
+      <div class="date-row">
+        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
+        <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
+        <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
+      </div>
+      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
+    </div>
 
     <div id="txnTypeSection">
       <!-- single mode (default) -->
@@ -1072,30 +1181,9 @@
         </div>
       </div>
     </div>
-
-    <div class="field">
-      <label for="expenseName">Transaction name</label>
-      <input type="text" id="expenseName" placeholder="e.g. Rapido, Groceries etc">
-    </div>
-
-    <div class="field">
-      <label for="moreInfo">Note <span style="font-weight:500;">(optional)</span></label>
-      <input type="text" id="moreInfo" placeholder="Notes">
-    </div>
-
-    <div class="field date-field">
-      <label for="dateTextInput">Date</label>
-      <div class="date-row">
-        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
-        <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
-        <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
-      </div>
-      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
-    </div>
     </div><!-- /group: what it was -->
 
-    <!-- 4 · WILL I GET THIS BACK — replaces the raw transaction-ID field.
-         The ID still exists underneath; it is simply never typed. -->
+    <!-- 4 · WILL I GET THIS BACK -->
     <div class="group" id="backGroup">
     <div class="group-title">Will I get this back?</div>
 
@@ -1104,7 +1192,6 @@
         <button type="button" class="kind-btn" data-back="Y" aria-pressed="false">Yes</button>
         <button type="button" class="kind-btn on" data-back="N" aria-pressed="true">No</button>
       </div>
-      <div class="field-hint" id="backHint">One-way payment — nothing is expected back.</div>
     </div>
 
     <div class="field" id="backKindField" style="display:none;">
@@ -1118,7 +1205,6 @@
     <div class="field" id="openItemField" style="display:none;">
       <label for="openItemSelect">Which open item</label>
       <select id="openItemSelect"></select>
-      <div class="field-hint" id="openItemHint"></div>
     </div>
     </div><!-- /group: will I get this back -->
 
@@ -1132,9 +1218,12 @@
   <!-- HISTORY -->
   <div class="stats-screen" id="historyScreen" style="display:none;">
     <div class="month-toggle" role="group" aria-label="Month">
-      <button type="button" class="mt-arrow" id="monthPrevBtn" disabled aria-label="Previous month">‹</button>
-      <span class="mt-label" id="monthToggleLabel">—</span>
-      <button type="button" class="mt-arrow" id="monthNextBtn" disabled aria-label="Next month">›</button>
+      <button type="button" class="mt-arrow" id="monthPrevBtn" aria-label="Previous month">‹</button>
+      <span class="mt-center">
+        <span class="mt-label" id="monthToggleLabel">—</span>
+        <span class="mt-sub" id="monthToggleSub"></span>
+      </span>
+      <button type="button" class="mt-arrow" id="monthNextBtn" aria-label="Next month">›</button>
     </div>
     <div class="sub-tabs" role="tablist" aria-label="History">
       <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
@@ -1148,80 +1237,84 @@
     <div id="duesPane" style="display:none;"></div>
   </div>
 
-  <!-- STATS — five live tiles, computed on the device from what it holds.
-       Nothing is cached and there is nothing to refresh. -->
+  <!-- STATS — the same month selector as History, so the two screens are
+       always talking about the same period. -->
   <div class="stats-screen" id="statsScreen" style="display:none;">
+    <div class="month-toggle" role="group" aria-label="Month">
+      <button type="button" class="mt-arrow" id="statsPrevBtn" aria-label="Previous month">‹</button>
+      <span class="mt-center">
+        <span class="mt-label" id="statsMonthLabel">—</span>
+        <span class="mt-sub" id="statsMonthSub"></span>
+      </span>
+      <button type="button" class="mt-arrow" id="statsNextBtn" aria-label="Next month">›</button>
+    </div>
     <div id="statsPane"></div>
   </div>
 
-  <!-- ACCOUNT / SYNC SCREEN -->
+  <!-- ACCOUNT / SYNC SCREEN — one line per thing. Anything only touched
+       when something has gone wrong is folded away. -->
   <div class="account-screen" id="accountScreen" style="display:none;">
 
-    <div class="group">
-      <div class="group-title">Sending</div>
-
-      <div class="field">
-        <div class="field-label" id="syncModeLabel">When to send entries to the sheet</div>
-        <div class="chip-group vertical" id="syncModeChips" role="group" aria-labelledby="syncModeLabel">
-          <button type="button" class="chip" data-val="smart" aria-pressed="false">Wait and send them together</button>
-          <button type="button" class="chip" data-val="instant" aria-pressed="false">As soon as I add them</button>
-          <button type="button" class="chip" data-val="manual" aria-pressed="false">Only when I tap send</button>
+    <div class="panel">
+      <div class="acct-row">
+        <div class="grow">
+          <div class="k">Waiting to be sent</div>
+          <div class="s" id="queueSummary">Nothing waiting</div>
         </div>
-        <div class="field-hint" id="syncModeHint">Every entry is kept on this device first, so nothing is lost while it waits.</div>
+        <button type="button" class="mini-btn primary" id="sendAllBtn">Send</button>
       </div>
-
-      <div class="field">
-        <div class="field-label">Waiting to be sent</div>
-        <div class="field-hint" id="queueSummary">Nothing waiting</div>
-        <button type="button" class="btn btn-save" id="sendAllBtn">Send everything now</button>
-      </div>
-
-      <div class="switch-row">
-        <div class="label-block">
-          <div class="title" id="confirmTitle">Wait for the sheet to confirm</div>
-          <div class="desc">Only clear an entry once Excel says it has the row. Needs the Make scenario to reply <b>LEDGER_OK</b> — leave this off until it does, or nothing will ever send.</div>
+      <div class="acct-row" style="display:block;">
+        <div class="k" style="margin-bottom:10px;">When to send</div>
+        <div class="seg-chips" id="syncModeChips" role="group" aria-label="When to send entries" style="padding:0;">
+          <button type="button" data-val="smart" aria-pressed="false">Batched</button>
+          <button type="button" data-val="instant" aria-pressed="false">Instant</button>
+          <button type="button" data-val="manual" aria-pressed="false">Manual</button>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="confirmToggle" aria-labelledby="confirmTitle">
-          <span class="slider"></span>
-        </label>
+        <div class="s" id="syncModeHint" style="margin-top:10px;"></div>
       </div>
     </div>
 
-    <div class="group">
-      <div class="group-title">Backup</div>
-      <div class="field">
-        <div class="field-hint" id="backupStatus">—</div>
-        <button type="button" class="btn btn-save" id="exportBtn">Save a backup file</button>
-        <button type="button" class="btn btn-outline" id="importBtn">Restore from a file</button>
+    <div class="panel">
+      <div class="acct-row">
+        <div class="grow">
+          <div class="k">Backup</div>
+          <div class="s" id="backupStatus">—</div>
+        </div>
+        <button type="button" class="mini-btn" id="importBtn">Restore</button>
+        <button type="button" class="mini-btn primary" id="exportBtn">Save</button>
         <input type="file" id="importFile" accept="application/json,.json" style="display:none;" aria-label="Choose a backup file">
-        <div class="field-hint">Restoring adds anything missing. It never deletes what is already on this device.</div>
+      </div>
+      <div class="acct-row">
+        <div class="grow">
+          <div class="k">The sheet</div>
+          <div class="s" id="monthSummary">—</div>
+        </div>
+        <button type="button" class="mini-btn" id="refreshBtn">Re-read</button>
       </div>
     </div>
 
-    <div class="group" id="lastSendField" style="display:none;">
-      <div class="group-title">Last send</div>
-      <div class="field">
-        <div class="field-hint" id="lastSendSummary">—</div>
-        <button type="button" class="btn btn-outline" id="requeueBtn">Put them back in the queue</button>
-        <div class="field-hint">Only if they never reached the sheet. Check Excel first — putting back a batch that did land will write it twice.</div>
+    <details class="fold">
+      <summary>If something went wrong</summary>
+      <div class="fold-body">
+        <div class="switch-row" style="border:none;border-radius:0;background:transparent;">
+          <div class="label-block grow">
+            <div class="title" id="confirmTitle">Wait for the sheet to confirm</div>
+            <div class="desc">Needs the Make scenario to reply LEDGER_OK. Off until it does.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="confirmToggle" aria-labelledby="confirmTitle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="acct-row" id="lastSendField" style="display:none;">
+          <div class="grow">
+            <div class="k">Last send</div>
+            <div class="s" id="lastSendSummary">—</div>
+          </div>
+          <button type="button" class="mini-btn" id="requeueBtn">Re-queue</button>
+        </div>
       </div>
-    </div>
-
-    <div class="group">
-      <div class="group-title">The sheet</div>
-
-      <div class="field">
-        <div class="field-label">Open items</div>
-        <div class="field-hint">The app tracks these itself. Read the sheet again if you have edited it in Excel directly.</div>
-        <button type="button" class="btn btn-outline" id="refreshBtn">Read the sheet again</button>
-      </div>
-
-      <div class="field">
-        <div class="field-label">This month</div>
-        <div class="field-hint" id="monthSummary">—</div>
-      </div>
-    </div>
+    </details>
   </div>
 </div>
 
@@ -1235,13 +1328,11 @@
     <div class="sheet-actions">
       <button type="button" class="btn btn-outline" id="confirmEditBtn">Edit entry</button>
       <button type="button" class="btn btn-save" id="confirmAddBtn">Add entry</button>
-      <!-- text swapped in edit mode by openConfirmSheet -->
     </div>
   </div>
 </div>
 
-<!-- ENTRY DETAIL — what a tap on a row in the history opens. Everything the
-     row had to leave out, plus the one thing you came for: a way to change it. -->
+<!-- ENTRY DETAIL -->
 <div class="modal-overlay" id="detailSheet" role="dialog" aria-modal="true" aria-labelledby="detailTitleText">
   <div class="modal">
     <button type="button" class="sheet-close" id="detailCloseBtn" aria-label="Close">✕</button>
@@ -1257,14 +1348,10 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script>
   // ---------- STATE ----------
   const state = {
     kind: 'N',
-    // The Yes/No answer and, when it is Yes, whether this opens a new item
-    // or closes an old one. The transaction ID is derived from these and
-    // never typed — idValue is what actually gets written.
     back: 'N',
     idValue: '',
     isSelfTransfer: false,
@@ -1283,99 +1370,62 @@
     historyShown: 40,
     requireConfirm: false,
     pending: null,
-    // Edits made on this device to rows that are already in the sheet,
-    // waiting to be pushed. Separate from `queue`, which only ever holds
-    // whole entries that have never been written.
     edits: [],
-    // The entry currently loaded into the form for editing, or null when
-    // the form is doing its normal job of adding.
     editing: null,
     pushingEdits: false,
-    // Rebuilt on every render of the list: the key on a row maps back to the
-    // folded entry it was drawn from, so a tap knows what it opened.
-    rowIndex: {}
+    rowIndex: {},
+    // Which month History and Stats are both looking at. 0 is this month,
+    // negative is further back. Never positive — there is no such thing as
+    // a future entry, so Next stops here.
+    monthOffset: 0,
+    // Why a month could not be read, keyed by sheet name. Set by a failed
+    // or unrecognisable read so the pane can say what happened rather than
+    // looking simply empty.
+    monthStatus: {},
+    monthLoading: null,
+    // Which cut of the month's spending the breakdown is showing.
+    breakdown: 'name',
+    breakdownAll: false
   };
 
   const $ = (id) => document.getElementById(id);
 
   // ---------- LEDGER ENDPOINT ----------
-  // One webhook now serves both jobs. The Make scenario reads MODE and builds
-  // its Graph URL and method from it — MODE=add appends rows, MODE=read
-  // returns the whole table range. Two jobs, one scenario, one billed module
-  // per request instead of two separate scenarios each burning their own
-  // trigger. The reply module carries a filter so it only runs on reads,
-  // which is why a write costs 2 operations and a read costs 3.
   const LEDGER_URL = 'https://hook.us2.make.com/pmrsweyiswbqrox3sj5ibmkj83bhuhz9';
 
-  // The order of values inside each row array, matching the Excel Table's
-  // structured columns left to right (B through K). Getting this wrong writes
-  // every field one column off with no error from Graph, so it is defined
-  // once here and never rebuilt inline.
-  //
-  // Nine columns, B through J, matching the sheet as it stands after the
-  // frequency column was deleted. Adding or removing one here without doing
-  // the same in Excel writes every field one column off with no error.
+  // Nine columns, B through J, matching the sheet. Adding or removing one
+  // here without doing the same in Excel writes every field one column off.
   const COLUMN_ORDER = ['DATE','ID','ACCOUNT','EXPENSE','INFO','TYPE','DEBIT','CREDIT','FORMULA'];
   const ROW_FORMULA = '=[@[CREDIT AMOUNT]]-[@[DEBIT AMOUNT]]';
 
-  // Storage keys. Everything the app needs to survive a reload lives under
-  // these — the unsent queue, the locally-tracked open Y-IDs, and the
-  // sync preference.
   // ---------- BATCHING ----------
-  // Entries are not sent on a count. They are sent once you stop adding, so a
-  // run of ten goes across in one call rather than being chopped into threes.
-  //
-  // The budget makes this a comfort choice rather than a necessity: a write
-  // costs 2 operations whatever the batch size, and 400 entries a month plus
-  // 30 nightly sorts and a handful of reads leaves room for 477 calls — so
-  // even one entry per call fits. That means nothing has to sit around
-  // waiting for company longer than it is worth.
-  const BATCH_FULL  = 3;                 // enough to be worth sending alone
-  const SETTLE_MS   = 90 * 1000;         // quiet time before a full batch goes
-  const MAX_WAIT_MS = 60 * 60 * 1000;    // nothing waits longer than this
+  const BATCH_FULL  = 3;
+  const SETTLE_MS   = 90 * 1000;
+  const MAX_WAIT_MS = 60 * 60 * 1000;
 
   const LS_QUEUE = 'ledger.queue.v1';
   const LS_YIDS  = 'ledger.openYIds.v1';
   const LS_MODE  = 'ledger.syncMode.v1';
-  // A batch is dropped from the queue the moment Make answers OK, but an OK
-  // only means Make received it — not that the row reached Excel. If the
-  // scenario is off, out of operations, or misconfigured, the reply can still
-  // be a 200 and the entry would be gone from the only place it existed.
-  // Every sent batch is kept here for a week so it can be put back.
   const LS_SENT  = 'ledger.sent.v1';
-  // Every entry ever added on this device, oldest first. The queue only holds
-  // what has not gone across yet, so it cannot answer "what did I spend on
-  // Tuesday" — this can, with no Make operations and no connection.
   const LS_HIST  = 'ledger.history.v1';
-  // Changes to rows that are already in the sheet, waiting to be pushed.
-  // An edit cannot be appended like a new entry — the row has to be found and
-  // patched in place — so it is held here rather than in the entry queue.
   const LS_EDITS = 'ledger.edits.v1';
-  // Months pulled back from the sheet, so older history can be read in the app
-  // without paying for it again. { "AUG26": { at, rows } }
   const LS_SHEET = 'ledger.sheetCache.v1';
+  // Names added by hand. Everything ever used is learned from the rows
+  // themselves; this only has to remember a name typed for something that
+  // has not been saved yet.
+  const LS_NAMES = 'ledger.names.v1';
   const SHEET_CACHE_MONTHS = 12;
-  // The sheet's own totals (B5:J5), read once after the nightly sort. It is
-  // the only number the device cannot work out for itself — rollovers and
-  // anything entered straight into Excel live there and nowhere else.
-  const LS_STATS = 'ledger.statsSnapshot.v1';
   const LS_BACKUP = 'ledger.lastBackup.v1';
   const LS_SNOOZE = 'ledger.backupSnooze.v1';
-  const BACKUP_HOUR = 22;   // the nightly nudge
+  const BACKUP_HOUR = 22;
   const LS_MONTHACK = 'ledger.monthAck.v1';
-  // The string the Make scenario must reply with for a write to count as
-  // landed. Make's default reply is "Accepted", which only means Make got the
-  // request — not that Graph wrote the row.
   const LS_CONFIRM = 'ledger.requireConfirm.v1';
   const CONFIRM_TOKEN = 'LEDGER_OK';
   const HIST_MAX = 2000;
   const SENT_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
   const SENT_KEEP_MAX = 400;
+  const MONTHS_BACK_MAX = 24;
 
-  // Private browsing and some embedded webviews throw on localStorage access
-  // rather than simply returning null, so every read and write goes through
-  // these. If storage is unavailable the app still works for the session —
-  // it just loses the queue when the tab closes.
   const memoryStore = {};
   function lsGet(key, fallback){
     try{
@@ -1390,7 +1440,7 @@
     try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
   }
 
-  // ---------- HEADER DATE (static, real today's date — not tied to the form) ----------
+  // ---------- HEADER DATE ----------
   function initHeaderDate(){
     const now = new Date();
     $('dateSub').textContent = now.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
@@ -1401,28 +1451,20 @@
   function isoToday(offsetDays=0){
     const d = new Date();
     d.setDate(d.getDate() + offsetDays);
-    return d.toISOString().slice(0,10);
+    // Local date parts, not toISOString() — that is UTC, so anywhere east of
+    // it "today" became yesterday for the first few hours of every morning.
+    return toIso(d.getFullYear(), d.getMonth() + 1, d.getDate());
   }
   function formatDateForExcel(iso){
     const [y,m,d] = iso.split('-');
     return `${d}/${m}/${y}`;
   }
-  // Excel's internal date system counts days since 1899-12-30 (the extra day
-  // vs 1900-01-01 accounts for Excel's intentional leap-year bug). Sending
-  // this number instead of a "DD/MM/YYYY" string makes Excel store a real
-  // date value — sortable, filterable, usable in SUMIFS date ranges — rather
-  // than text that merely looks like a date.
   function toExcelSerial(iso){
     const [y, m, d] = iso.split('-').map(Number);
     const utcDate = Date.UTC(y, m - 1, d);
     const excelEpoch = Date.UTC(1899, 11, 30);
     return Math.round((utcDate - excelEpoch) / 86400000);
   }
-  // Every month gets its own worksheet ("OCT26") and its own Table ("OCT_26"
-  // — the underscore is required, since a bare "OCT26" is syntactically a
-  // valid Excel cell reference and gets rejected as a Table name). This
-  // computes both names from a given date so entries automatically land in
-  // the right month's sheet without ever hardcoding a month.
   const MONTH_ABBR = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   function monthNamesFor(iso){
     const [y, m] = iso.split('-').map(Number);
@@ -1434,27 +1476,62 @@
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
   }
+
+  // ---------- MONTH SELECTION ----------
+  // One offset drives both History and Stats, so the two screens are never
+  // describing different periods.
+  function monthDateFor(off){
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth() + off, 1);
+  }
+  function monthNamesForOffset(off){
+    const d = monthDateFor(off);
+    return monthNamesFor(toIso(d.getFullYear(), d.getMonth() + 1, 1));
+  }
+  function monthLabelFor(off){
+    return monthDateFor(off).toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  }
+  function monthSubFor(off){
+    if(off === 0) return 'Current month';
+    if(off === -1) return 'Last month';
+    return `${-off} months ago`;
+  }
+  function selectedSheet(){ return monthNamesForOffset(state.monthOffset).sheet; }
+
+  // Rows that belong to a given month, from wherever this device holds them.
+  function rowsForMonth(off){
+    const sheet = monthNamesForOffset(off).sheet;
+    return allRows().filter(r => r.dateISO && monthNamesFor(r.dateISO).sheet === sheet);
+  }
+
+  function shiftMonth(step){
+    const next = state.monthOffset + step;
+    if(next > 0 || next < -MONTHS_BACK_MAX) return;
+    state.monthOffset = next;
+    state.historyShown = 40;
+    state.breakdownAll = false;
+    renderHistory();
+    renderStats();
+  }
+
+  // The two toggles are the same control drawn twice; this keeps them in
+  // step without either screen owning the state.
+  function renderMonthToggles(){
+    const off = state.monthOffset;
+    [['monthToggleLabel','monthToggleSub','monthPrevBtn','monthNextBtn'],
+     ['statsMonthLabel','statsMonthSub','statsPrevBtn','statsNextBtn']].forEach(ids => {
+      $(ids[0]).textContent = monthLabelFor(off);
+      $(ids[1]).textContent = monthSubFor(off);
+      $(ids[2]).disabled = off <= -MONTHS_BACK_MAX;
+      $(ids[3]).disabled = off >= 0;
+    });
+  }
+  ['monthPrevBtn','statsPrevBtn'].forEach(id => $(id).addEventListener('click', () => shiftMonth(-1)));
+  ['monthNextBtn','statsNextBtn'].forEach(id => $(id).addEventListener('click', () => shiftMonth(1)));
+
   // ---------- DATE PARSING ----------
-  // The field takes day, a separator, then month. The year is worked out
-  // rather than typed, because in an expense tracker it is never genuinely
-  // ambiguous: a day+month pair either already happened this year, or it
-  // happened last year. Those are the only two candidates, so "5.9" on 12
-  // Sep 2026 is 5 Sep 2026, and "25.12" typed on 2 Jan 2027 is 25 Dec 2026.
-  //
-  // The separator is required and carries real meaning. Without it "212"
-  // could be 21 Feb or 2 Dec and no amount of ranking can know which was
-  // meant — so rather than guess, the field asks for the one keystroke that
-  // removes the guess entirely. Dot, space, slash and hyphen are all
-  // accepted, because which of those is reachable depends on whichever
-  // keyboard the phone happens to offer.
-  //
-  // Nothing here rewrites what was typed. An impossible value is reported,
-  // not silently clamped into a different date.
   const SEPARATORS = /[.\-\/\s]+/;
 
-  // A two-digit year means the most recent year ending in those digits, so
-  // "26" reads as 2026 rather than 1926 — and stays correct without a
-  // hardcoded century window.
   function expandYear(raw){
     if(raw.length === 4) return parseInt(raw, 10);
     if(raw.length > 2) return null;
@@ -1473,8 +1550,6 @@
     return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
 
-  // Returns { iso, inferredYear, ... } on success, or { error } with a
-  // message that says what is actually wrong.
   function parseDateInput(str){
     const s = (str || '').trim();
     if(!s) return { empty:true };
@@ -1492,7 +1567,6 @@
 
     const today = isoToday(0);
 
-    // An explicit year is taken as given — no inference, no adjustment.
     if(parts.length === 3){
       const year = expandYear(parts[2]);
       if(year === null) return { error:'Year should be 2 or 4 digits' };
@@ -1502,9 +1576,6 @@
       return { iso, inferredYear:false };
     }
 
-    // No year typed: this year if it has already happened, otherwise last
-    // year. The loop exists only for 29 February, where the two nearest
-    // candidates can both be non-leap years and the real one is further back.
     const thisYear = new Date().getFullYear();
     for(let y = thisYear; y >= thisYear - 8; y--){
       if(!isRealDate(y, month, day)) continue;
@@ -1520,7 +1591,6 @@
     return `There is no ${d} ${monthName}`;
   }
 
-  // How far back a date sits, for deciding whether it deserves a second look.
   function daysAgo(iso){
     const a = new Date(iso + 'T00:00:00');
     const b = new Date(isoToday(0) + 'T00:00:00');
@@ -1532,12 +1602,6 @@
   }
 
   // ---------- DATE FIELD ----------
-  // The field accepts digits and separators and otherwise leaves the text
-  // alone: no mask, no auto-inserted characters, no cursor repositioning.
-  // That is what lets select-all-and-delete, mid-string editing and the
-  // caret all behave the way they do in any other text field. Everything
-  // the old mask was protecting against is caught by parseDateInput and
-  // reported in the hint line instead.
   const dateHint = $('dateHint');
 
   function renderDateHint(){
@@ -1559,11 +1623,6 @@
     }
 
     const back = daysAgo(res.iso);
-    // Two cases deserve attention rather than quiet acceptance: a date that
-    // resolved into last year, and one that is months old. Both are legitimate
-    // — backdating is the whole point of the field — but both are also what a
-    // mistyped month looks like. A normal date says nothing at all; the line
-    // stays where it is, empty, so nothing jumps when it has something to say.
     if(res.inferredYear){
       say(`${formatFullDate(res.iso)} — last year`, 'is-warn');
     } else if(back > 90){
@@ -1576,16 +1635,12 @@
   $('dateTextInput').addEventListener('input', (e) => {
     const cleaned = e.target.value.replace(/[^\d.\-\/\s]/g, '');
     if(cleaned !== e.target.value){
-      // Only rewrite when something illegal was actually typed, and put the
-      // caret back where it was rather than throwing it to the end.
       const pos = e.target.selectionStart - (e.target.value.length - cleaned.length);
       e.target.value = cleaned;
       e.target.setSelectionRange(pos, pos);
     }
     document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
     renderDateHint();
-    // Resolve as they type so the CTA caption and the month the entry will
-    // land in are live, not held back until the field loses focus.
     const res = parseDateInput(e.target.value);
     state.selectedDateISO = res.iso || null;
     updateCTA();
@@ -1600,13 +1655,18 @@
     renderDateHint();
     updateCTA();
   }
+  // The day is over when you go to bed, not when the clock rolls over. Until
+  // 05:30 an entry is still being added to the day that has just finished, so
+  // that is the default — and it is labelled Yesterday, because by then it is.
+  const DAY_STARTS_AT = 5.5;
+  function applyDefaultDate(){
+    const n = new Date();
+    if(n.getHours() + n.getMinutes() / 60 < DAY_STARTS_AT) setDate(isoToday(-1), 'yesterday');
+    else setDate(isoToday(0), 'today');
+  }
   $('todayBtn').addEventListener('click', () => setDate(isoToday(0), 'today'));
   $('yesterdayBtn').addEventListener('click', () => setDate(isoToday(-1), 'yesterday'));
 
-  // On leaving the field a resolved date is written back in full, so the
-  // year it settled on is visible in the field itself and not only in the
-  // hint. Unparseable text is left exactly as typed — clearing it would
-  // throw away what someone was halfway through correcting.
   $('dateTextInput').addEventListener('blur', (e) => {
     const res = parseDateInput(e.target.value);
     if(res.iso){
@@ -1619,6 +1679,87 @@
     updateCTA();
   });
 
+  // ---------- TRANSACTION NAME ----------
+  // The list is learned rather than configured: every name that appears in
+  // anything this device knows about is an option, ordered by how often it
+  // has been used. Adding one is a deliberate act, which is what stops
+  // "Rapido" and "rapido" from becoming two different things in the stats.
+  const nameWrap = () => $('expenseNameWrap');
+
+  function storedNames(){
+    const s = lsGet(LS_NAMES, []);
+    return Array.isArray(s) ? s : [];
+  }
+  function rememberName(n){
+    const name = (n || '').trim();
+    if(!name) return;
+    if(knownNames().includes(name)) return;
+    const list = storedNames();
+    list.push(name);
+    lsSet(LS_NAMES, list);
+  }
+  function knownNames(){
+    const counts = {};
+    allRows().forEach(r => {
+      const n = String(r.expenseName || '').trim();
+      if(n) counts[n] = (counts[n] || 0) + 1;
+    });
+    storedNames().forEach(n => { if(n && !(n in counts)) counts[n] = 0; });
+    return Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+  }
+
+  function renderNameOptions(keep){
+    const sel = $('expenseName');
+    const cur = keep != null ? keep : sel.value;
+    sel.innerHTML = '<option value="">Choose a name…</option>'
+      + knownNames().map(n => `<option>${esc(n)}</option>`).join('')
+      + '<option value="__new" style="font-style:italic;">Add a new name…</option>';
+    if(cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+  }
+  function enterNameCustomMode(){
+    nameWrap().classList.add('custom-mode');
+    $('expenseNameCustomInput').style.display = 'block';
+    $('expenseNameCustomInput').value = '';
+  }
+  function exitNameCustomMode(){
+    nameWrap().classList.remove('custom-mode');
+    $('expenseNameCustomInput').style.display = 'none';
+    $('expenseNameCustomInput').value = '';
+  }
+  function expenseNameValue(){
+    return nameWrap().classList.contains('custom-mode')
+      ? $('expenseNameCustomInput').value.trim()
+      : $('expenseName').value.trim();
+  }
+  function setExpenseName(v){
+    const name = (v || '').trim();
+    renderNameOptions(null);
+    const sel = $('expenseName');
+    if(name && [...sel.options].some(o => o.value === name)){
+      sel.value = name;
+      exitNameCustomMode();
+    } else if(name){
+      sel.value = '__new';
+      enterNameCustomMode();
+      $('expenseNameCustomInput').value = name;
+    } else {
+      sel.value = '';
+      exitNameCustomMode();
+    }
+    updateCTA();
+  }
+
+  $('expenseName').addEventListener('change', (e) => {
+    if(e.target.value === '__new'){
+      enterNameCustomMode();
+      $('expenseNameCustomInput').focus();
+    } else {
+      exitNameCustomMode();
+    }
+    updateCTA();
+  });
+  $('expenseNameCustomInput').addEventListener('input', updateCTA);
+
   // ---------- SELF TRANSFER TOGGLE ----------
   const selfTransferToggle = $('selfTransferToggle');
   selfTransferToggle.addEventListener('click', () => {
@@ -1629,25 +1770,19 @@
   function applySelfTransferMode(){
     const on = state.isSelfTransfer;
     selfTransferToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
-    // The To row is never added or removed — it opens and closes. A text
-    // swap on the label above it costs no layout at all.
     $('accountRow').classList.toggle('is-transfer', on);
     $('accountLabel').textContent = on ? 'From account' : 'Account';
 
     $('singleTypeField').style.display = on ? 'none' : 'flex';
     if(on) exitTxnTypeCustomMode();
     $('splitTypeFields').style.display = on ? 'grid' : 'none';
-
-    // Moving your own money is never something that comes back to you, so
-    // the question is not asked — the pair is tracked with a Y ID under the
-    // hood exactly as before.
     $('backGroup').style.display = on ? 'none' : 'flex';
 
     if(on){
       state.kind = 'Y';
       state.idValue = generateId('Y');
 
-      $('expenseName').value = 'Self Transfer';
+      setExpenseName('Self Transfer');
       $('txnTypeFrom').value = 'Sent Transfer';
       $('txnTypeTo').value = 'Received Transfer';
       updateSplitCustomVisibility();
@@ -1657,9 +1792,6 @@
       $('debitBtn').classList.add('locked');
       $('creditBtn').classList.add('locked');
 
-      // Account may have been changed while in single-account mode, and
-      // could now coincide with To account's untouched default — resolve
-      // that before it ever becomes a visible conflict.
       if(state.account === state.toAccount){
         const options = ['Domestic', 'International', 'Cash'];
         const alt = options.find(o => o !== state.account) || options[0];
@@ -1671,21 +1803,14 @@
       $('creditBtn').classList.remove('locked');
       state.credit = false; state.debit = true;
       renderKindButtons(false);
-      if($('expenseName').value === 'Self Transfer') $('expenseName').value = '';
+      if(expenseNameValue() === 'Self Transfer') setExpenseName('');
       setBack('N');
       $('splitCustomFields').style.display = 'none';
     }
     updateCTA();
   }
 
-  // ---------- ACCOUNT CHIPS (single + from/to) ----------
-  // Every chip is always clickable — nothing is ever disabled. If picking a
-  // value would make From and To the same account, the *other* side swaps
-  // to whatever this side just gave up, rather than blocking the click or
-  // making the person manually clear a conflict first. E.g. From=Domestic,
-  // To=International — clicking International on the From side instantly
-  // flips To to Domestic, landing exactly on "International to Domestic"
-  // in one tap.
+  // ---------- ACCOUNT CHIPS ----------
   function selectChip(groupId, value){
     document.querySelectorAll(`#${groupId} .chip`).forEach(c => {
       const on = c.dataset.val === value;
@@ -1728,14 +1853,6 @@
   }, 1);
 
   // ---------- WILL I GET THIS BACK ----------
-  // The raw alphanumeric ID field is gone. The same two kinds of entry it
-  // encoded are now asked for in words: No writes an N id, Yes + New writes
-  // a fresh Y id, and Yes + Old reuses the Y id of whichever open item is
-  // picked — chosen by its name, never by its code.
-  //
-  // keepId is set when an existing entry is being loaded into the form:
-  // the answer has to be shown without a new ID being minted over the one
-  // the row already has.
   function setBack(v, keepId){
     state.back = v;
     state.kind = v;
@@ -1744,9 +1861,6 @@
       b.classList.toggle('on', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
-    $('backHint').textContent = v === 'Y'
-      ? 'Kept under Owed to me until the other half is entered.'
-      : 'One-way payment — nothing is expected back.';
     $('backKindField').style.display = v === 'Y' ? 'flex' : 'none';
     if(v === 'Y'){
       applyBackMode(keepId);
@@ -1766,16 +1880,12 @@
     }
     const items = renderOpenItems();
     if(!items.length){
-      // Nothing is open, so there is nothing to close. Say so rather than
-      // leaving an empty dropdown that looks broken.
       if(!keepId) state.idValue = generateId('Y');
       return;
     }
     if(!keepId) applyOpenItem($('openItemSelect').value);
   }
 
-  // Every currently-open item, newest first, described by its name rather
-  // than its ID — the ID is still the handle underneath.
   function openItems(){
     const rows = allRows();
     return computeOpenYIds().map(id => {
@@ -1800,28 +1910,20 @@
     items.forEach(it => {
       const opt = document.createElement('option');
       opt.value = it.id;
-      const money = it.amount ? ` · ₹${it.amount.toLocaleString('en-IN')}` : '';
+      const money2 = it.amount ? ` · ₹${it.amount.toLocaleString('en-IN')}` : '';
       const when = it.dateISO ? ` · ${formatDisplayDate(it.dateISO)}` : '';
-      opt.textContent = it.name + money + when;
+      opt.textContent = it.name + money2 + when;
       sel.appendChild(opt);
     });
     if(items.some(i => i.id === keep)) sel.value = keep;
-    $('openItemHint').textContent = items.length
-      ? 'Picking one marks it as settled once this entry is saved.'
-      : 'Nothing is open yet — this will be saved as a new one instead.';
     return items;
   }
 
-  // Choosing an open item carries its name across, so the returning half of
-  // a pair is labelled the same as the half that opened it. Anything already
-  // typed is left alone.
   function applyOpenItem(id){
     if(!id) return;
     state.idValue = id;
     const it = openItems().find(i => i.id === id);
-    if(it && !$('expenseName').value.trim() && it.name !== id){
-      $('expenseName').value = it.name;
-    }
+    if(it && !expenseNameValue() && it.name !== id) setExpenseName(it.name);
     updateCTA();
   }
 
@@ -1843,25 +1945,10 @@
   }
 
   // ---------- OPEN Y-IDS ----------
-  // A Y-ID is "open" while it appears exactly once in the sheet: the outgoing
-  // leg is recorded and the returning leg isn't yet. The app used to work
-  // this out by reading the whole table before every single submit, which
-  // meant two round trips per entry. It doesn't need to — the app knows every
-  // Y-ID it writes, so the same list is maintained locally: a new Y-ID opens,
-  // and writing the same Y-ID a second time closes it. Reading the sheet is
-  // now only for reconciling against edits made directly in Excel, which is
-  // a deliberate action rather than something that happens on every save.
   function loadOpenYIds(){
     const ids = lsGet(LS_YIDS, []);
     state.openYIds = Array.isArray(ids) ? ids : [];
   }
-  // A Y-ID is open while it appears an odd number of times: the outgoing leg
-  // is written and the returning one is not. Counted across everything this
-  // device knows — its own history plus every month pulled back from the
-  // sheet — so an ID opened in July is still visible in September.
-  //
-  // Where rows exist for an ID, they decide. The locally-tracked list only
-  // fills in IDs that predate this device having a row for them at all.
   function computeOpenYIds(){
     const counts = {};
     allRows().forEach(r => {
@@ -1881,9 +1968,6 @@
     lsSet(LS_YIDS, state.openYIds);
   }
 
-  // Re-reads the current month and folds it back in. It deliberately does not
-  // rebuild the open list from that one month — doing so used to erase every
-  // ID opened in any other month.
   async function refreshOpenYIds({ silent = false } = {}){
     const { sheet, table } = monthNamesFor(isoToday(0));
     const r = await importMonth(sheet, table);
@@ -1891,9 +1975,6 @@
       if(!silent) showToast(r.why, 3400);
       return false;
     }
-    // Anything still queued has not reached the sheet, so the snapshot cannot
-    // know about it — allRows() keeps those local rows, which is what makes
-    // the count come out right.
     const open = computeOpenYIds();
     state.openYIds = open;
     lsSet(LS_YIDS, open);
@@ -1902,20 +1983,13 @@
     return true;
   }
 
-  // ---------- AMOUNT INPUT (masked, comma-formatted, 2-decimal cap) ----------
-  // Two guards against a stray zero, which is the one typo this form cannot
-  // otherwise notice: ₹50,000 and ₹5,000 look equally plausible on the page.
-  // Nothing past 7 integer digits can be typed at all, and anything from a
-  // lakh up has to be confirmed with a second tap before it is queued.
-  const AMOUNT_MAX_INT_DIGITS = 7;                              // ₹99,99,999
+  // ---------- AMOUNT INPUT ----------
+  const AMOUNT_MAX_INT_DIGITS = 7;
   const AMOUNT_MAX = Math.pow(10, AMOUNT_MAX_INT_DIGITS) - 1;
-  const AMOUNT_CONFIRM_FROM = 100000;                           // ₹1,00,000
+  const AMOUNT_CONFIRM_FROM = 100000;
 
   const amountInput = $('amountInput');
 
-  // Reads a large amount back in the unit it is most likely to be misread in.
-  // "5,00,000" and "50,000" differ by one glyph; "5 lakh" and "50 thousand"
-  // do not. Empty below the threshold, where there is nothing to catch.
   function largeAmountLabel(n){
     if(!n || n < AMOUNT_CONFIRM_FROM) return '';
     return (Math.floor(n / 1000) / 100).toFixed(2).replace(/\.?0+$/, '') + ' lakh';
@@ -1928,10 +2002,6 @@
     note.style.display = label ? 'block' : 'none';
   }
 
-  // The single definition of what this field will hold: digits, at most one
-  // dot, at most 2 decimals, at most AMOUNT_MAX_INT_DIGITS before the dot, no
-  // redundant leading zeros. Typing and deleting both run through this, so
-  // neither can produce a string the other would reject.
   function cleanAmountString(raw){
     let cleaned = '';
     let dotSeen = false;
@@ -1940,12 +2010,9 @@
       else if(ch === '.' && !dotSeen){ cleaned += ch; dotSeen = true; }
     }
     let [intPart, decPart] = cleaned.split('.');
-    // "0" + "5" reads as "5", but a lone "0" before a dot stays ("0.5").
     intPart = intPart.replace(/^0+(?=\d)/, '');
     const overflowed = intPart.length > AMOUNT_MAX_INT_DIGITS;
     if(overflowed) intPart = intPart.slice(0, AMOUNT_MAX_INT_DIGITS);
-    // Once 2 decimals exist a 3rd is refused outright, not accepted and
-    // rounded off later.
     if(decPart !== undefined) decPart = decPart.slice(0, 2);
     return {
       clean: decPart !== undefined ? intPart + '.' + decPart : intPart,
@@ -1953,45 +2020,26 @@
     };
   }
 
-  // Formats a clean "digits[.digits]" string with Indian comma grouping on
-  // the integer part, preserving the decimal part exactly as-is (including
-  // an in-progress trailing dot or a single lone decimal digit).
   function formatAmountString(clean){
     const [intPart, decPart] = clean.split('.');
     const groupedInt = intPart === '' ? '' : Number(intPart).toLocaleString('en-IN');
     return clean.includes('.') ? groupedInt + '.' + (decPart || '') : groupedInt;
   }
 
-  // Reads the numeric value for calculations — strips the display commas
-  // this field adds, which a plain parseFloat would otherwise choke on
-  // (parseFloat("5,000.00") stops at the comma and silently returns 5).
   function amountRawNumber(){
     const num = parseFloat(amountInput.value.replace(/,/g, ''));
     return isNaN(num) ? 0 : num;
   }
 
-  // A plain text input defaults to a fairly wide box. Sizing it in
-  // character units (the "size" attribute) is imprecise for a bold,
-  // proportionally-spaced font — it tends to leave a sliver of invisible
-  // space inside the box, which throws off centering: justify-content
-  // centers the whole (₹ + box) group including that invisible space, so
-  // the visible ₹+number ends up sitting left of true center. Measuring
-  // the actual rendered pixel width of the current text and setting the
-  // input's width to exactly that removes the dead space entirely.
   const amountMeasureCanvas = document.createElement('canvas').getContext('2d');
   function updateAmountWidth(){
     const cs = getComputedStyle(amountInput);
     amountMeasureCanvas.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
     const text = amountInput.value || amountInput.placeholder;
     const width = amountMeasureCanvas.measureText(text).width;
-    amountInput.style.width = Math.ceil(width) + 3 + 'px'; // +3px for the caret
+    amountInput.style.width = Math.ceil(width) + 3 + 'px';
   }
 
-  // The commas this field inserts mean a position in the visible text is not
-  // a position in the number. Everything that edits the value works in
-  // "clean" coordinates — digits and the dot only — and converts back once,
-  // at the end. That is what lets the caret stay where it was put instead of
-  // being thrown to the end on every keystroke.
   function toCleanPos(display, pos){
     let n = 0;
     for(let i = 0; i < pos; i++) if(display[i] !== ',') n++;
@@ -2006,8 +2054,6 @@
     return display.length;
   }
 
-  // Writes a clean string back to the field, re-grouped, with the caret put
-  // at the given clean position rather than at the end.
   function setAmountValue(clean, cleanCaret){
     const formatted = formatAmountString(clean);
     amountInput.value = formatted;
@@ -2018,28 +2064,15 @@
   }
 
   amountInput.addEventListener('input', (e) => {
-    // Editing the amount invalidates any pending large-amount confirmation —
-    // the number that was confirmed is no longer the number in the field.
     state.confirmAmount = null;
-
     const display = e.target.value;
     const caret = e.target.selectionStart;
-    // Count the legal characters sitting before the caret. That count
-    // survives re-grouping, where the raw offset would not.
     const cleanCaret = cleanAmountString(display.slice(0, caret)).clean.length;
     const { clean, overflowed } = cleanAmountString(display);
-
     setAmountValue(clean, cleanCaret);
     if(overflowed) showToast(`Amounts stop at ₹${AMOUNT_MAX.toLocaleString('en-IN')}`);
   });
 
-  // Backspace/Delete has to be intercepted here — unlike the date field, the
-  // handler cannot simply be deleted. Deleting a comma leaves the digit count
-  // unchanged, so the next re-render draws the same comma straight back and
-  // nothing ever gets removed. What it no longer does is assume the caret is
-  // at the end: the deletion is applied over the real selection, in clean
-  // coordinates, so select-all-and-delete clears the field and a caret in the
-  // middle of the number deletes the character next to it.
   amountInput.addEventListener('keydown', (e) => {
     if(e.key !== 'Backspace' && e.key !== 'Delete') return;
     e.preventDefault();
@@ -2051,9 +2084,6 @@
     let to   = toCleanPos(display, e.target.selectionEnd);
 
     if(from === to){
-      // Nothing selected: take the character on the side the key points at.
-      // A comma is not a character here, so backspacing "over" one removes
-      // the digit beyond it — which is what it looks like it should do.
       if(e.key === 'Backspace'){
         if(from === 0) return;
         from -= 1;
@@ -2067,26 +2097,15 @@
     setAmountValue(next, from);
   });
 
-  // The native placeholder only disappears once real text exists — it
-  // would otherwise sit there through the tap and up until the first
-  // keystroke. Clearing the placeholder attribute itself on focus makes it
-  // vanish the instant the field is tapped, and since updateAmountWidth
-  // measures value||placeholder, clearing it also collapses the box to
-  // zero width immediately — so what's left centered is just ₹ on its own,
-  // not ₹ plus a lingering gap the width of "00.00".
   amountInput.addEventListener('focus', (e) => {
     e.target.dataset.placeholderBackup = e.target.placeholder || '00.00';
     e.target.placeholder = '';
     updateAmountWidth();
   });
 
-  // On leaving the field, pad a lone decimal digit out to two — "57.1"
-  // becomes "57.10" — and a bare integer or trailing dot gets a full
-  // ".00", so whatever's left in the field is always a clean amount.
   amountInput.addEventListener('blur', (e) => {
     let val = e.target.value.replace(/,/g, '');
     if(val === ''){
-      // Field is empty on blur — bring the placeholder back.
       e.target.placeholder = e.target.dataset.placeholderBackup || '00.00';
       updateAmountWidth();
       return;
@@ -2100,8 +2119,6 @@
       val = val + '.00';
     }
     e.target.value = formatAmountString(val);
-    // Padding changes the string length — "57.1" becomes "57.10" — so the box
-    // has to be re-measured or it stays sized for the pre-padding text.
     updateAmountWidth();
     updateCTA();
   });
@@ -2136,23 +2153,16 @@
       txnTypeCustomInput.style.display = 'block';
       txnTypeCustomInput.value = '';
     } else {
-      // Any real preset — picked either from the full select in normal
-      // mode, or from the same select now sitting as a narrow overlay
-      // over the arrow while in custom mode — always lands back here.
       exitTxnTypeCustomMode();
     }
   });
 
-  // Back to a normal, full-width, fully visible <select> — identical in
-  // every way to any other dropdown in the app.
   function exitTxnTypeCustomMode(){
     txnTypeWrap.classList.remove('custom-mode');
     txnTypeCustomInput.style.display = 'none';
     txnTypeCustomInput.value = '';
   }
 
-  // Same "placeholder vanishes the instant you tap in" treatment as the
-  // amount field — clearing the attribute itself, not just its color.
   txnTypeCustomInput.addEventListener('focus', (e) => {
     e.target.dataset.placeholderBackup = e.target.placeholder || 'Enter a category of your own';
     e.target.placeholder = '';
@@ -2172,7 +2182,7 @@
   $('txnTypeFrom').addEventListener('change', updateSplitCustomVisibility);
   $('txnTypeTo').addEventListener('change', updateSplitCustomVisibility);
 
-  // ---------- CTA (single Save button + live caption) ----------
+  // ---------- CTA ----------
   function formattedAmount(){
     const num = amountRawNumber();
     return num.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -2182,9 +2192,6 @@
     const raw = amountRawNumber();
     renderAmountNote(raw);
 
-    // An amount of zero is "not typed yet", not a real figure — printing
-    // "₹0.00" on the button from the first paint makes the number stop
-    // meaning anything, so it only appears once there is one.
     const verb = state.editing ? 'Save Changes' : 'Add Entry';
     if(state.isSelfTransfer){
       $('ctaMainText').textContent = raw ? `${verb} • ₹${amt} Transfer` : verb;
@@ -2193,13 +2200,10 @@
       $('ctaMainText').textContent = raw ? `${verb} • ₹${amt} ${dir}` : verb;
     }
 
-    // The caption's only remaining job is saying why a tap will not work.
-    // What the entry will actually be is read back in the confirm sheet,
-    // where it is a sentence rather than three fields joined by bullets.
     const cap = $('ctaCaption');
     const missing = [];
     if(!raw) missing.push('an amount');
-    if(!$('expenseName').value.trim()) missing.push('a name');
+    if(!expenseNameValue()) missing.push('a name');
     if(!state.selectedDateISO) missing.push('a date');
     if(missing.length){
       const list = missing.length === 1 ? missing[0]
@@ -2212,12 +2216,6 @@
     }
   }
 
-  // The caption tracks the name field too, so it stops asking for something
-  // the moment it is typed rather than on the next unrelated interaction.
-  $('expenseName').addEventListener('input', updateCTA);
-
-  // Marks the field the save button just refused, and brings it into view.
-  // Clears itself on the next edit, so it never outlives the problem.
   function flagInvalid(el){
     const target = el.closest('.amount-card') || el;
     target.classList.add('is-invalid');
@@ -2225,8 +2223,10 @@
     const clear = () => {
       target.classList.remove('is-invalid');
       el.removeEventListener('input', clear);
+      el.removeEventListener('change', clear);
     };
     el.addEventListener('input', clear);
+    el.addEventListener('change', clear);
   }
 
   // ---------- TOAST ----------
@@ -2239,34 +2239,23 @@
     toastTimer = setTimeout(() => t.classList.remove('show'), duration);
   }
 
-  // ---------- RESET (runs automatically after a successful save) ----------
+  // ---------- RESET ----------
   function fullReset(){
-    // Leaving edit mode is part of clearing the form, not a separate step —
-    // otherwise a blank form could still be sitting under an Editing banner,
-    // pointed at a row it no longer describes.
     state.editing = null;
     const eb = $('editBanner');
     if(eb) eb.style.display = 'none';
     $('entryForm').reset();
     exitTxnTypeCustomMode();
     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    // Most entries are for today, so today is where the field starts. It is
-    // a visible, labelled default — the Today chip is lit and the CTA
-    // caption spells the date out — not a hidden assumption.
-    setDate(isoToday(0), 'today');
+    applyDefaultDate();
     state.isSelfTransfer = false;
     applySelfTransferMode();
+    setExpenseName('');
     $('backKind').value = 'new';
     setBack('N');
     selectChip('accountChips', 'Domestic');
     state.account = 'Domestic';
     $('splitCustomFields').style.display = 'none';
-    // Submitting blurs the amount field while it still holds a value, so the
-    // blur handler's "restore the placeholder" branch never runs and the
-    // attribute stays empty from the earlier focus. Once reset() clears the
-    // value there would be neither text nor placeholder left to measure, and
-    // the box would collapse to a few pixels. Restore it here rather than
-    // relying on blur.
     amountInput.placeholder = amountInput.dataset.placeholderBackup || '00.00';
     state.confirmAmount = null;
     updateAmountWidth();
@@ -2279,13 +2268,6 @@
   }
 
   async function callLedger(payload){
-    // Sent as a form-encoded body (not JSON) on purpose: a JSON Content-Type
-    // forces the browser to send a CORS preflight (OPTIONS) request first,
-    // and Make/most webhook receivers don't answer that preflight the way
-    // fetch() needs — so the browser silently blocks the real POST before it
-    // ever leaves the device. Form-encoding with no explicit Content-Type
-    // header is a "simple request" and skips preflight entirely. Make parses
-    // this into the same flat key/value fields either way.
     const body = new URLSearchParams();
     Object.entries(payload).forEach(([k, v]) => body.append(k, v == null ? '' : String(v)));
 
@@ -2303,18 +2285,9 @@
   }
 
   // ---------- QUEUE ----------
-  // An entry is written to the local queue first and pushed to the sheet
-  // second. That ordering is what makes the app safe to use offline, on a
-  // dropped connection, or against a paused Make account: the record exists
-  // on the device the moment Add Entry is tapped, and syncing is a separate
-  // concern that can fail and be retried without ever losing what was typed.
   function loadQueue(){
     const q = lsGet(LS_QUEUE, []);
     state.queue = Array.isArray(q) ? q : [];
-    // Entries queued by an older build have no timestamp. Treating them as
-    // brand new would restart their hour; treating them as ancient would
-    // send them the moment the app opens. The latter is the right one —
-    // they have already waited.
     let patched = false;
     state.queue.forEach(e => { if(!e.at){ e.at = 0; patched = true; } });
     if(patched) lsSet(LS_QUEUE, state.queue);
@@ -2338,8 +2311,6 @@
     if(state.history.length > HIST_MAX) state.history = state.history.slice(-HIST_MAX);
     lsSet(LS_HIST, state.history);
   }
-  // The history copy carries the sheet and table names because a patch
-  // cannot find its row without knowing which table the row is in.
   function recordHistory(entries){
     entries.forEach(e => state.history.push({
       uid: e.uid, at: e.at, dateISO: e.dateISO, id: e.id,
@@ -2366,8 +2337,6 @@
     state.history.forEach(h => {
       if(!set.has(h.uid)) return;
       h.sent = sent;
-      // When it reached the sheet, which is what decides whether a given
-      // snapshot of that sheet could have contained it.
       if(sent) h.sentAt = now; else delete h.sentAt;
     });
     saveHistory();
@@ -2390,23 +2359,9 @@
     lsSet(LS_SHEET, cache);
   }
 
-  // Excel counts days from 1899-12-30; this is toExcelSerial run backwards.
   function excelSerialToIso(n){
     const d = new Date(Date.UTC(1899, 11, 30) + Number(n) * 86400000);
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
-  }
-
-  // The month the "get earlier" button should offer next: the most recent one
-  // that has not been pulled back yet, walking backwards from this month.
-  function nextImportMonth(){
-    const cache = loadSheetCache();
-    const now = new Date();
-    for(let i = 0; i < 36; i++){
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const names = monthNamesFor(toIso(d.getFullYear(), d.getMonth() + 1, 1));
-      if(!cache[names.sheet]) return names;
-    }
-    return null;
   }
 
   function loadSent(){
@@ -2417,7 +2372,6 @@
     const cutoff = Date.now() - SENT_KEEP_MS;
     let archive = loadSent().filter(b => b.at > cutoff);
     archive.push({ at: Date.now(), entries });
-    // Oldest batches drop off first if the archive gets large.
     let total = archive.reduce((n, b) => n + b.entries.length, 0);
     while(archive.length > 1 && total > SENT_KEEP_MAX){
       total -= archive[0].entries.length;
@@ -2426,7 +2380,6 @@
     lsSet(LS_SENT, archive);
   }
 
-  // When the oldest thing in the queue runs out of patience.
   function oldestAt(){
     return state.queue.length ? Math.min(...state.queue.map(e => e.at || 0)) : null;
   }
@@ -2439,24 +2392,13 @@
     return d !== null && Date.now() >= d;
   }
 
-  // Two timers, rearmed on every queue change.
-  //
-  //   settle  — restarted by each new entry, so a burst keeps pushing it back
-  //             and the whole burst goes out as one call once you pause.
-  //   ceiling — measured from the oldest entry and never pushed back, so a
-  //             lone entry can wait for company without waiting all day.
-  //
-  // Neither runs while the app is closed, which is why backgrounding and
-  // launch are also flush points (see below).
-  const RETRY_MS = 5 * 60 * 1000;        // after a failed send, before trying again
+  const RETRY_MS = 5 * 60 * 1000;
   let settleTimer = null, ceilingTimer = null, retryTimer = null;
   function scheduleSync({ allowInstant = true } = {}){
     clearTimeout(settleTimer); clearTimeout(ceilingTimer); clearTimeout(retryTimer);
     settleTimer = ceilingTimer = retryTimer = null;
     if(!state.queue.length || state.syncMode === 'manual' || state.syncing) return;
 
-    // allowInstant is false when this is being rearmed from the tail of a
-    // send, so a failure cannot bounce straight back into another attempt.
     if(state.syncMode === 'instant' && allowInstant){ syncQueue({ silent:true }); return; }
 
     settleTimer = setTimeout(() => {
@@ -2468,7 +2410,6 @@
                               Math.max(0, deadline() - Date.now()));
   }
 
-  // Builds the 10-value array for one entry in COLUMN_ORDER's exact order.
   function toRowArray(e){
     const map = {
       DATE: e.dateSerial,
@@ -2477,8 +2418,6 @@
       EXPENSE: e.expenseName,
       INFO: e.moreInfo,
       TYPE: e.txnType,
-      // Graph writes an empty string as a text cell, which then poisons the
-      // SUMIFS totals on row 5. null leaves the cell genuinely blank.
       DEBIT: e.debit === '' ? null : e.debit,
       CREDIT: e.credit === '' ? null : e.credit,
       FORMULA: ROW_FORMULA
@@ -2486,10 +2425,6 @@
     return COLUMN_ORDER.map(k => map[k]);
   }
 
-  // A single Graph call can only append into one table, so entries are
-  // grouped by the month they belong to. Backdating across a month boundary
-  // is the only way this produces more than one group, and it stays correct
-  // when it does.
   function groupByTable(entries){
     const groups = {};
     entries.forEach(e => {
@@ -2499,10 +2434,6 @@
     return Object.values(groups);
   }
 
-  // Pushes everything currently queued. Make replies "Accepted" before the
-  // Graph write actually runs — there is no success string to wait for — so
-  // a batch is cleared from the queue once the request itself is accepted,
-  // and the sheet is the source of truth from then on.
   async function syncQueue({ silent = false } = {}){
     if(state.syncing) return { ok:true, sent:0 };
     if(state.queue.length === 0) return { ok:true, sent:0 };
@@ -2525,9 +2456,6 @@
         BATCH: batchId
       });
 
-      // An OK status only says Make received the request. With confirmation
-      // on, the reply itself has to say the row landed, or the batch stays
-      // queued rather than being deleted from the only place it exists.
       if(res.ok && state.requireConfirm && !String(res.text || '').includes(CONFIRM_TOKEN)){
         failure = { ok:false, reason:'unconfirmed' };
         break;
@@ -2542,7 +2470,7 @@
         sent += group.length;
       } else {
         failure = res;
-        break; // leave this group and everything after it queued for retry
+        break;
       }
     }
 
@@ -2550,8 +2478,6 @@
     renderSyncState();
 
     if(failure && state.queue.length){
-      // Back off rather than hammer. Coming back online, backgrounding and
-      // launch all get there sooner than this when they apply.
       clearTimeout(retryTimer);
       retryTimer = setTimeout(() => syncQueue({ silent:true }), RETRY_MS);
     } else {
@@ -2609,12 +2535,6 @@
   $('entryForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // An edit rewrites rows that already exist, so two things are settled
-    // before any field is looked at. Both are refusals about the shape of
-    // the change rather than about a value, and checking them here is what
-    // makes the message name the real problem: turning the transfer switch
-    // off also empties the name field, so left any later this would come
-    // back as "add a transaction name".
     if(state.editing && state.isSelfTransfer !== state.editing.isTransfer){
       showToast(state.editing.isTransfer
         ? 'A transfer is two rows and an entry is one — cancel and add a new one instead'
@@ -2629,9 +2549,6 @@
       return;
     }
 
-    // A row can only be patched inside the table it already sits in, so an
-    // entry that has reached the sheet can move its date within its month
-    // but not out of it.
     if(state.editing){
       const written = state.editing.members.filter(o => !state.queue.some(q => q.uid === o.uid));
       const home = written.map(o => o.sheet || monthNamesFor(o.dateISO).sheet);
@@ -2643,21 +2560,12 @@
       }
     }
 
-    // Sent to the webhook as an Excel serial number (see toExcelSerial), not
-    // the "DD/MM/YYYY" display string — that's what makes Excel store a real
-    // date instead of text.
     const dateForSheet = toExcelSerial(state.selectedDateISO);
-    // Which month's table this entry belongs in — computed from the entry's
-    // own date (not today's date), so backdating into a different month
-    // correctly targets that month's sheet.
     const { table: targetTable } = monthNamesFor(state.selectedDateISO);
-    const expenseName = $('expenseName').value.trim();
+    const expenseName = expenseNameValue();
     const moreInfo = $('moreInfo').value.trim();
     const amount = amountRawNumber();
 
-    // Each missing field gets its own message and its own focus. `required`
-    // used to fire the browser's native bubble first, which meant the
-    // name branch of the old combined toast could never run.
     if(!amount || amount <= 0){
       showToast('Add an amount');
       flagInvalid(amountInput);
@@ -2665,9 +2573,10 @@
       return;
     }
     if(!expenseName){
-      showToast('Add a transaction name');
-      flagInvalid($('expenseName'));
-      $('expenseName').focus();
+      showToast('Pick a transaction name');
+      const el = nameWrap().classList.contains('custom-mode') ? $('expenseNameCustomInput') : $('expenseName');
+      flagInvalid(el);
+      el.focus();
       return;
     }
 
@@ -2686,9 +2595,6 @@
     if(state.isSelfTransfer){
       const typeFrom = $('txnTypeFrom').value === 'Custom' ? ($('customTypeFromInput').value.trim() || 'Custom') : $('txnTypeFrom').value;
       const typeTo = $('txnTypeTo').value === 'Custom' ? ($('customTypeToInput').value.trim() || 'Custom') : $('txnTypeTo').value;
-      // Both legs share one ID and go into the same batch, so a transfer can
-      // never be half-written: either both rows reach the sheet or neither
-      // does and both stay queued together.
       entries = [
         { ...base, uid: newUid(), account: state.account,   txnType: typeFrom, debit: amount, credit: '' },
         { ...base, uid: newUid(), account: state.toAccount, txnType: typeTo,   debit: '', credit: amount }
@@ -2700,10 +2606,6 @@
       ];
     }
 
-    // The new values have to be carried on the same identities — same uid,
-    // same timestamp — or the app would end up holding the entry twice and
-    // the sheet would never be told which row to change. The shared
-    // timestamp is also what keeps a transfer's two legs folded together.
     if(state.editing){
       const originals = state.editing.members;
       entries = entries.map((e, i) => originals[i]
@@ -2711,8 +2613,6 @@
         : e);
     }
 
-    // Nothing is written yet. The form is left exactly as it is, so Edit
-    // entry is a close rather than a restore.
     state.pending = {
       entries, savedId, amount,
       editing: state.editing,
@@ -2729,15 +2629,11 @@
   });
 
   // ---------- CONFIRM SHEET ----------
-  // The form can only show its own settings. This shows what they add up to,
-  // in a sentence, which is the thing worth checking before a row is written.
   function propRow(k, v){
     if(v === '' || v == null) return '';
     return `<div class="sheet-prop"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`;
   }
 
-  // "14 Sep 2026 (Monday)". The form no longer echoes the resolved date, so
-  // this is where the day it landed on is checked.
   function formatConfirmDate(iso){
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
@@ -2787,8 +2683,6 @@
       ];
     }
 
-    // The same read-back serves both jobs; only the words on the buttons say
-    // whether tapping adds a row or rewrites one.
     const editing = !!p.editing;
     $('confirmTitleText').textContent = editing ? 'Save these changes?' : 'Add this entry?';
     $('confirmAddBtn').textContent = editing ? 'Save changes' : 'Add entry';
@@ -2797,9 +2691,6 @@
     $('confirmLine').textContent = line;
     $('confirmProps').innerHTML = rows.map(r => propRow(r[0], r[1])).join('');
 
-    // One stray zero turns ₹5,000 into ₹50,000 and nothing else on the form
-    // would look wrong, so from a lakh up the figure is read back in the
-    // unit it would be misread in.
     const big = largeAmountLabel(p.amount);
     $('confirmNote').textContent = big ? `That is ${big} — check the zeros` : '';
     $('confirmNote').style.display = big ? 'block' : 'none';
@@ -2820,23 +2711,14 @@
     if(p.editing){ commitEdit(p); return; }
 
     enqueue(p.entries);
-    // enqueue() stamps `at`; the history copy has to carry the same stamp,
-    // which is what pairs a self transfer's two legs back together later.
     recordHistory(state.queue.slice(-p.entries.length));
-    // A self transfer writes two rows under one ID, which would read as a
-    // closed pair. Only the single-row case changes the open list.
+    rememberName(p.expenseName);
     if(!p.isSelfTransfer) applyYId(p.savedId);
 
     showToast(p.isSelfTransfer ? `Transfer added · ${p.savedId}` : `Added · ${p.savedId}`);
     fullReset();
-
-    // enqueue() already rearmed the timers. Whether this goes now or waits
-    // for company is scheduleSync's call — either way it is safe on the
-    // device the moment it was added.
   }
 
-  // Edit, the cross and a tap outside all do the same thing: nothing is
-  // written and the form is left untouched.
   function dismissConfirm(){
     state.pending = null;
     closeConfirmSheet();
@@ -2849,8 +2731,6 @@
   });
   document.addEventListener('keydown', (e) => {
     if(e.key !== 'Escape') return;
-    // Only one is ever open, and the confirm sheet sits on top when both
-    // could be, so it gets first refusal.
     if($('confirmSheet').classList.contains('open')) dismissConfirm();
     else if($('detailSheet').classList.contains('open')) closeDetail();
   });
@@ -2878,9 +2758,6 @@
   const esc = (t) => String(t == null ? '' : t)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-  // A self transfer is two rows in the sheet but one thing that happened, so
-  // the pair is folded back into a single line. Both legs were written by one
-  // submit, which is why they share an id and a timestamp.
   function foldTransfers(rows){
     const out = [];
     const used = new Set();
@@ -2894,9 +2771,6 @@
         used.add(i); used.add(j);
         const from = r.debit ? r : rows[j];
         const to   = r.debit ? rows[j] : r;
-        // `members` keeps the two underlying rows. The list only needs the
-        // folded line, but editing has to change both legs, and each leg is
-        // its own row in the sheet.
         out.push({ ...from, transfer:true, toAccount: to.account, amount: Number(from.debit),
                    members:[from, to] });
       } else {
@@ -2908,40 +2782,43 @@
     return out;
   }
 
-  // True while a row has been changed on this device but the sheet still
-  // holds the old values.
   function hasPendingEdit(row){
     return state.edits.some(e => e.uid === row.uid);
   }
 
+  // Two lines rather than one. The amount sits beside the name on the top
+  // line, and everything that used to be crushed into a single ellipsised
+  // strip — account, category, whether it is owed, whether the sheet has it
+  // — becomes tags on the line below, which wrap instead of being cut off.
   function txnRow(r){
-    const tile = r.transfer ? 'tile transfer' : 'tile acct-' + esc(r.account);
+    const acct = esc(r.account || '');
+    const members = r.members || [r];
+    const tile = r.transfer ? 'tile transfer' : 'tile acct-' + acct;
     const mark = r.transfer ? '⇄' : esc(String(r.account || '?').charAt(0).toUpperCase());
-    const name = r.transfer
-      ? 'Self transfer'
-      : esc(r.expenseName) + (r.moreInfo ? ' · ' + esc(r.moreInfo) : '');
-    const where = r.transfer ? `${esc(r.account)} → ${esc(r.toAccount)}` : esc(r.account);
-    const held = r.sent ? '' : ' · <span class="held">on this device</span>';
-    const edited = (r.members || []).some(hasPendingEdit)
-      ? ' · <span class="edited">edited</span>' : '';
+    const name = r.transfer ? 'Self transfer' : esc(r.expenseName || '—');
     const amt = r.transfer
       ? `<div class="amt flat">₹${money(r.amount)}</div>`
       : `<div class="amt ${r.isOut ? 'out' : 'in'}">${r.isOut ? '−' : '+'} ₹${money(r.amount)}</div>`;
+
+    const tags = [];
+    tags.push(r.transfer
+      ? `<span class="tag acct acct-${acct}">${acct} → ${esc(r.toAccount || '')}</span>`
+      : `<span class="tag acct acct-${acct}">${acct}</span>`);
+    if(r.txnType) tags.push(`<span class="tag">${esc(r.txnType)}</span>`);
+    if(!r.transfer && String(r.id || '').startsWith('Y')) tags.push('<span class="tag">Owed</span>');
+    if(members.some(m => !m.sent)) tags.push('<span class="tag held">on this device</span>');
+    if(members.some(hasPendingEdit)) tags.push('<span class="tag edited">edited</span>');
+
     return `<div class="txn tappable" data-key="${esc(r.uid)}" role="button" tabindex="0">
       <div class="${tile}">${mark}</div>
       <div class="body">
-        <div class="name">${name}</div>
-        <div class="meta">${where} · ${esc(r.txnType)}${held}${edited}</div>
+        <div class="line1"><div class="name">${name}</div>${amt}</div>
+        <div class="tags">${tags.join('')}</div>
+        ${r.moreInfo ? `<div class="note">${esc(r.moreInfo)}</div>` : ''}
       </div>
-      ${amt}
     </div>`;
   }
 
-  // Local entries and pulled-back sheet rows are the same history seen from
-  // two sides. Where a month has been pulled back, the sheet is the truth for
-  // anything it already contained — a local entry sent before that snapshot
-  // would otherwise appear twice. Anything sent since, or not sent at all,
-  // still shows.
   function allRows(){
     const cache = loadSheetCache();
     const out = [];
@@ -2958,58 +2835,94 @@
     return out;
   }
 
-  // Out, in and net for the month currently being written to. Built from
-  // exactly the rows the list below shows, and folded by the same rule, so
-  // the total can never disagree with what is on screen under it.
-  function monthSummaryCard(all){
-    const m = monthNamesFor(isoToday(0)).sheet;
-    const rows = all.filter(r => r.dateISO && monthNamesFor(r.dateISO).sheet === m);
-    if(!rows.length) return '';
+  // Whether a month has ever been pulled back from the sheet, and what
+  // happened the last time it was tried.
+  function monthState(off){
+    const sheet = monthNamesForOffset(off).sheet;
+    const cache = loadSheetCache();
+    return {
+      sheet,
+      table: monthNamesForOffset(off).table,
+      pulled: !!cache[sheet],
+      pulledAt: cache[sheet] ? cache[sheet].at : 0,
+      problem: state.monthStatus[sheet] || null
+    };
+  }
 
-    let out = 0, inn = 0;
-    foldTransfers(rows).forEach(r => {
-      if(r.transfer) return;              // your own money, moved — not spending
-      if(r.isOut) out += r.amount; else inn += r.amount;
+  // The one button that fills a month in, wherever it is needed. It is the
+  // same read for History and Stats, so pulling once fixes both.
+  function importButton(ms, labelWhenPulled){
+    const busy = state.monthLoading === ms.sheet;
+    const label = busy ? `Reading ${ms.sheet}…`
+      : ms.pulled ? (labelWhenPulled || `Read ${ms.sheet} again`)
+      : `Get ${ms.sheet} from the sheet`;
+    return `<button type="button" class="show-more import-month-btn" data-sheet="${ms.sheet}" data-table="${ms.table}" ${busy ? 'disabled' : ''}>${label}</button>
+      <div class="scope-note">One read · 3 Make operations</div>`;
+  }
+
+  function wireImportButton(pane){
+    const btn = pane.querySelector('.import-month-btn');
+    if(!btn) return;
+    btn.addEventListener('click', async () => {
+      const { sheet, table } = btn.dataset;
+      state.monthLoading = sheet;
+      btn.disabled = true;
+      btn.textContent = `Reading ${sheet}…`;
+      const r = await importMonth(sheet, table);
+      state.monthLoading = null;
+      state.monthStatus[sheet] = r.ok ? null : r.why;
+      renderHistory();
+      renderStats();
+      showToast(r.ok
+        ? (r.count === 0 ? `${sheet} is empty` : `${sheet} added · ${r.count} entries`)
+        : r.why, r.ok ? 2200 : 4000);
     });
-    const net = inn - out;
-    const label = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  }
 
-    return `<div class="month-card">
-      <div class="month-head">
-        <span class="month-title">${label}</span>
-        <span class="month-count">${rows.length === 1 ? '1 entry' : rows.length + ' entries'}</span>
-      </div>
-      <div class="month-grid">
-        <div class="ms-cell"><div class="ms-key">Out</div><div class="ms-val out">₹${money(out)}</div></div>
-        <div class="ms-cell"><div class="ms-key">In</div><div class="ms-val in">₹${money(inn)}</div></div>
-        <div class="ms-cell"><div class="ms-key">Net</div><div class="ms-val net">${net < 0 ? '−' : '+'} ₹${money(Math.abs(net))}</div></div>
-      </div>
-    </div>`;
+  // What to say when a month has nothing to show. Empty is not one state —
+  // it is four, and which one it is decides what to do about it.
+  function emptyMonthCard(ms, off){
+    let h2, p, why = '';
+    if(ms.problem){
+      h2 = `${ms.sheet} could not be read`;
+      p = 'Nothing was changed. Try again, or check the sheet in Excel.';
+      why = ms.problem;
+    } else if(ms.pulled){
+      h2 = `Nothing in ${ms.sheet}`;
+      p = 'That month was read from the sheet and had no entries in it.';
+    } else if(off === 0){
+      h2 = 'Nothing this month yet';
+      p = 'Add an entry, or pull the month back from the sheet to see what is already there.';
+    } else {
+      h2 = `${ms.sheet} is not on this device`;
+      p = 'This device only holds what it typed. Pull the month back from the sheet to read it here.';
+    }
+    return `<div class="ledger-card"><div class="stats-empty">
+      <h2>${esc(h2)}</h2>
+      <p>${esc(p)}</p>
+      ${why ? `<span class="why">${esc(why)}</span>` : ''}
+    </div></div>` + importButton(ms);
   }
 
   function renderRecent(){
     const pane = $('recentPane');
-    const all = allRows().sort((a,b) => b.at - a.at);
+    const off = state.monthOffset;
+    const ms = monthState(off);
+    const all = rowsForMonth(off).sort((a,b) => b.at - a.at);
+
     const rc = $('recentCount');
     rc.textContent = all.length;
     rc.style.display = all.length ? 'inline-block' : 'none';
 
-    let html = '';
     if(!all.length){
-      html = `<div class="ledger-card"><div class="stats-empty">
-        <h2>Nothing here yet</h2>
-        <p>Add an entry, or pull a month back from the sheet.</p>
-      </div></div>` + importFooter();
-      pane.innerHTML = html;
-      wireFooter();
+      pane.innerHTML = editsBar() + emptyMonthCard(ms, off);
+      wireImportButton(pane);
+      wireEditsBar(pane);
       return;
     }
 
-    html = editsBar() + monthSummaryCard(all);
-
     state.rowIndex = {};
     const shown = all.slice(0, state.historyShown);
-    // Newest day first; inside a day, newest entry first.
     const days = [];
     const byDay = {};
     shown.forEach(r => {
@@ -3018,23 +2931,28 @@
     });
     days.sort((a,b) => a < b ? 1 : -1);
 
+    let cards = '';
     days.forEach(iso => {
       const rows = foldTransfers(byDay[iso]);
       rows.forEach(r => { state.rowIndex[r.uid] = r; });
       const net = rows.reduce((n, r) => n + (r.transfer ? 0 : (r.isOut ? -r.amount : r.amount)), 0);
-      const netText = net === 0 ? '' :
-        (net > 0 ? '+ ₹' : '− ₹') + money(Math.abs(net));
+      const netText = net === 0 ? '' : (net > 0 ? '+ ₹' : '− ₹') + money(Math.abs(net));
       const netCls = net === 0 ? '' : (net > 0 ? ' in' : ' out');
-      html += `<div class="ledger-card">
+      cards += `<div class="ledger-card">
         <div class="day-head"><span class="day">${dayLabel(iso)}</span><span class="net${netCls}">${netText}</span></div>
         ${rows.map(txnRow).join('')}
       </div>`;
     });
+
+    let html = editsBar() + `<div class="day-list">${cards}</div>`;
     html += all.length > state.historyShown
-      ? `<button type="button" class="show-more" id="showMoreBtn">Show earlier entries</button>`
-      : importFooter();
+      ? `<button type="button" class="show-more" id="showMoreBtn">Show earlier in ${ms.sheet}</button>`
+      : importButton(ms);
+
     pane.innerHTML = html;
-    wireFooter();
+    const more = pane.querySelector('#showMoreBtn');
+    if(more) more.addEventListener('click', () => { state.historyShown += 40; renderRecent(); });
+    wireImportButton(pane);
     wireRows(pane);
     wireEditsBar(pane);
   }
@@ -3050,10 +2968,6 @@
   }
 
   // ---------- EDITS WAITING TO GO ----------
-  // A new entry is appended, which one call does for any number of rows. An
-  // edit has to be found first, and finding it means reading the month it
-  // sits in — so the price is one read per month plus one write per row, and
-  // it is stated rather than quietly spent.
   function editsOpsCost(){
     const months = new Set(state.edits.map(e => e.sheet)).size;
     return months * 3 + state.edits.length * 2;
@@ -3133,9 +3047,6 @@
     $('detailLine').textContent = line;
     $('detailProps').innerHTML = rows.map(x => propRow(x[0], x[1])).join('');
 
-    // Anything already written can only be corrected in place, and Graph can
-    // only patch a row inside the table it is in — so the month is fixed for
-    // as long as the row exists.
     const sent = m.every(x => x.sent);
     $('detailNote').textContent = sent
       ? 'Already in the sheet — an edit is held here until you push it'
@@ -3158,16 +3069,11 @@
   });
 
   // ---------- EDIT MODE ----------
-  // The entry form does both jobs rather than a second form being built
-  // alongside it. One set of fields, one set of rules, one place a change to
-  // either has to be made — and no chance of the two drifting apart.
   function beginEdit(row){
     closeDetail();
     state.editing = {
       key: row.uid,
       isTransfer: !!row.transfer,
-      // The originals, frozen. What the sheet is asked to find later is this,
-      // not whatever the form ends up holding.
       members: (row.members || [row]).map(m => ({ ...m }))
     };
     showScreen('add');
@@ -3185,8 +3091,6 @@
   }
   $('editCancelBtn').addEventListener('click', cancelEdit);
 
-  // A stored category may be one someone typed themselves, in which case the
-  // select has no option for it and the custom box has to be opened instead.
   function setSingleType(value){
     const v = value || 'Payment';
     if([...txnTypeSelect.options].some(o => o.value === v)){
@@ -3205,8 +3109,6 @@
     else { sel.value = 'Custom'; customInput.value = v; }
   }
 
-  // The ID must survive being loaded. The Yes/No answer is read back off the
-  // ID itself, and keepId stops a fresh one being minted over it.
   function forceId(id){
     if(!state.isSelfTransfer){
       const isY = String(id || '').startsWith('Y');
@@ -3219,13 +3121,11 @@
   function fillFormFrom(row){
     const m = row.members || [row];
 
-    // This has to run first: it rewrites the name, the categories and the ID
-    // on its way through, and everything below is what should survive.
     state.isSelfTransfer = !!row.transfer;
     applySelfTransferMode();
 
     setDate(row.dateISO, null);
-    $('expenseName').value = row.expenseName || '';
+    setExpenseName(row.expenseName || '');
     $('moreInfo').value = row.moreInfo || '';
 
     amountInput.value = formatAmountString(String(Number(row.amount)));
@@ -3258,9 +3158,6 @@
   const COL = {};
   COLUMN_ORDER.forEach((k, i) => COL[k] = i);
 
-  // Everything the sheet will be asked to match on, taken before anything
-  // changes. Frozen on the first edit: editing the same row twice before a
-  // push changes what gets written, not what gets looked for.
   function stageEdit(original, updated){
     const sheet = original.sheet || monthNamesFor(original.dateISO).sheet;
     const table = original.table || monthNamesFor(original.dateISO).table;
@@ -3277,8 +3174,6 @@
     else state.edits.push(rec);
   }
 
-  // Writes the new values into whichever local store holds that row, so the
-  // app shows the change immediately whether or not the sheet has it yet.
   function applyLocal(row){
     const h = state.history.find(x => x.uid === row.uid);
     if(h) Object.assign(h, row);
@@ -3291,9 +3186,6 @@
     if(touched) saveSheetCache(cache);
   }
 
-  // An ID can be renamed by an edit. The open list is only a fallback for IDs
-  // with no row anywhere, so an abandoned name left in it would go on
-  // reading as outstanding for good.
   function pruneOpenYIds(){
     const seen = new Set(allRows().map(r => r.id));
     const before = state.openYIds.length;
@@ -3311,8 +3203,6 @@
 
       const qi = state.queue.findIndex(q => q.uid === o.uid);
       if(qi > -1){
-        // Never written, so there is nothing to correct — the thing that is
-        // about to be sent is simply rewritten. Costs no operations.
         state.queue[qi] = { ...e, uid: o.uid, at: state.queue[qi].at };
         queued++;
       } else {
@@ -3339,6 +3229,7 @@
     if(queued) saveQueue();
     saveHistory();
     saveEdits();
+    rememberName(p.expenseName);
     pruneOpenYIds();
 
     fullReset();
@@ -3351,18 +3242,12 @@
   }
 
   // ---------- PUSHING EDITS ----------
-  // An index is only meaningful in the snapshot it came from: the nightly
-  // sort reorders the whole table at 23:50, so a cached index is right only
-  // by luck. Every push therefore reads the month first and patches against
-  // that read, which is what makes it safe rather than merely usually right.
   function findTargetRow(rows, t){
     const num = v => (v === '' || v == null) ? null : Number(v);
     const sameAmount = r => num(r.debit) === num(t.debit) && num(r.credit) === num(t.credit);
     const exact = rows.filter(r => r.id === t.id && sameAmount(r)
       && Number(r.dateSerial) === Number(t.dateSerial) && r.account === t.account);
     if(exact.length) return exact[0];
-    // The sheet may have been edited in Excel since. ID plus which side the
-    // money was on plus the figure still picks one row out of a month.
     const loose = rows.filter(r => r.id === t.id && sameAmount(r));
     return loose.length === 1 ? loose[0] : null;
   }
@@ -3407,8 +3292,6 @@
         }
 
         state.edits = state.edits.filter(x => x.uid !== ed.uid);
-        // The snapshot is now one row out of date. Keeping it current matters
-        // when two edits in the same month have to be matched against it.
         row.dateSerial = Number(ed.values[COL.DATE]);
         row.id = ed.values[COL.ID];
         row.account = ed.values[COL.ACCOUNT];
@@ -3428,36 +3311,6 @@
     return { ok: !problems.length, msg };
   }
 
-  function importFooter(){
-    const nxt = nextImportMonth();
-    if(!nxt) return '';
-    return `<button type="button" class="show-more" id="importMonthBtn" data-sheet="${nxt.sheet}" data-table="${nxt.table}">Get ${nxt.sheet} from the sheet</button>
-      <div class="field-hint" style="text-align:center;">Reads that month once and keeps it · 3 Make operations</div>`;
-  }
-
-  function wireFooter(){
-    const more = $('showMoreBtn');
-    if(more) more.addEventListener('click', () => { state.historyShown += 40; renderRecent(); });
-
-    const imp = $('importMonthBtn');
-    if(imp) imp.addEventListener('click', async () => {
-      const { sheet, table } = imp.dataset;
-      imp.disabled = true;
-      imp.textContent = `Reading ${sheet}…`;
-      const r = await importMonth(sheet, table);
-      if(!r.ok){
-        imp.disabled = false;
-        imp.textContent = `Get ${sheet} from the sheet`;
-        showToast(r.why, 3600);
-        return;
-      }
-      // Show what just arrived rather than making them tap again.
-      state.historyShown += Math.max(r.count, 40);
-      renderRecent();
-      showToast(r.count === 0 ? `${sheet} is empty` : `${sheet} added · ${r.count} entries`);
-    });
-  }
-
   function renderDues(){
     const pane = $('duesPane');
     const items = openItems();
@@ -3465,11 +3318,10 @@
     $('duesBadge').textContent = items.length;
 
     if(!items.length){
-      const seen = Object.keys(loadSheetCache()).length;
       pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
         <h2>Nothing outstanding</h2>
         <p>Anything you mark "Yes, I'll get this back" shows up here until the money comes back.</p>
-      </div></div>` + (seen ? '' : `<div class="field-hint" style="text-align:center;padding:0 8px;">Only this device has been checked. Pull earlier months in Recent to search them too.</div>`);
+      </div></div>`;
       return;
     }
 
@@ -3479,22 +3331,22 @@
       : 'Counted from this device only. Pull earlier months in Recent to include them.';
 
     pane.innerHTML = '<div class="ledger-card">' + items.map(it => {
+      const acct = esc(it.account || '');
       if(!it.dateISO) return `<div class="txn due">
         <div class="tile transfer"></div>
-        <div class="body"><div class="name">${esc(it.name)}</div>
-        <div class="meta">Opened before this device had a record of it</div></div>
+        <div class="body"><div class="line1"><div class="name">${esc(it.name)}</div></div>
+        <div class="note">Opened before this device had a record of it</div></div>
       </div>`;
       const days = daysAgo(it.dateISO);
       const age = days === 0 ? 'opened today' : days === 1 ? 'open since yesterday' : `open ${days} days`;
       return `<div class="txn due">
-        <div class="tile acct-${esc(it.account)}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
+        <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
         <div class="body">
-          <div class="name">${esc(it.name)}</div>
-          <div class="meta">${esc(it.account)} · ${age}</div>
+          <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
+          <div class="tags"><span class="tag acct acct-${acct}">${acct}</span><span class="tag">${age}</span></div>
         </div>
-        <div class="amt">₹${money(it.amount || 0)}</div>
       </div>`;
-    }).join('') + '</div>' + `<div class="field-hint" style="text-align:center;padding:0 8px;">${scope}</div>`;
+    }).join('') + '</div>' + `<div class="scope-note">${esc(scope)}</div>`;
   }
 
   function renderHistory(){
@@ -3506,8 +3358,7 @@
       t.classList.toggle('active', on);
       t.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    $('monthToggleLabel').textContent =
-      new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+    renderMonthToggles();
     renderRecent();
     renderDues();
   }
@@ -3517,18 +3368,24 @@
   });
 
   // ---------- STATS ----------
-  // Five tiles, worked out on the device every time the screen is opened.
-  // There is nothing cached and nothing to refresh: the same rows the
-  // history list is drawn from are the rows these numbers come from.
+  // Everything on this screen is worked out from the same rows the history
+  // list is drawn from, for the same month. Nothing is cached separately,
+  // so the two screens can never disagree.
   const ACCOUNTS = ['Domestic', 'International', 'Cash'];
+  // Rows the sheet uses to carry a balance forward. They are real money but
+  // they are not income, so they are kept out of anything that counts what
+  // came in or went out.
+  const CARRY_TYPES = ['Balance'];
 
-  // Balance is simply what came in less what went out, per account. A self
-  // transfer debits one side and credits the other, so it nets to nothing
-  // across the three without needing to be special-cased here.
-  function accountBalances(){
+  function isCarry(r){ return CARRY_TYPES.includes(r.txnType); }
+
+  // Balance per account = everything in less everything out, rollover
+  // included. A self transfer debits one side and credits the other, so it
+  // nets to nothing across the three without being special-cased.
+  function balancesFor(rows){
     const bal = {};
     ACCOUNTS.forEach(a => bal[a] = 0);
-    allRows().forEach(r => {
+    rows.forEach(r => {
       const a = r.account;
       if(!a) return;
       if(!(a in bal)) bal[a] = 0;
@@ -3537,169 +3394,155 @@
     return bal;
   }
 
-  // Spending is the one figure a transfer must be kept out of, so the rows
-  // are folded first — exactly as the history list folds them.
-  function totalSpent(){
-    let out = 0;
-    foldTransfers(allRows()).forEach(r => {
-      if(!r.transfer && r.isOut) out += r.amount;
+  // Spending is the one figure transfers and rollovers must be kept out of,
+  // so the rows are folded first — exactly as the history list folds them.
+  function spendRows(rows){
+    return foldTransfers(rows).filter(r => !r.transfer && r.isOut && !isCarry(r));
+  }
+  function incomeRows(rows){
+    return foldTransfers(rows).filter(r => !r.transfer && !r.isOut && !isCarry(r));
+  }
+  function sum(list){ return list.reduce((n, r) => n + r.amount, 0); }
+
+  function groupSpend(rows, key){
+    const g = {};
+    spendRows(rows).forEach(r => {
+      const k = String(r[key] || '—').trim() || '—';
+      if(!g[k]) g[k] = { name:k, total:0, count:0 };
+      g[k].total += r.amount;
+      g[k].count++;
     });
-    return out;
+    return Object.values(g).sort((a,b) => b.total - a.total);
   }
 
-  function statTile(name, value, wide){
+  function statTile(name, value, opts){
+    const o = opts || {};
     const cls = value < 0 ? 'st-val out' : 'st-val';
-    return `<div class="stat-tile${wide ? ' wide' : ''}">
-      <div class="st-key"><span class="st-dot acct-${esc(name)}"></span>${esc(name)}</div>
-      <div class="${cls}">${value < 0 ? '−' : ''}₹${money(Math.abs(value))}</div>
+    return `<div class="stat-tile${o.wide ? ' wide' : ''}${o.dark ? ' dark' : ''}">
+      <div class="st-key">${o.dot === false ? '' : `<span class="st-dot acct-${esc(name)}"></span>`}${esc(o.label || name)}</div>
+      <div class="${o.dark ? 'st-val' : cls}">${value < 0 ? '−' : ''}₹${money(Math.abs(value))}</div>
+      ${o.sub ? `<div class="st-sub">${esc(o.sub)}</div>` : ''}
     </div>`;
   }
 
-  // ---------- THE SHEET'S OWN TOTALS ----------
-  // B5:J5 in order: Domestic, International, Cash, Net amount, (blank),
-  // (blank), Domestic expenses, Cash expenses, Net expenses.
-  const STATS_CELLS = ['domestic','international','cash','have',null,null,'domesticExp','cashExp','spent'];
+  const BREAKDOWN_KEYS = { name:'expenseName', category:'txnType', account:'account' };
+  const BREAKDOWN_LABEL = { name:'By name', category:'By category', account:'By account' };
 
-  async function readStats(){
-    const { sheet, table } = monthNamesFor(isoToday(0));
-    const res = await callLedger({ MODE:'stats', SHEET: sheet, TABLE: table, ROWS:'[]' });
-    if(!res.ok) return { ok:false, why: failureText(res) };
-    let row = null;
-    try{
-      const data = JSON.parse(res.text);
-      const values = data.values || (data.body && data.body.values);
-      row = values && values[0];
-    }catch(e){
-      return { ok:false, why:'The sheet sent back something unreadable' };
-    }
-    if(!row) return { ok:false, why:`No ${sheet} sheet found` };
-    const snap = { at: Date.now(), sheet };
-    STATS_CELLS.forEach((k, i) => { if(k) snap[k] = Number(row[i]) || 0; });
-    lsSet(LS_STATS, snap);
-    return { ok:true, snap };
-  }
+  function breakdownPanel(rows){
+    const key = BREAKDOWN_KEYS[state.breakdown] || 'expenseName';
+    const groups = groupSpend(rows, key);
+    const total = groups.reduce((n, g) => n + g.total, 0);
+    const limit = state.breakdownAll ? groups.length : 6;
+    const shown = groups.slice(0, limit);
+    const top = shown.length ? shown[0].total : 1;
 
-  // A snapshot only describes the month it was taken from, so it is dropped
-  // rather than carried into the next one.
-  function statsSnapshot(){
-    const s = lsGet(LS_STATS, null);
-    return (s && s.sheet === monthNamesFor(isoToday(0)).sheet) ? s : null;
-  }
-  // The sheet re-sorts and recomputes at 23:50. A snapshot older than the
-  // most recent one of those has been overtaken.
-  function statsStale(){
-    const s = statsSnapshot();
-    if(!s) return true;
-    const cut = new Date();
-    cut.setHours(23, 50, 0, 0);
-    if(cut > new Date()) cut.setDate(cut.getDate() - 1);
-    return s.at < cut.getTime();
-  }
-  async function ensureStats(){
-    if(!statsStale() || !navigator.onLine) return false;
-    const r = await readStats();
-    return r.ok;
+    const seg = Object.keys(BREAKDOWN_KEYS).map(k =>
+      `<button type="button" data-brk="${k}" class="${state.breakdown === k ? 'on' : ''}">${BREAKDOWN_LABEL[k]}</button>`).join('');
+
+    const body = shown.length
+      ? shown.map(g => {
+          const pct = total ? Math.round(g.total / total * 100) : 0;
+          return `<div class="brk-row">
+            <div class="brk-top">
+              <span class="brk-name">${esc(g.name)}</span>
+              <span class="brk-val">₹${money(g.total)}</span>
+            </div>
+            <div class="brk-bar"><div class="brk-fill" style="width:${Math.max(2, Math.round(g.total / top * 100))}%;"></div></div>
+            <div class="brk-meta">${pct}% · ${g.count === 1 ? '1 entry' : g.count + ' entries'}</div>
+          </div>`;
+        }).join('')
+      : `<div class="brk-meta" style="padding:8px 0 14px;">Nothing spent in this month yet.</div>`;
+
+    const foot = groups.length > 6
+      ? `<div class="panel-foot"><button type="button" id="brkMoreBtn">${state.breakdownAll ? 'Show less' : `Show all ${groups.length}`}</button></div>`
+      : '';
+
+    return `<div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Where it went</span>
+        <span class="panel-note">${groups.length} ${groups.length === 1 ? 'group' : 'groups'}</span>
+      </div>
+      <div class="seg" id="brkSeg">${seg}</div>
+      <div class="brk">${body}</div>
+      ${foot}
+    </div>`;
   }
 
-  // Everything this device has recorded since the snapshot was taken. The
-  // sheet already contains the rest, so only these are added on top.
-  function statsDelta(since){
-    const rows = allRows().filter(r => (r.at || 0) > since);
-    const bal = {};
-    rows.forEach(r => {
-      const a = r.account;
-      if(!a) return;
-      bal[a] = (bal[a] || 0) + (Number(r.credit) || 0) - (Number(r.debit) || 0);
-    });
-    let spent = 0;
-    foldTransfers(rows).forEach(r => { if(!r.transfer && r.isOut) spent += r.amount; });
-    return { bal, spent, count: rows.length };
+  function factsPanel(rows){
+    const spend = spendRows(rows);
+    const income = incomeRows(rows);
+    const biggest = spend.slice().sort((a,b) => b.amount - a.amount)[0];
+    const d = monthDateFor(state.monthOffset);
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const elapsed = state.monthOffset === 0 ? new Date().getDate() : daysInMonth;
+    const perDay = elapsed ? sum(spend) / elapsed : 0;
+    const owed = openItems().reduce((n, i) => n + (i.amount || 0), 0);
+    const spendDays = new Set(spend.map(r => r.dateISO)).size;
+
+    const facts = [
+      ['Entries', `${rows.length}`],
+      ['Money in', `₹${money(sum(income))}`],
+      ['Biggest expense', biggest ? `${biggest.expenseName} · ₹${money(biggest.amount)}` : '—'],
+      ['Average a day', `₹${money(Math.round(perDay))} over ${elapsed} ${elapsed === 1 ? 'day' : 'days'}`],
+      ['Days with spending', `${spendDays} of ${elapsed}`],
+      ['Owed to me', owed ? `₹${money(owed)}` : 'Nothing open']
+    ];
+    return `<div class="facts">${facts.map(f =>
+      `<div class="fact"><span class="k">${esc(f[0])}</span><span class="v">${esc(f[1])}</span></div>`).join('')}</div>`;
   }
 
   function renderStats(){
     const pane = $('statsPane');
-    const snap = statsSnapshot();
+    const off = state.monthOffset;
+    const ms = monthState(off);
+    const rows = rowsForMonth(off);
+    renderMonthToggles();
 
-    let bal, spent, have, scope;
-    if(snap){
-      const d = statsDelta(snap.at);
-      bal = {
-        Domestic: snap.domestic + (d.bal.Domestic || 0),
-        International: snap.international + (d.bal.International || 0),
-        Cash: snap.cash + (d.bal.Cash || 0)
-      };
-      Object.keys(d.bal).forEach(k => { if(!(k in bal)) bal[k] = d.bal[k]; });
-      spent = snap.spent + d.spent;
-      have = snap.have + Object.keys(d.bal).reduce((n, k) => n + d.bal[k], 0);
-      const when = new Date(snap.at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-      scope = `${snap.sheet} totals read ${when}`
-            + (d.count ? ` · plus ${d.count === 1 ? '1 entry' : d.count + ' entries'} added here since` : '');
-    } else {
-      // No snapshot yet, so the device adds up everything it holds. That
-      // misses rollovers and anything typed straight into Excel.
-      bal = accountBalances();
-      spent = totalSpent();
-      have = Object.keys(bal).reduce((n, k) => n + bal[k], 0);
-      scope = 'Added up on this device — read the sheet to include rollovers.';
-    }
-
-    if(!snap && !allRows().length){
-      pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
-        <h2>No numbers yet</h2>
-        <p>Balances appear as soon as there is something to add up.</p>
-      </div></div>` + statsFooter();
-      wireStatsFooter();
+    if(!rows.length){
+      pane.innerHTML = emptyMonthCard(ms, off);
+      wireImportButton(pane);
       return;
     }
 
-    // The three fixed accounts first, then anything else that turns up — an
-    // account renamed in Excel still gets a tile rather than being silently
-    // left out of the totals.
+    const bal = balancesFor(rows);
+    const spent = sum(spendRows(rows));
+    const have = Object.keys(bal).reduce((n, k) => n + bal[k], 0);
+
     const names = ACCOUNTS.concat(Object.keys(bal).filter(k => !ACCOUNTS.includes(k)));
-    const tiles = names.map((n, i) =>
-      statTile(n, bal[n] || 0, i === names.length - 1 && names.length % 2 === 1)).join('');
+    const tiles = names.map(n => statTile(n, bal[n] || 0, { sub:'current balance' })).join('');
+
+    // Rollover rows only exist in the sheet, so a month that has never been
+    // pulled back has balances that start from zero rather than from what
+    // was carried in. Say so rather than showing a confidently wrong number.
+    const scope = ms.pulled
+      ? `${ms.sheet} read from the sheet ${new Date(ms.pulledAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}, plus anything added here since.`
+      : `Added up from this device only — ${ms.sheet} has not been read, so last month's rollover is not counted yet.`;
 
     pane.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;">
       <div class="stat-grid">${tiles}</div>
-      <div class="month-card">
-        <div class="month-grid two">
-          <div class="ms-cell"><div class="ms-key">Total spent</div><div class="ms-val out">₹${money(spent)}</div></div>
-          <div class="ms-cell"><div class="ms-key">Total have</div><div class="ms-val ${have < 0 ? 'out' : 'net'}">${have < 0 ? '−' : ''}₹${money(Math.abs(have))}</div></div>
-        </div>
+      <div class="stat-grid">
+        ${statTile('Total spend', spent, { dot:false, label:'Total spend' })}
+        ${statTile('Total have', have, { dot:false, label:'Total have', dark:true })}
       </div>
-      <div class="field-hint" style="text-align:center;padding:0 8px;">${esc(scope)}</div>
-      ${statsFooter()}
+      ${breakdownPanel(rows)}
+      ${factsPanel(rows)}
+      <div class="scope-note">${esc(scope)}</div>
+      ${importButton(ms)}
     </div>`;
-    wireStatsFooter();
-  }
 
-  function statsFooter(){
-    return `<button type="button" class="show-more" id="statsRefreshBtn">Read totals from the sheet</button>
-      <div class="field-hint" style="text-align:center;">Done once a night on its own · 3 Make operations</div>`;
-  }
-  function wireStatsFooter(){
-    const btn = $('statsRefreshBtn');
-    if(!btn) return;
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      btn.textContent = 'Reading…';
-      const r = await readStats();
-      if(!r.ok){
-        btn.disabled = false;
-        btn.textContent = 'Read totals from the sheet';
-        showToast(r.why, 3600);
-        return;
-      }
-      renderStats();
-      showToast('Totals updated from the sheet');
+    pane.querySelectorAll('#brkSeg button').forEach(b => {
+      b.addEventListener('click', () => {
+        state.breakdown = b.dataset.brk;
+        state.breakdownAll = false;
+        renderStats();
+      });
     });
+    const more = pane.querySelector('#brkMoreBtn');
+    if(more) more.addEventListener('click', () => { state.breakdownAll = !state.breakdownAll; renderStats(); });
+    wireImportButton(pane);
   }
 
   // ---------- BACKUP ----------
-  // Nothing stored in a browser is permanent: clearing site data, uninstalling
-  // the app or resetting the phone all take it. persist() asks the browser not
-  // to evict it to reclaim space, which covers the accidental case. The file
-  // export covers the rest, by putting a copy somewhere this app cannot reach.
   if(navigator.storage && navigator.storage.persist){
     navigator.storage.persist().catch(() => {});
   }
@@ -3714,6 +3557,7 @@
       queue: state.queue,
       edits: state.edits,
       openYIds: state.openYIds,
+      names: storedNames(),
       sent: loadSent(),
       syncMode: state.syncMode
     };
@@ -3724,9 +3568,6 @@
     const name = `ledger-backup-${isoToday(0)}.json`;
     const file = new File([data], name, { type:'application/json' });
 
-    // Sharing beats downloading on a phone: the file can go straight to Drive
-    // or a chat, rather than into a Downloads folder that is itself on the
-    // device that might be the thing that fails.
     try{
       if(navigator.canShare && navigator.canShare({ files:[file] })){
         await navigator.share({ files:[file], title:name });
@@ -3734,7 +3575,7 @@
         return;
       }
     }catch(e){
-      if(e && e.name === 'AbortError') return;   // user cancelled the share sheet
+      if(e && e.name === 'AbortError') return;
     }
 
     const url = URL.createObjectURL(new Blob([data], { type:'application/json' }));
@@ -3779,9 +3620,15 @@
     state.openYIds = [...ids];
     lsSet(LS_YIDS, state.openYIds);
 
+    if(Array.isArray(data.names)){
+      const merged = new Set([...storedNames(), ...data.names]);
+      lsSet(LS_NAMES, [...merged]);
+    }
+
     renderAccountScreen();
     renderHistory();
     renderStats();
+    renderNameOptions(null);
     showToast(addedH + addedQ === 0
       ? 'Everything in that file was already here'
       : `Restored ${addedH} ${addedH === 1 ? 'entry' : 'entries'}${addedQ ? `, ${addedQ} still to send` : ''}`, 3600);
@@ -3791,11 +3638,10 @@
     const last = lsGet(LS_BACKUP, 0);
     const n = state.history.length;
     $('backupStatus').textContent = !last
-      ? `${n} ${n === 1 ? 'entry' : 'entries'} on this device, never backed up`
-      : `${n} ${n === 1 ? 'entry' : 'entries'} on this device · last backup ${new Date(last).toLocaleString('en-GB', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`;
+      ? `${n} ${n === 1 ? 'entry' : 'entries'} · never backed up`
+      : `${n} ${n === 1 ? 'entry' : 'entries'} · ${new Date(last).toLocaleString('en-GB', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`;
   }
 
-  // The most recent 10pm that has already gone past.
   function lastBackupCutoff(){
     const now = new Date();
     const cut = new Date(now);
@@ -3807,9 +3653,6 @@
   function backupDue(){
     if(!state.history.length) return false;
     const cut = lastBackupCutoff();
-    // Only nudge inside a window that opens at 10pm and closes at 10am. Past
-    // that it would stop being a nightly reminder and become a permanent
-    // banner, which is the fastest way to make someone ignore it.
     if(Date.now() - cut > BACKUP_WINDOW_MS) return false;
     return lsGet(LS_BACKUP, 0) < cut && lsGet(LS_SNOOZE, 0) < cut;
   }
@@ -3818,9 +3661,6 @@
     $('backupBar').style.display = backupDue() ? 'flex' : 'none';
   }
 
-  // A page cannot wake itself at 10pm — that needs a push server. So the bar
-  // is shown whenever the app is open past the cutoff: live if it is already
-  // open, otherwise the next time it is opened.
   let backupTimer = null;
   function scheduleBackupCheck(){
     clearTimeout(backupTimer);
@@ -3853,15 +3693,9 @@
   });
 
   // ---------- PULLING A MONTH BACK FROM THE SHEET ----------
-  // The app only knows what this device typed. Everything older lives in the
-  // sheet, so it is fetched a month at a time and kept — one read each, never
-  // repeated.
-  //
-  // `index` is the row's position in the table body, which is the only
-  // handle Graph offers for changing a row in place. It is read here rather
-  // than derived later because it has to come from the same response the
-  // rest of the row came from — an index from an older snapshot may point at
-  // a different row entirely once the nightly sort has run.
+  // A read can come back three ways: it worked, it failed, or it worked and
+  // the thing that came back is not the table this app knows how to read.
+  // The third used to look identical to an empty month, so it is named.
   async function readTable(sheet, table){
     const res = await callLedger({ MODE:'read', SHEET: sheet, TABLE: table, ROWS:'[]' });
     if(!res.ok) return { ok:false, why: failureText(res) };
@@ -3873,23 +3707,28 @@
     }catch(e){
       return { ok:false, why:'The sheet sent back something unreadable' };
     }
-    if(!values) return { ok:false, why:`No ${sheet} sheet found` };
+    if(!values || !values.length) return { ok:false, why:`No ${sheet} sheet or ${table} table found` };
+
+    const width = (values[0] || []).length;
+    if(width !== COLUMN_ORDER.length){
+      return { ok:false, why:`${sheet} has ${width} columns, this app reads ${COLUMN_ORDER.length} — check the ${table} table` };
+    }
 
     const col = {};
     COLUMN_ORDER.forEach((k, i) => col[k] = i);
     const rows = [];
+    let skipped = 0;
     values.slice(1).forEach((r, i) => {
       const serial = Number(r[col.DATE]);
-      if(!serial || !isFinite(serial)) return;              // header leftovers, blanks
       const debit = Number(r[col.DEBIT]) || 0;
       const credit = Number(r[col.CREDIT]) || 0;
-      if(!debit && !credit) return;                          // spacer rows
+      if(!serial || !isFinite(serial) || (!debit && !credit)){ skipped++; return; }
       const dateISO = excelSerialToIso(serial);
       rows.push({
         uid: `sheet:${sheet}:${i}`,
         src: 'sheet',
-        index: i,                                            // position in the table body
-        at: Date.parse(dateISO + 'T00:00:00') + i,           // keeps the sheet's own order
+        index: i,
+        at: Date.parse(dateISO + 'T00:00:00') + i,
         dateISO,
         dateSerial: serial,
         id: String(r[col.ID] || ''),
@@ -3903,6 +3742,12 @@
         sent: true
       });
     });
+
+    // Rows came back but none of them parsed: the columns are in a different
+    // order, or the dates are text rather than real dates.
+    if(!rows.length && skipped > 2){
+      return { ok:false, why:`${sheet} came back with ${skipped} rows the app could not read — dates or columns are not in the expected format` };
+    }
     return { ok:true, rows };
   }
 
@@ -3912,13 +3757,11 @@
     const cache = loadSheetCache();
     cache[sheet] = { at: Date.now(), rows: r.rows };
     saveSheetCache(cache);
+    renderNameOptions(null);
     return { ok:true, count: r.rows.length };
   }
 
   // ---------- NEW MONTH REMINDER ----------
-  // A month's entries can only land in that month's sheet, and the app cannot
-  // create one. Without this, the first failure of the month is silent: the
-  // entries queue, the send fails, and nothing says why.
   function renderMonthBar(){
     const { sheet, table } = monthNamesFor(isoToday(0));
     const due = new Date().getDate() <= 5 && lsGet(LS_MONTHACK, '') !== sheet;
@@ -3940,22 +3783,17 @@
   }
   $('confirmToggle').addEventListener('change', (e) => setRequireConfirm(e.target.checked));
 
-  // ---------- SCREEN NAVIGATION (Add Payment / History / Stats / Account) ----------
+  // ---------- SCREEN NAVIGATION ----------
   function showScreen(name){
     $('entryForm').style.display = name === 'add' ? 'flex' : 'none';
     $('historyScreen').style.display = name === 'history' ? 'flex' : 'none';
     $('statsScreen').style.display = name === 'stats' ? 'flex' : 'none';
     $('accountScreen').style.display = name === 'account' ? 'flex' : 'none';
-    // The sync bar belongs to the entry flow — on the account screen the same
-    // information is already on the page in full, so showing both would just
-    // say it twice.
     $('syncBar').style.display = (name === 'add' && state.queue.length) ? 'flex' : 'none';
-    // No top tab is active on the account screen, which left nothing on
-    // the page saying where you were. The gear it was opened from does.
     $('openSettings').classList.toggle('active', name === 'account');
     if(name === 'account'){ renderAccountScreen(); renderBackupStatus(); }
     if(name === 'history'){ state.historyShown = 40; renderHistory(); }
-    if(name === 'stats'){ renderStats(); ensureStats().then(ok => { if(ok) renderStats(); }); }
+    if(name === 'stats'){ renderStats(); }
     document.querySelectorAll('.top-tab').forEach(b => {
       const on = b.dataset.tab === name;
       b.classList.toggle('active', on);
@@ -3967,15 +3805,11 @@
     btn.addEventListener('click', () => showScreen(btn.dataset.tab));
   });
 
-  // The account icon opens the sync settings — how often entries are pushed
-  // to the sheet, what's still waiting, and a manual re-read.
   $('openSettings').addEventListener('click', () => showScreen('account'));
 
   // ---------- SYNC CONTROLS ----------
   $('syncNowBtn').addEventListener('click', () => syncQueue());
   $('sendAllBtn').addEventListener('click', () => syncQueue());
-  // Make answering OK is not the same as Excel holding the row. If a send
-  // reported success but nothing appeared, this puts that batch back.
   $('requeueBtn').addEventListener('click', () => {
     const archive = loadSent();
     const last = archive.pop();
@@ -3994,11 +3828,10 @@
     $('refreshBtn').textContent = 'Reading…';
     await refreshOpenYIds();
     $('refreshBtn').disabled = false;
-    $('refreshBtn').textContent = 'Read the sheet again';
+    $('refreshBtn').textContent = 'Re-read';
     renderAccountScreen();
   });
 
-  // Older builds stored a number here (1 / 2 / 4 / 999).
   function loadSyncMode(){
     const raw = lsGet(LS_MODE, 'smart');
     if(raw === 'smart' || raw === 'instant' || raw === 'manual') return raw;
@@ -4011,21 +3844,19 @@
   function setSyncMode(mode){
     state.syncMode = mode;
     lsSet(LS_MODE, mode);
-    document.querySelectorAll('#syncModeChips .chip').forEach(c => {
+    document.querySelectorAll('#syncModeChips button').forEach(c => {
       const on = c.dataset.val === mode;
-      c.classList.toggle('selected', on);
+      c.classList.toggle('on', on);
       c.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     $('syncModeHint').textContent =
-      mode === 'instant'
-        ? 'Each entry goes straight to the sheet on its own. Uses the most Make operations.'
-      : mode === 'manual'
-        ? 'Entries stay on this device until you tap send. Uses the fewest.'
-        : `${BATCH_FULL} or more go together about ${Math.round(SETTLE_MS/1000)} seconds after you stop adding. Fewer than that wait for company, but never longer than an hour.`;
+      mode === 'instant' ? 'Each entry goes on its own. Most operations.'
+      : mode === 'manual' ? 'Nothing leaves until you tap Send. Fewest operations.'
+      : `${BATCH_FULL}+ go together once you stop adding. Never held over an hour.`;
     scheduleSync();
     renderAccountScreen();
   }
-  document.querySelectorAll('#syncModeChips .chip').forEach(chip => {
+  document.querySelectorAll('#syncModeChips button').forEach(chip => {
     chip.addEventListener('click', () => setSyncMode(chip.dataset.val));
   });
 
@@ -4033,14 +3864,13 @@
     const n = state.queue.length;
     if(!n) return 'Nothing waiting';
     const count = n === 1 ? '1 entry' : `${n} entries`;
-    if(!navigator.onLine) return `${count} · offline, going when you are back`;
+    if(!navigator.onLine) return `${count} · offline`;
     if(state.syncing) return `${count} · sending`;
-    if(state.syncMode === 'manual') return `${count} · waiting for you to tap send`;
+    if(state.syncMode === 'manual') return `${count} · waiting for you`;
     if(state.syncMode === 'instant') return `${count} · retrying`;
     if(n >= BATCH_FULL) return `${count} · going shortly`;
     const by = new Date(deadline()).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
-    const more = BATCH_FULL - n;
-    return `${count} · going by ${by}, or as soon as you add ${more === 1 ? '1 more' : more + ' more'}`;
+    return `${count} · by ${by}`;
   }
 
   function renderAccountScreen(){
@@ -4057,15 +3887,12 @@
     }
     const blocked = n === 0 || state.syncing || !navigator.onLine;
     $('sendAllBtn').disabled = blocked;
-    $('sendAllBtn').style.opacity = blocked ? '0.5' : '1';
-    $('sendAllBtn').textContent = !navigator.onLine && n > 0
-      ? 'Offline — these go across when you are back'
-      : 'Send everything now';
+    $('sendAllBtn').textContent = state.syncing ? 'Sending…' : !navigator.onLine && n > 0 ? 'Offline' : 'Send';
 
     const { sheet, table } = monthNamesFor(isoToday(0));
     const open = computeOpenYIds().length;
     $('monthSummary').textContent =
-      `Writing to ${sheet}, table ${table}. ${open === 0 ? 'Nothing open.' : open === 1 ? '1 item open.' : open + ' items open.'}`;
+      `${sheet} · ${table} · ${open === 0 ? 'nothing open' : open === 1 ? '1 open item' : open + ' open items'}`;
   }
 
   // ---------- INIT ----------
@@ -4073,50 +3900,39 @@
   loadOpenYIds();
   loadHistory();
   loadEdits();
-  setSyncMode(loadSyncMode());   // also arms the timers for anything already queued
+  renderNameOptions(null);
+  setSyncMode(loadSyncMode());
   renderSyncState();
   renderBackupStatus();
   scheduleBackupCheck();
   setRequireConfirm(lsGet(LS_CONFIRM, false));
   renderMonthBar();
+  renderMonthToggles();
   setBack('N');
-  setDate(isoToday(0), 'today');
+  applyDefaultDate();
   updateAmountWidth();
   updateCTA();
 
-  // Timers stop when the app closes, so launch is where an expired ceiling
-  // actually gets noticed. A full batch that has been sitting goes now too;
-  // anything smaller and still inside its hour is left to wait for company,
-  // otherwise opening the app would defeat the batching entirely.
   if(state.queue.length && navigator.onLine && state.syncMode !== 'manual'){
     if(overdue() || state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
   }
 
-  // Backgrounding is the last reliable moment before the timers die with the
-  // page. Same test as launch, so a half-full batch inside its hour is not
-  // flushed just because you switched apps.
   document.addEventListener('visibilitychange', () => {
     if(document.visibilityState !== 'hidden') return;
     if(!state.queue.length || !navigator.onLine || state.syncMode === 'manual') return;
     if(overdue() || state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
   });
 
-  // Coming back online is the moment a retry is most likely to succeed.
   window.addEventListener('online', () => {
     renderSyncState();
     if(state.queue.length && state.syncMode !== 'manual') syncQueue({ silent:true });
   });
   window.addEventListener('offline', renderSyncState);
-  // The webfont loads asynchronously, so the very first measurement above
-  // may have used a fallback font's metrics — re-measure once it's ready.
   if(document.fonts && document.fonts.ready){
     document.fonts.ready.then(updateAmountWidth);
   }
 
   // ---------- SERVICE WORKER ----------
-  // The worker caches the shell so the app opens with no signal, and reports
-  // back when a newer build has landed. Updates are offered, never applied
-  // silently — swapping the page out mid-entry would lose whatever was typed.
   let updateOffered = false;
   let updateAccepted = false;
   let reloadStarted = false;
@@ -4136,33 +3952,23 @@
   $('updateBtn').addEventListener('click', async () => {
     $('updateBtn').disabled = true;
     $('updateBtn').textContent = 'Reloading…';
-    // Anything still queued is on the device and survives a reload, but
-    // sending first means a reload can't be what delays it.
     if(state.queue.length && navigator.onLine) await syncQueue({ silent:true });
 
     const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
     if(reg && reg.waiting){
-      // A new worker is installed and waiting. Let it take over, then reload
-      // once it does.
       updateAccepted = true;
       reg.waiting.postMessage({ type:'SKIP_WAITING' });
-      setTimeout(doReload, 1200); // in case controllerchange never fires
+      setTimeout(doReload, 1200);
     } else {
-      // Same worker, new page — the cache already holds it, so a plain
-      // reload is enough.
       doReload();
     }
   });
 
   if('serviceWorker' in navigator){
-    // controllerchange also fires the very first time a worker claims the
-    // page, which must not reload anything.
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if(updateAccepted) doReload();
     });
 
-    // The worker sends this when the page it just fetched differs from the
-    // page it had cached.
     navigator.serviceWorker.addEventListener('message', (e) => {
       if(e.data && e.data.type === 'UPDATE_READY') offerUpdate();
     });
@@ -4174,13 +3980,9 @@
           const incoming = reg.installing;
           if(!incoming) return;
           incoming.addEventListener('statechange', () => {
-            // A worker that reaches "installed" while something is already
-            // controlling the page is an update, not a first install.
             if(incoming.state === 'installed' && navigator.serviceWorker.controller) offerUpdate();
           });
         });
-        // Check on launch, and again whenever the app is brought back to the
-        // foreground — an installed PWA can sit open for days.
         const check = () => reg.update().catch(() => {});
         check();
         document.addEventListener('visibilitychange', () => {
