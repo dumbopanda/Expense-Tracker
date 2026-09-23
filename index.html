@@ -1940,8 +1940,53 @@
     for(let i=0;i<len;i++) out += chars[Math.floor(Math.random()*chars.length)];
     return out;
   }
+  // NETEXDO — one letter saying whether it comes back, then the second you
+  // tapped Add Entry, scrambled.
+  //
+  // Underneath is the count of seconds since 2026. Multiplying that by
+  // ID_KEY modulo 36^6 is a bijection: every second maps to exactly one
+  // code and back again, so uniqueness is a property of the arithmetic
+  // rather than something that has to be checked against anything.
+  // Consecutive seconds land nowhere near each other, so it does not read
+  // as a clock.
+  //
+  // This is obfuscation, not encryption — the sheet is yours and anyone
+  // holding this file can decode it. What it buys is that the ID is not a
+  // date at a glance, while the app can still say exactly when a row was
+  // made. 36^6 seconds of room runs to 2094.
+  //
+  // The ID never changes once saved, even on edit — it is the handle that
+  // both the Y pairs and the sheet-row lookup are built on.
+  const ID_EPOCH = Date.UTC(2026, 0, 1) / 1000;
+  const ID_SPACE = Math.pow(36, 6);
+  const ID_KEY = 1737350093;          // coprime with 36^6, therefore invertible
+  const ID_KEY_INV = 1724942597;      // (ID_KEY * ID_KEY_INV) % ID_SPACE === 1
+  const ID_RE = /^([NY])([0-9a-z]{6})$/;
+
+  // The product overflows a double, so it is done in BigInt.
+  function scramble(n, key){
+    return Number((BigInt(n) * BigInt(key)) % BigInt(ID_SPACE));
+  }
+  function idFor(kind, secs){
+    return (kind === 'Y' ? 'Y' : 'N')
+      + scramble(secs, ID_KEY).toString(36).padStart(6, '0');
+  }
   function generateId(kind){
-    return kind === 'Y' ? `Y${randomSuffix()}` : `N${randomSuffix()}`;
+    const taken = new Set(allRows().map(r => String(r.id || '')));
+    let secs = Math.floor(Date.now() / 1000) - ID_EPOCH;
+    // Two entries saved inside the same second would otherwise share a code.
+    // The second one takes the next second — still never reused.
+    for(let i = 0; i < 60 && taken.has(idFor(kind, secs)); i++) secs++;
+    return idFor(kind, secs);
+  }
+  // Back the other way, for saying when a row was made.
+  function idCreatedAt(id){
+    const m = ID_RE.exec(String(id || ''));
+    if(!m) return null;
+    return new Date((scramble(parseInt(m[2], 36), ID_KEY_INV) + ID_EPOCH) * 1000);
+  }
+  function stampText(d){
+    return d ? d.toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
   }
 
   // ---------- OPEN Y-IDS ----------
@@ -2581,7 +2626,9 @@
     }
 
     const { sheet: targetSheet } = monthNamesFor(state.selectedDateISO);
-    const savedId = currentId();
+    const reusing = state.editing
+      || (!state.isSelfTransfer && state.back === 'Y' && $('backKind').value === 'old' && openItems().length);
+    const savedId = reusing ? currentId() : generateId(state.kind);
     const base = {
       dateSerial: dateForSheet,
       id: savedId,
@@ -3024,6 +3071,7 @@
         ['Note', r.moreInfo],
         ['Date', formatConfirmDate(r.dateISO)],
         ['Transaction ID', r.id],
+        ['Added', stampText(idCreatedAt(r.id))],
         ['Status', statusOf(r)]
       ];
     } else {
@@ -3039,6 +3087,7 @@
         ['Date', formatConfirmDate(r.dateISO)],
         ['Will I get this back', String(r.id || '').startsWith('Y') ? 'Yes' : 'No'],
         ['Transaction ID', r.id],
+        ['Added', stampText(idCreatedAt(r.id))],
         ['Status', statusOf(r)]
       ];
     }
@@ -3782,6 +3831,7 @@
     $('confirmToggle').checked = state.requireConfirm;
   }
   $('confirmToggle').addEventListener('change', (e) => setRequireConfirm(e.target.checked));
+
 
   // ---------- SCREEN NAVIGATION ----------
   function showScreen(name){
