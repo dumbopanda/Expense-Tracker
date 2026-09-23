@@ -1955,16 +1955,14 @@
   // date at a glance, while the app can still say exactly when a row was
   // made. 36^6 seconds of room runs to 2094.
   //
-  // The ID never changes once saved, even on edit — it is the handle that
-  // both the Y pairs and the sheet-row lookup are built on.
-  // Epoch is 1 Jan 2026, 00:00:00 IST (not UTC) — Date.now() is always UTC
-  // millis under the hood, so this just bakes the +5:30 shift in once here,
-  // instead of it having to be done by hand every time someone decodes an id.
-  const ID_EPOCH = Date.UTC(2026, 0, 1) / 1000 - 5.5 * 3600;
+  // The ID never changes once saved. It is the handle that both the Y pairs
+  // and the sheet-row lookup are built on, so an edit leaves its mark in
+  // editedAt beside the row instead (see commitEdit).
+  const ID_EPOCH = Date.UTC(2026, 0, 1) / 1000;
   const ID_SPACE = Math.pow(36, 6);
   const ID_KEY = 1737350093;          // coprime with 36^6, therefore invertible
   const ID_KEY_INV = 1724942597;      // (ID_KEY * ID_KEY_INV) % ID_SPACE === 1
-  const ID_RE = /^([NY])([0-9a-z]{6})$/;
+  const ID_RE = /^([NY])([0-9A-Z]{6})$/;
 
   // The product overflows a double, so it is done in BigInt.
   function scramble(n, key){
@@ -1972,7 +1970,7 @@
   }
   function idFor(kind, secs){
     return (kind === 'Y' ? 'Y' : 'N')
-      + scramble(secs, ID_KEY).toString(36).padStart(6, '0');
+      + scramble(secs, ID_KEY).toString(36).toUpperCase().padStart(6, '0');
   }
   function generateId(kind){
     const taken = new Set(allRows().map(r => String(r.id || '')));
@@ -3075,6 +3073,7 @@
         ['Date', formatConfirmDate(r.dateISO)],
         ['Transaction ID', r.id],
         ['Added', stampText(idCreatedAt(r.id))],
+        ['Last edited', r.editedAt ? stampText(new Date(r.editedAt)) : ''],
         ['Status', statusOf(r)]
       ];
     } else {
@@ -3091,6 +3090,7 @@
         ['Will I get this back', String(r.id || '').startsWith('Y') ? 'Yes' : 'No'],
         ['Transaction ID', r.id],
         ['Added', stampText(idCreatedAt(r.id))],
+        ['Last edited', r.editedAt ? stampText(new Date(r.editedAt)) : ''],
         ['Status', statusOf(r)]
       ];
     }
@@ -3264,6 +3264,7 @@
 
       applyLocal({
         uid: o.uid,
+        editedAt: Date.now(),
         dateISO: e.dateISO,
         dateSerial: e.dateSerial,
         id: e.id,
