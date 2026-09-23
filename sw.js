@@ -13,8 +13,8 @@
 // Nothing here touches the Make webhook: those are POSTs, and the fetch
 // handler ignores every method except GET.
 
-const SHELL_CACHE = 'ledger-shell-v2';
-const FONT_CACHE  = 'ledger-fonts-v2';
+const SHELL_CACHE = 'ledger-shell-v1';
+const FONT_CACHE  = 'ledger-fonts-v1';
 
 // The page is always cached and served under one key, whatever URL the
 // navigation actually used ("/", "/index.html", "/index.html?x=1").
@@ -28,14 +28,26 @@ const SHELL = [
   './icon-512.png'
 ];
 
+// Every shell fetch this worker makes goes around the browser's own HTTP
+// cache. GitHub Pages serves index.html with a ten-minute max-age, so without
+// this the worker can "refresh" the page and be handed back the very build it
+// was trying to replace — the deploy then appears to have done nothing, for
+// ten minutes, with no way to tell from inside the app.
+const FRESH = { cache: 'reload' };
+
 // ---------- install ----------
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
-    // addAll rejects the whole install if any single file 404s. Added one at
-    // a time instead, so a missing icon costs only that icon and the app
+    // One at a time rather than addAll, which rejects the whole install if any
+    // single file 404s. A missing icon then costs only that icon and the app
     // still ends up installable and offline-capable.
-    await Promise.all(SHELL.map(url => cache.add(url).catch(() => {})));
+    await Promise.all(SHELL.map(async (url) => {
+      try{
+        const res = await fetch(url, FRESH);
+        if(res && res.ok) await cache.put(url, res);
+      }catch(e){}
+    }));
   })());
   // Deliberately no skipWaiting() here. On a first install there is no
   // controller to replace, so this worker activates immediately anyway. On an
@@ -106,7 +118,7 @@ async function shell(event){
 
   if(!cached){
     try{
-      const res = await fetch(req);
+      const res = await fetch(req, FRESH);
       if(res && res.ok) await cache.put(key, res.clone());
       return res;
     }catch(e){
@@ -120,7 +132,7 @@ async function shell(event){
 
   event.waitUntil((async () => {
     try{
-      const res = await fetch(req);
+      const res = await fetch(req, FRESH);
       if(!res || !res.ok) return;
       await cache.put(key, res.clone());
       if(isPage && (await res.clone().text()) !== cachedText) await announceUpdate();
