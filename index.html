@@ -686,6 +686,7 @@
   .tag.acct-Cash{background:#EAE5D8;color:#6B6045;}
   .tag.held{background:var(--amber);color:#6E571A;}
   .tag.edited{background:#FFE9C9;color:#8A5A0F;}
+  .tag.settled{background:var(--mint);color:#14614A;}
   .txn .note{
     font-size:12.5px;font-weight:500;color:var(--text-muted);
     line-height:1.35;overflow-wrap:anywhere;
@@ -963,7 +964,6 @@
   .sheet-prop .k{font-size:13px;font-weight:600;color:var(--text-muted);flex-shrink:0;}
   .sheet-prop .v{font-size:14px;font-weight:700;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
   .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px;}
-  .sheet-actions.cols-3{grid-template-columns:1fr 1fr 1fr;}
   .btn{
     padding:16px 0;
     border-radius:var(--radius-pill);
@@ -1342,9 +1342,8 @@
     <p class="sheet-line" id="detailLine">—</p>
     <div class="sheet-note" id="detailNote" style="display:none;"></div>
     <div class="sheet-props" id="detailProps"></div>
-    <div class="sheet-actions cols-3">
+    <div class="sheet-actions">
       <button type="button" class="btn btn-danger" id="detailDeleteBtn">Delete</button>
-      <button type="button" class="btn btn-outline" id="detailDismissBtn">Close</button>
       <button type="button" class="btn btn-save" id="detailEditBtn">Edit</button>
     </div>
   </div>
@@ -3135,7 +3134,6 @@
     state.detailKey = null;
   }
   $('detailCloseBtn').addEventListener('click', closeDetail);
-  $('detailDismissBtn').addEventListener('click', closeDetail);
   $('detailSheet').addEventListener('click', (e) => { if(e.target === $('detailSheet')) closeDetail(); });
   $('detailEditBtn').addEventListener('click', () => {
     const r = state.rowIndex[state.detailKey];
@@ -3441,16 +3439,44 @@
     return { ok: !problems.length, msg };
   }
 
+  // Every Y id ever seen, open or closed — a history of loans/self-transfers
+  // rather than just the currently-outstanding ones.
+  function yGroups(){
+    const byId = {};
+    allRows().forEach(r => {
+      if(typeof r.id === 'string' && r.id.startsWith('Y')) (byId[r.id] = byId[r.id] || []).push(r);
+    });
+    // A device-known open id with no local row data (opened before this
+    // device had the sheet) still belongs in the list.
+    const ids = new Set([...Object.keys(byId), ...state.openYIds]);
+    return [...ids].map(id => {
+      const legs = (byId[id] || []).sort((a,b) => a.at - b.at);
+      const open = legs[0] || null;
+      const close = legs.length > 1 ? legs[legs.length - 1] : null;
+      return {
+        id,
+        name: open ? (open.expenseName || id) : id,
+        account: open ? open.account : '',
+        amount: open ? Number(open.debit || open.credit || 0) : null,
+        openDateISO: open ? open.dateISO : null,
+        closeDateISO: close ? close.dateISO : null,
+        at: close ? close.at : (open ? open.at : 0),
+        closed: !!close
+      };
+    }).sort((a,b) => b.at - a.at);
+  }
+
   function renderDues(){
     const pane = $('duesPane');
-    const items = openItems();
-    $('duesBadge').style.display = items.length ? 'inline-block' : 'none';
-    $('duesBadge').textContent = items.length;
+    const items = yGroups();
+    const openCount = items.filter(it => !it.closed).length;
+    $('duesBadge').style.display = openCount ? 'inline-block' : 'none';
+    $('duesBadge').textContent = openCount;
 
     if(!items.length){
       pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
-        <h2>Nothing outstanding</h2>
-        <p>Anything you mark "Yes, I'll get this back" shows up here until the money comes back.</p>
+        <h2>Nothing here yet</h2>
+        <p>Anything you mark "Yes, I'll get this back" shows up here, open or settled.</p>
       </div></div>`;
       return;
     }
@@ -3462,18 +3488,22 @@
 
     pane.innerHTML = '<div class="ledger-card">' + items.map(it => {
       const acct = esc(it.account || '');
-      if(!it.dateISO) return `<div class="txn due">
+      if(!it.openDateISO) return `<div class="txn due">
         <div class="tile transfer"></div>
         <div class="body"><div class="line1"><div class="name">${esc(it.name)}</div></div>
         <div class="note">Opened before this device had a record of it</div></div>
       </div>`;
-      const days = daysAgo(it.dateISO);
-      const age = days === 0 ? 'opened today' : days === 1 ? 'open since yesterday' : `open ${days} days`;
+      const statusTag = it.closed
+        ? `<span class="tag settled">settled ${esc(formatDisplayDate(it.closeDateISO))}</span>`
+        : (() => {
+            const days = daysAgo(it.openDateISO);
+            return `<span class="tag">${days === 0 ? 'opened today' : days === 1 ? 'open since yesterday' : `open ${days} days`}</span>`;
+          })();
       return `<div class="txn due">
         <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
         <div class="body">
           <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
-          <div class="tags"><span class="tag acct acct-${acct}">${acct}</span><span class="tag">${age}</span></div>
+          <div class="tags"><span class="tag acct acct-${acct}">${acct}</span>${statusTag}</div>
         </div>
       </div>`;
     }).join('') + '</div>' + `<div class="scope-note">${esc(scope)}</div>`;
