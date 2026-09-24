@@ -1413,6 +1413,7 @@
   const LS_HIST  = 'ledger.history.v1';
   const LS_EDITS = 'ledger.edits.v1';
   const LS_SHEET = 'ledger.sheetCache.v1';
+  const LS_STATS = 'ledger.statsSnapshot.v1';
   // Names added by hand. Everything ever used is learned from the rows
   // themselves; this only has to remember a name typed for something that
   // has not been saved yet.
@@ -3665,7 +3666,12 @@
     }
 
     const bal = balancesFor(rows);
-    const spent = sum(spendRows(rows));
+    const statsSnap = loadStatsSnap()[ms.sheet];
+    // Rows already synced to the sheet are already inside J5; only what this
+    // device holds that isn't in the sheet yet needs adding on top.
+    const spent = statsSnap
+      ? statsSnap.spent + sum(spendRows(rows.filter(r => r.src !== 'sheet')))
+      : sum(spendRows(rows));
     const have = Object.keys(bal).reduce((n, k) => n + bal[k], 0);
 
     const names = ACCOUNTS.concat(Object.keys(bal).filter(k => !ACCOUNTS.includes(k)));
@@ -3918,8 +3924,31 @@
     const cache = loadSheetCache();
     cache[sheet] = { at: Date.now(), rows: r.rows };
     saveSheetCache(cache);
+    await pullStats(sheet);
     renderNameOptions(null);
     return { ok:true, count: r.rows.length };
+  }
+
+  // Row 5's J column is the sheet's own SUMIFS total — the only place
+  // rollovers and anything typed straight into Excel show up. Pulled
+  // alongside the table read so "Total spend" stops drifting from it.
+  function loadStatsSnap(){
+    const s = lsGet(LS_STATS, {});
+    return (s && typeof s === 'object' && !Array.isArray(s)) ? s : {};
+  }
+  async function pullStats(sheet){
+    const res = await callLedger({ MODE:'stats', SHEET: sheet, TABLE:'', ROWS:'[]' });
+    if(!res.ok) return false;
+    try{
+      const data = JSON.parse(res.text);
+      const row = (data.values || (data.body && data.body.values) || [])[0];
+      const j5 = row && row.length >= 9 ? Number(row[8]) : NaN;
+      if(!isFinite(j5)) return false;
+      const snap = loadStatsSnap();
+      snap[sheet] = { at: Date.now(), spent: j5 };
+      lsSet(LS_STATS, snap);
+      return true;
+    }catch(e){ return false; }
   }
 
   // ---------- NEW MONTH REMINDER ----------
