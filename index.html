@@ -935,6 +935,24 @@
   .modal h2{margin:0 0 4px;font-size:18px;}
   .modal .close{align-self:flex-end;font-size:13px;color:var(--text-muted);font-weight:700;cursor:pointer;}
 
+  /* Shown only on the detail sheet for a Y id that has both legs — lets you
+     flip between editing/deleting the open (loan-out) leg and the close
+     (repayment) leg without leaving the popup. Smaller than .kind-toggle,
+     same dark-on-light-off language. */
+  .leg-toggle{
+    position:absolute;top:18px;left:18px;
+    display:flex;background:var(--white);border:1px solid var(--border);
+    border-radius:var(--radius-pill);padding:2px;gap:2px;
+  }
+  .leg-btn{
+    border:none;background:transparent;
+    font-family:var(--font);font-size:11px;font-weight:700;
+    color:var(--text-muted);
+    padding:5px 10px;border-radius:var(--radius-pill);
+    cursor:pointer;
+  }
+  .leg-btn.on{background:var(--text-dark);color:var(--lime);}
+
   .sheet-close{
     position:absolute;top:18px;right:18px;
     width:32px;height:32px;
@@ -1344,6 +1362,10 @@
 <div class="modal-overlay" id="detailSheet" role="dialog" aria-modal="true" aria-labelledby="detailTitleText">
   <div class="modal">
     <button type="button" class="sheet-close" id="detailCloseBtn" aria-label="Close">✕</button>
+    <div class="leg-toggle" id="detailLegToggle" style="display:none;" role="group" aria-label="Which leg">
+      <button type="button" class="leg-btn" data-leg="open">Open</button>
+      <button type="button" class="leg-btn" data-leg="close">Close</button>
+    </div>
     <div class="sheet-title" id="detailTitleText">Entry</div>
     <p class="sheet-line" id="detailLine">—</p>
     <div class="sheet-note" id="detailNote" style="display:none;"></div>
@@ -3080,10 +3102,13 @@
     return 'In the sheet';
   }
 
-  function openDetail(key){
-    const r = state.rowIndex[key];
-    if(!r) return;
-    state.detailKey = key;
+  // Every row for a given Y id, oldest first — the open leg is [0], the
+  // close leg (if the loan has been repaid) is the last one.
+  function rawLegsFor(id){
+    return allRows().filter(r => r.id === id).sort((a,b) => a.at - b.at);
+  }
+
+  function renderDetailBody(r){
     const m = r.members || [r];
     const amt = Number(r.amount).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
     const when = formatDisplayDate(r.dateISO);
@@ -3132,13 +3157,59 @@
       ? 'Already in the sheet — an edit is held here until you push it'
       : '';
     $('detailNote').style.display = sent ? 'block' : 'none';
+  }
 
+  function updateLegToggleUI(){
+    $('detailLegToggle').querySelectorAll('.leg-btn').forEach(b => {
+      b.classList.toggle('on', b.dataset.leg === state.detailLeg);
+    });
+  }
+
+  function openDetail(key){
+    const r = state.rowIndex[key];
+    if(!r) return;
+
+    // A Y id with both legs on this device gets the Open/Close toggle so
+    // either leg can be edited or deleted without leaving the popup — a Y
+    // id can't exist without an open leg, so deleting that one just leaves
+    // the close leg (if any) to fend for itself; deleting the close leg
+    // simply reopens the loan. Both are ordinary single-row deletes.
+    state.detailLegs = null;
+    state.detailLeg = null;
+    if(typeof r.id === 'string' && r.id.startsWith('Y') && !r.transfer){
+      const legs = rawLegsFor(r.id);
+      if(legs.length > 1){
+        const open = foldTransfers([legs[0]])[0];
+        const close = foldTransfers([legs[legs.length - 1]])[0];
+        state.rowIndex[open.uid] = open;
+        state.rowIndex[close.uid] = close;
+        state.detailLegs = { open, close };
+        state.detailLeg = (r.uid === close.uid) ? 'close' : 'open';
+      }
+    }
+
+    state.detailKey = state.detailLegs ? state.detailLegs[state.detailLeg].uid : key;
+    renderDetailBody(state.rowIndex[state.detailKey]);
+    $('detailLegToggle').style.display = state.detailLegs ? 'flex' : 'none';
+    if(state.detailLegs) updateLegToggleUI();
     $('detailSheet').classList.add('open');
   }
+
+  $('detailLegToggle').querySelectorAll('.leg-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      if(!state.detailLegs) return;
+      state.detailLeg = b.dataset.leg;
+      state.detailKey = state.detailLegs[state.detailLeg].uid;
+      renderDetailBody(state.detailLegs[state.detailLeg]);
+      updateLegToggleUI();
+    });
+  });
 
   function closeDetail(){
     $('detailSheet').classList.remove('open');
     state.detailKey = null;
+    state.detailLegs = null;
+    state.detailLeg = null;
   }
   $('detailCloseBtn').addEventListener('click', closeDetail);
   $('detailSheet').addEventListener('click', (e) => { if(e.target === $('detailSheet')) closeDetail(); });
@@ -3468,14 +3539,23 @@
         openDateISO: open ? open.dateISO : null,
         closeDateISO: close ? close.dateISO : null,
         at: close ? close.at : (open ? open.at : 0),
-        closed: !!close
+        closed: !!close,
+        openRow: open,
+        closeRow: close
       };
     }).sort((a,b) => b.at - a.at);
   }
 
+  // Tapping opens the same detail sheet Recent uses — the closing leg if the
+  // item is settled (the more likely one to need a fix), otherwise the leg
+  // that opened it. Registered into the shared rowIndex so Edit/Delete work
+  // exactly as they do from Recent.
   function duesRow(it, closed){
     const acct = esc(it.account || '');
-    if(!it.openDateISO) return `<div class="txn due${closed ? ' closed' : ''}">
+    const targetRow = closed ? it.closeRow : it.openRow;
+    const cls = 'txn due' + (closed ? ' closed' : '') + (targetRow ? ' tappable' : '');
+    const attrs = targetRow ? ` data-key="${esc(targetRow.uid)}" role="button" tabindex="0"` : '';
+    if(!it.openDateISO) return `<div class="${cls}"${attrs}>
       <div class="tile transfer"></div>
       <div class="body"><div class="line1"><div class="name">${esc(it.name)}</div></div>
       <div class="note">Opened before this device had a record of it</div></div>
@@ -3483,7 +3563,7 @@
     const dates = closed
       ? `Opened ${esc(formatDisplayDate(it.openDateISO))} · Closed ${esc(formatDisplayDate(it.closeDateISO))}`
       : `Opened ${esc(formatDisplayDate(it.openDateISO))}`;
-    return `<div class="txn due${closed ? ' closed' : ''}">
+    return `<div class="${cls}"${attrs}>
       <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
       <div class="body">
         <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
@@ -3492,12 +3572,20 @@
     </div>`;
   }
 
-  // One list, one place to look — open items on top under their own heading,
-  // closed ones below, grayed out, under theirs. Never two tabs to check.
+  function registerDueRow(raw){
+    if(!raw) return;
+    const norm = foldTransfers([raw])[0];
+    state.rowIndex[norm.uid] = norm;
+  }
+
+  // One list, one place to look — open items on top in their own card,
+  // closed ones below in theirs, grayed out. Never two tabs to check.
   function duesSection(label, list, closed){
     if(!list.length) return '';
-    return `<div class="day-head"><span class="day">${esc(label)}</span><span class="net">${list.length}</span></div>`
-      + list.map(it => duesRow(it, closed)).join('');
+    return `<div class="ledger-card">
+      <div class="day-head"><span class="day">${esc(label)}</span><span class="net">${list.length}</span></div>
+      ${list.map(it => duesRow(it, closed)).join('')}
+    </div>`;
   }
 
   function renderDues(){
@@ -3523,10 +3611,11 @@
       ? `Counted across this device and ${loaded.length === 1 ? loaded[0] : loaded.length + ' months'} read from the sheet.`
       : 'Counted from this device only. Pull earlier months in Recent to include them.';
 
-    pane.innerHTML = '<div class="ledger-card">'
-      + duesSection('Open', openList, false)
-      + duesSection('Closed', closedList, true)
-      + '</div>' + `<div class="scope-note">${esc(scope)}</div>`;
+    items.forEach(it => { registerDueRow(it.openRow); registerDueRow(it.closeRow); });
+
+    pane.innerHTML = `<div class="day-list">${duesSection('Open', openList, false)}${duesSection('Closed', closedList, true)}</div>`
+      + `<div class="scope-note">${esc(scope)}</div>`;
+    wireRows(pane);
   }
 
   function renderHistory(){
