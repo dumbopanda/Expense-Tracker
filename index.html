@@ -940,7 +940,7 @@
      (repayment) leg without leaving the popup. Smaller than .kind-toggle,
      same dark-on-light-off language. */
   .leg-toggle{
-    position:absolute;top:18px;left:18px;
+    position:absolute;top:18px;right:58px;
     display:flex;background:var(--white);border:1px solid var(--border);
     border-radius:var(--radius-pill);padding:2px;gap:2px;
   }
@@ -965,6 +965,7 @@
     cursor:pointer;
   }
   .sheet-title{font-size:19px;font-weight:800;color:var(--text-dark);padding-right:44px;}
+  .sheet-title.has-legs{padding-right:150px;}
   .sheet-line{margin:0;font-size:14px;font-weight:500;line-height:1.55;color:var(--text-dark);}
   .sheet-note{
     align-self:flex-start;
@@ -3191,6 +3192,7 @@
     state.detailKey = state.detailLegs ? state.detailLegs[state.detailLeg].uid : key;
     renderDetailBody(state.rowIndex[state.detailKey]);
     $('detailLegToggle').style.display = state.detailLegs ? 'flex' : 'none';
+    $('detailTitleText').classList.toggle('has-legs', !!state.detailLegs);
     if(state.detailLegs) updateLegToggleUI();
     $('detailSheet').classList.add('open');
   }
