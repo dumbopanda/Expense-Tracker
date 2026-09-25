@@ -686,7 +686,13 @@
   .tag.acct-Cash{background:#EAE5D8;color:#6B6045;}
   .tag.held{background:var(--amber);color:#6E571A;}
   .tag.edited{background:#FFE9C9;color:#8A5A0F;}
-  .tag.settled{background:var(--mint);color:#14614A;}
+  .tag.settled{background:var(--canvas-light);color:var(--text-muted);}
+
+  /* Owed to me: closed items sit in their own section, grayed out rather
+     than removed — same shape as an open row so nothing has to be relearned. */
+  .txn.due.closed{opacity:0.55;}
+  .txn.due.closed .tile{background:var(--canvas-light) !important;color:var(--text-muted);border:1px solid var(--border);}
+  .txn.due.closed .tag.acct{background:var(--canvas-light);color:var(--text-muted);}
   .txn .note{
     font-size:12.5px;font-weight:500;color:var(--text-muted);
     line-height:1.35;overflow-wrap:anywhere;
@@ -3467,12 +3473,42 @@
     }).sort((a,b) => b.at - a.at);
   }
 
+  function duesRow(it, closed){
+    const acct = esc(it.account || '');
+    if(!it.openDateISO) return `<div class="txn due${closed ? ' closed' : ''}">
+      <div class="tile transfer"></div>
+      <div class="body"><div class="line1"><div class="name">${esc(it.name)}</div></div>
+      <div class="note">Opened before this device had a record of it</div></div>
+    </div>`;
+    const dates = closed
+      ? `Opened ${esc(formatDisplayDate(it.openDateISO))} · Closed ${esc(formatDisplayDate(it.closeDateISO))}`
+      : `Opened ${esc(formatDisplayDate(it.openDateISO))}`;
+    return `<div class="txn due${closed ? ' closed' : ''}">
+      <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
+      <div class="body">
+        <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
+        <div class="tags"><span class="tag acct acct-${acct}">${acct}</span><span class="tag${closed ? ' settled' : ''}">${dates}</span></div>
+      </div>
+    </div>`;
+  }
+
+  // One list, one place to look — open items on top under their own heading,
+  // closed ones below, grayed out, under theirs. Never two tabs to check.
+  function duesSection(label, list, closed){
+    if(!list.length) return '';
+    return `<div class="day-head"><span class="day">${esc(label)}</span><span class="net">${list.length}</span></div>`
+      + list.map(it => duesRow(it, closed)).join('');
+  }
+
   function renderDues(){
     const pane = $('duesPane');
     const items = yGroups();
-    const openCount = items.filter(it => !it.closed).length;
-    $('duesBadge').style.display = openCount ? 'inline-block' : 'none';
-    $('duesBadge').textContent = openCount;
+    const openList = items.filter(it => !it.closed)
+      .sort((a,b) => (Date.parse(b.openDateISO || 0) || 0) - (Date.parse(a.openDateISO || 0) || 0));
+    const closedList = items.filter(it => it.closed)
+      .sort((a,b) => (Date.parse(b.closeDateISO || 0) || 0) - (Date.parse(a.closeDateISO || 0) || 0));
+    $('duesBadge').style.display = openList.length ? 'inline-block' : 'none';
+    $('duesBadge').textContent = openList.length;
 
     if(!items.length){
       pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
@@ -3487,27 +3523,10 @@
       ? `Counted across this device and ${loaded.length === 1 ? loaded[0] : loaded.length + ' months'} read from the sheet.`
       : 'Counted from this device only. Pull earlier months in Recent to include them.';
 
-    pane.innerHTML = '<div class="ledger-card">' + items.map(it => {
-      const acct = esc(it.account || '');
-      if(!it.openDateISO) return `<div class="txn due">
-        <div class="tile transfer"></div>
-        <div class="body"><div class="line1"><div class="name">${esc(it.name)}</div></div>
-        <div class="note">Opened before this device had a record of it</div></div>
-      </div>`;
-      const statusTag = it.closed
-        ? `<span class="tag settled">settled ${esc(formatDisplayDate(it.closeDateISO))}</span>`
-        : (() => {
-            const days = daysAgo(it.openDateISO);
-            return `<span class="tag">${days === 0 ? 'opened today' : days === 1 ? 'open since yesterday' : `open ${days} days`}</span>`;
-          })();
-      return `<div class="txn due">
-        <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
-        <div class="body">
-          <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
-          <div class="tags"><span class="tag acct acct-${acct}">${acct}</span>${statusTag}</div>
-        </div>
-      </div>`;
-    }).join('') + '</div>' + `<div class="scope-note">${esc(scope)}</div>`;
+    pane.innerHTML = '<div class="ledger-card">'
+      + duesSection('Open', openList, false)
+      + duesSection('Closed', closedList, true)
+      + '</div>' + `<div class="scope-note">${esc(scope)}</div>`;
   }
 
   function renderHistory(){
