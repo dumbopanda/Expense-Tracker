@@ -2394,7 +2394,12 @@
   }
   function recordHistory(entries){
     entries.forEach(e => state.history.push({
-      uid: e.uid, at: e.at, dateISO: e.dateISO, id: e.id,
+      uid: e.uid, at: e.at, dateISO: e.dateISO, dateSerial: e.dateSerial, id: e.id,
+      // timeFraction has to travel with the row: editing an entry before the
+      // sheet re-syncs reads this record back as the "original" and resends
+      // its timeFraction verbatim (see the submit handler). Drop it here and
+      // that resend carries `undefined` -> a blank TIME cell in the sheet.
+      timeFraction: e.timeFraction,
       account: e.account, expenseName: e.expenseName, moreInfo: e.moreInfo,
       txnType: e.txnType,
       debit: e.debit, credit: e.credit,
