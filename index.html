@@ -229,11 +229,12 @@
   }
 
   /* =====================================================================
-     HEADER
+     HEADER — the app's name, today's date, and two quiet round buttons:
+     what needs attention, and sync & backup.
      ===================================================================== */
   .topbar{
     display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
-    padding:var(--sp-5) var(--gutter) var(--sp-4);
+    padding:var(--sp-5) var(--gutter) var(--sp-3);
   }
   .topbar h1{
     font-size:var(--fs-2xl);font-weight:var(--fw-heavy);
@@ -244,62 +245,85 @@
     font-size:var(--fs-sm);font-weight:var(--fw-medium);
     color:var(--text-muted);margin-top:var(--sp-1);
   }
-  /* The account button: a dark disc that turns lime while you're on it —
-     the same selected colour as the nav. */
+  .top-actions{display:flex;align-items:center;gap:var(--sp-2);flex-shrink:0;}
   .gear-wrap{position:relative;flex-shrink:0;}
-  .gear-btn{
+  .icon-btn{
     width:var(--h-sm);height:var(--h-sm);padding:0;
-    border-radius:var(--r-pill);border:none;
-    background:var(--ink);color:var(--on-ink-muted);
     display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
+    border:none;border-radius:var(--r-pill);
+    background:var(--surface);color:var(--text);
+    box-shadow:var(--shadow-1);
+    cursor:pointer;flex-shrink:0;
   }
+  @media (hover:hover){ .icon-btn:not(.active):hover{background:var(--hover);} }
+  .icon-btn.active{background:var(--ink);color:var(--lime);}
   .gear-inner{display:flex;align-items:center;justify-content:center;}
-  .gear-btn svg{width:var(--icon);height:var(--icon);stroke:currentColor;}
-  @media (hover:hover){ .gear-btn:not(.active):hover{color:var(--lime);} }
-  .gear-btn.active{background:var(--lime);color:var(--ink);}
   .pending-count{
-    position:absolute;top:calc(-1 * var(--sp-1));right:calc(-1 * var(--sp-1));
-    min-width:20px;height:20px;padding:0 5px;
+    position:absolute;top:-2px;right:-2px;
+    min-width:18px;height:18px;padding:0 5px;
     border-radius:var(--r-pill);
-    background:var(--lime);color:var(--ink);
-    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);
-    align-items:center;justify-content:center;
+    background:var(--green);color:var(--on-ink);
+    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);line-height:18px;text-align:center;
     box-shadow:0 0 0 2px var(--canvas);
   }
 
   /* =====================================================================
-     NAV — the one dark pill. Only the active tab is drawn.
+     DOCK — where you are (Stats, History) and the one thing you do
+     (Add payment), all inside thumb reach. Stats is the home screen: see
+     what you have, then decide, then add.
      ===================================================================== */
-  .top-tabs-wrap{padding:0 var(--gutter);}
-  .top-tabs{
+  .dock{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    padding:var(--sp-8) var(--gutter) calc(var(--sp-3) + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, var(--canvas) 55%, transparent);
+    pointer-events:none;
+  }
+  .dock-inner{max-width:480px;margin:0 auto;display:flex;gap:var(--sp-2);pointer-events:auto;}
+  .dock-tabs{
     display:flex;gap:var(--sp-1);padding:var(--sp-1);
     background:var(--ink);border-radius:var(--r-pill);
+    box-shadow:var(--shadow-2);
   }
-  .top-tab{
-    flex:1;height:var(--h-sm);
+  .dock-tab{
+    display:flex;align-items:center;gap:6px;
+    height:var(--h-sm);padding:0 var(--sp-3);
     border:none;border-radius:var(--r-pill);
     background:transparent;color:var(--on-ink-muted);
     font-size:var(--fs-md);font-weight:var(--fw-bold);
-    cursor:pointer;
+    cursor:pointer;white-space:nowrap;
   }
-  @media (hover:hover){ .top-tab:not(.active):hover{color:var(--on-ink);background:var(--on-ink-hover);} }
-  .top-tab.active{background:var(--lime);color:var(--ink);}
+  @media (hover:hover){ .dock-tab:not(.active):hover{color:var(--on-ink);background:var(--on-ink-hover);} }
+  .dock-tab.active{background:var(--lime);color:var(--ink);}
+  .dock-add{
+    flex:1;min-width:0;height:var(--h-md);
+    display:flex;align-items:center;justify-content:center;gap:var(--sp-2);
+    border:none;border-radius:var(--r-pill);
+    background:var(--green);color:var(--on-ink);
+    font-size:var(--fs-lg);font-weight:var(--fw-heavy);
+    box-shadow:var(--shadow-cta);
+    cursor:pointer;white-space:nowrap;
+  }
+  @media (hover:hover){ .dock-add:hover{background:var(--green-hover);} }
+  .dock-add .icon{stroke-width:2.6;}
+  /* Room for the dock under the last thing on every screen. */
+  .app{padding-bottom:calc(var(--sp-10) + var(--h-md) + env(safe-area-inset-bottom));}
 
   /* =====================================================================
-     NOTICES — backup, new version, new month, waiting to send, edits to
-     push. All one component: a white strip, a coloured dot that says what
-     kind of news it is, one line, one action. They sit under the nav.
+     ATTENTION — everything that used to be a bar under the nav lives in
+     one panel behind the bell: entries waiting to send, edits to push, a
+     new version, a backup nudge, a new month. The bell carries a count.
      ===================================================================== */
-  .notice, .update-bar, .backup-bar, .sync-bar, .edits-bar{
-    display:flex;align-items:center;gap:var(--sp-3);
-    min-height:var(--h-md);
-    padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
-    background:var(--surface);
-    border-radius:var(--r-panel);
-    box-shadow:var(--shadow-1);
+  .act-list{
+    display:flex;flex-direction:column;gap:1px;
+    background:var(--line);
+    border-radius:var(--r-panel);box-shadow:var(--shadow-1);overflow:hidden;
   }
-  .update-bar, .backup-bar, .sync-bar{margin:var(--sp-3) var(--gutter) 0;}
+  .act-list > *{
+    display:flex;align-items:center;gap:var(--sp-3);
+    min-height:var(--h-lg);
+    padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+    background:var(--surface);
+  }
   .update-bar::before, .backup-bar::before, .edits-bar::before, .sync-dot{
     content:"";width:8px;height:8px;border-radius:50%;flex-shrink:0;
     background:var(--green);
@@ -307,13 +331,21 @@
   .update-bar::before, .edits-bar::before{background:var(--amber-dot);}
   .update-label, .backup-label, .sync-label, .edits-bar .eb-label{
     flex:1;min-width:0;
-    font-size:var(--fs-sm);font-weight:var(--fw-medium);line-height:var(--lh-snug);
+    font-size:var(--fs-md);font-weight:var(--fw-medium);line-height:var(--lh-snug);
     color:var(--text);
   }
-  .edits-bar .eb-hint{display:block;font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);margin-top:2px;}
+  .edits-bar .eb-label{font-weight:var(--fw-bold);}
+  .edits-bar .eb-hint{display:block;margin-top:2px;font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);}
   /* Offline is a normal state here, not a failure — the entry is already
      safe on the device. */
   .sync-bar.is-offline .sync-dot{background:var(--text-faint);}
+  .act-empty{
+    display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);
+    padding:var(--sp-6) var(--sp-4);
+    text-align:center;color:var(--text-muted);
+    font-size:var(--fs-md);font-weight:var(--fw-medium);
+  }
+  .act-empty .icon{width:28px;height:28px;color:var(--green);}
 
   /* EDIT MODE — the one notice that changes what the whole form means, so
      it's the one that's tinted. */
@@ -334,9 +366,9 @@
   /* =====================================================================
      SCREENS — one rhythm: 16 at the sides, 12 between cards
      ===================================================================== */
-  form, .stats-screen, .account-screen{
+  .stats-screen, .account-screen{
     display:flex;flex-direction:column;gap:var(--sp-3);
-    padding:var(--sp-4) var(--gutter) var(--sp-8);
+    padding:var(--sp-2) var(--gutter) var(--sp-4);
   }
   #recentPane, #duesPane, #statsPane{display:flex;flex-direction:column;gap:var(--sp-3);}
   .screen-title{
@@ -344,101 +376,210 @@
     font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);
   }
 
-  /* CARD — the one surface. Groups, panels, facts, folds all use it. */
-  .group, .amount-card, .panel, .facts, details.fold, .ledger-card, .duo{
+  /* CARD — the one surface. */
+  .group, .panel, .facts, details.fold, .ledger-card, .duo, .rows{
     background:var(--surface);
     border-radius:var(--r-card);
     box-shadow:var(--shadow-1);
   }
-  .panel, .facts, details.fold, .ledger-card{overflow:hidden;}
+  .panel, .facts, details.fold, .ledger-card, .rows{overflow:hidden;}
 
   /* =====================================================================
-     ADD PAYMENT
+     ADD PAYMENT — a sheet that rises over whatever screen you were on.
+     Four different kinds of thing, so no two blocks look alike:
+       1  the amount     dark, huge          (same as Total have)
+       2  the account    three coloured tiles, no box
+       3  the details    one list, icon-led rows, no field boxes
+       4  get it back?   one line, one switch
+     Labels are placeholders and icons, not headings to read first.
      ===================================================================== */
-  .group{padding:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-4);}
-  .group-title{
-    font-size:var(--fs-lg);font-weight:var(--fw-heavy);
-    letter-spacing:var(--ls-title);line-height:var(--lh-snug);
-    color:var(--text);
+  .sheet-full{
+    position:fixed;inset:0;z-index:40;
+    display:none;align-items:flex-end;justify-content:center;
+    background:var(--scrim);
   }
-  .account-group{position:relative;}
-  .account-group > .toggle-pill{position:absolute;top:var(--sp-3);right:var(--sp-3);}
-  /* "Which account" already says it — the field label only appears once
-     there are two accounts to tell apart. */
-  .account-block:not(.is-transfer) #accountLabel{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+  .sheet-full.open{display:flex;animation:fade var(--t-med) var(--ease);}
+  .sheet-panel{
+    position:relative;width:100%;max-width:480px;
+    height:calc(94vh / var(--ui-scale));
+    display:flex;flex-direction:column;
+    background:var(--canvas);
+    border-radius:var(--r-sheet) var(--r-sheet) 0 0;
+    animation:sheet-up var(--t-slow) var(--ease);
+  }
+  .sheet-panel::before{
+    content:"";position:absolute;top:10px;left:50%;
+    width:36px;height:4px;margin-left:-18px;
+    border-radius:var(--r-pill);background:var(--line-strong);
+  }
+  .sheet-head{
+    flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+    padding:var(--sp-6) var(--gutter) var(--sp-2);
+  }
+  .sheet-head h2{margin:0;font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);}
+  #addSheet .sheet-close{position:static;}
+  .sheet-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+  body.sheet-open{overflow:hidden;}
 
-  /* AMOUNT — the hero of the form: biggest type, deepest shadow. */
-  .amount-card{
-    box-shadow:var(--shadow-2);
-    border:1px solid transparent;
-    padding:var(--sp-4);
-    display:flex;flex-direction:column;align-items:center;gap:var(--sp-3);
+  #entryForm{
+    display:flex;flex-direction:column;gap:var(--sp-3);
+    padding:var(--sp-2) var(--gutter) 0;
   }
-  .amount-card .amt-label{display:flex;justify-content:space-between;align-items:baseline;width:100%;}
-  .amt-label label, .amt-label .pill-inr{font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--text-muted);}
-  .amt-label .pill-inr{color:var(--text-faint);letter-spacing:var(--ls-caps);}
+
+  /* 1 · AMOUNT — the biggest thing on the screen, in the same dark card
+     and the same lime as "Total have". The ₹ is as large as the digits. */
+  .amount-card{
+    display:flex;flex-direction:column;align-items:center;gap:var(--sp-4);
+    padding:var(--sp-5) var(--sp-4) var(--sp-4);
+    background:var(--ink);color:var(--on-ink);
+    border-radius:var(--r-card);box-shadow:var(--shadow-2);
+    border:1px solid transparent;
+  }
   .amt-display-wrap{
     display:flex;align-items:baseline;justify-content:center;
-    width:100%;padding:var(--sp-1) 0 var(--sp-2);
+    width:100%;padding:var(--sp-2) 0;
   }
-  .amt-display-wrap .rupee{
-    font-size:var(--fs-2xl);font-weight:var(--fw-medium);
-    color:var(--green);margin-right:var(--sp-2);
+  .amt-display-wrap .rupee, #amountInput{
+    font-size:var(--fs-4xl);font-weight:var(--fw-heavy);
+    letter-spacing:var(--ls-display);line-height:var(--lh-tight);
+    color:var(--lime);
   }
+  .amt-display-wrap .rupee{margin-right:var(--sp-1);transition:opacity var(--t-med) var(--ease);}
+  .amt-display-wrap:has(#amountInput:placeholder-shown) .rupee{opacity:.35;}
   #amountInput{
     flex:0 1 auto;min-width:0;max-width:100%;height:auto;
     border:none;background:transparent;box-shadow:none;outline:none;padding:0;
-    font-size:var(--fs-4xl);font-weight:var(--fw-bold);
-    letter-spacing:var(--ls-display);line-height:var(--lh-tight);
-    color:var(--text);text-align:left;
+    text-align:left;
   }
-  #amountInput::placeholder{color:var(--text-ghost);font-weight:var(--fw-bold);opacity:1;}
+  #amountInput::placeholder{color:rgba(255,255,255,.3);font-weight:var(--fw-heavy);opacity:1;}
   .amt-note{
     margin-top:calc(-1 * var(--sp-2));
     padding:var(--sp-1) var(--sp-3);
     border-radius:var(--r-pill);
-    background:var(--amber-soft);color:var(--amber-ink);
+    background:var(--amber);color:var(--ink);
     font-size:var(--fs-sm);font-weight:var(--fw-bold);
   }
+  .amount-card .kind-toggle{background:rgba(255,255,255,.08);}
+  .amount-card .kind-btn{color:var(--on-ink-muted);}
+  @media (hover:hover){ .amount-card .kind-btn:not(.on):not(.locked):hover{color:var(--on-ink);background:var(--on-ink-hover);} }
+  .amount-card .kind-btn.on{background:var(--lime);color:var(--ink);box-shadow:none;}
+  /* Self transfer: the money is both out and in, so neither side is "the"
+     choice — both halves sit quietly lit. */
+  .amount-card .kind-btn.locked, .amount-card .kind-btn.locked.on{
+    background:rgba(255,255,255,.14);color:var(--on-ink);cursor:default;
+  }
 
-  /* FIELDS */
-  .field{display:flex;flex-direction:column;gap:var(--sp-2);}
-  .field label, .field .field-label{font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--text-muted);}
-  .field label .opt{font-weight:var(--fw-regular);color:var(--text-faint);}
-  .field-hint{font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);}
-  .is-invalid{border-color:var(--red) !important;box-shadow:var(--ring-error) !important;}
+  /* 2 · ACCOUNT — three tiles in the same colours History uses for them.
+     The chosen one fills with its colour, takes a ring and a tick. */
+  .acct-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:var(--h-xs);padding:0 var(--sp-1);}
+  .overline, .field-label{
+    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);
+    letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-muted);
+  }
+  .account-block{display:flex;flex-direction:column;}
+  .account-block .field{gap:var(--sp-2);}
+  #accountChips, #toChips{
+    display:grid;grid-template-columns:repeat(3, 1fr);gap:var(--sp-2);
+    padding:0;background:none;border-radius:0;
+  }
+  .chip{
+    position:relative;
+    height:auto;padding:var(--sp-3) var(--sp-2);
+    flex-direction:column;gap:var(--sp-2);
+    background:var(--surface);color:var(--text-muted);
+    border:2px solid transparent;border-radius:var(--r-panel);
+    box-shadow:var(--shadow-1);
+  }
+  .chip-tile{
+    width:var(--tile);height:var(--tile);
+    display:flex;align-items:center;justify-content:center;
+    border-radius:var(--r-ctl);
+    font-size:var(--fs-md);font-weight:var(--fw-heavy);
+    background:var(--acct-dom-bg);color:var(--acct-dom-ink);
+  }
+  .chip[data-val="International"] .chip-tile{background:var(--acct-int-bg);color:var(--acct-int-ink);}
+  .chip[data-val="Cash"] .chip-tile{background:var(--acct-cash-bg);color:var(--acct-cash-ink);}
+  .chip-check{
+    position:absolute;top:var(--sp-2);right:var(--sp-2);
+    width:18px;height:18px;padding:3px;
+    display:none;border-radius:50%;
+    background:var(--acct-dom-ink);color:var(--on-ink);
+  }
+  .chip.selected{color:var(--text);box-shadow:none;background:var(--acct-dom-bg);border-color:var(--acct-dom-ink);}
+  .chip[data-val="International"].selected{background:var(--acct-int-bg);border-color:var(--acct-int-ink);}
+  .chip[data-val="Cash"].selected{background:var(--acct-cash-bg);border-color:var(--acct-cash-ink);}
+  .chip.selected .chip-tile{background:var(--surface);}
+  .chip.selected .chip-check{display:block;}
+  .chip[data-val="International"] .chip-check{background:var(--acct-int-ink);}
+  .chip[data-val="Cash"] .chip-check{background:var(--acct-cash-ink);}
+  @media (hover:hover){ .chip:not(.selected):hover{background:var(--hover);color:var(--text);} }
+
+  .toggle-pill{
+    display:flex;align-items:center;gap:6px;
+    height:var(--h-xs);padding:0 var(--sp-3);
+    border-radius:var(--r-pill);
+    border:none;background:var(--track);
+    font-size:var(--fs-xs);font-weight:var(--fw-bold);
+    color:var(--text-muted);
+    cursor:pointer;flex-shrink:0;
+  }
+  .toggle-pill .icon{width:14px;height:14px;}
+  @media (hover:hover){ .toggle-pill[aria-pressed="false"]:hover{color:var(--text);} }
+  .toggle-pill[aria-pressed="true"]{background:var(--ink);color:var(--lime);}
+
+  .to-slot{
+    max-height:0;opacity:0;margin-top:0;overflow:hidden;
+    transition:max-height var(--t-slow) var(--ease), opacity var(--t-med) var(--ease), margin-top var(--t-slow) var(--ease);
+  }
+  .account-block.is-transfer .to-slot{max-height:170px;opacity:1;margin-top:var(--sp-3);}
+
+  /* 3 · THE DETAILS — one list. Each row leads with an icon that says what
+     it is and ends with the control. No boxes inside the box. */
+  .rows, #txnTypeSection{display:flex;flex-direction:column;gap:1px;}
+  .rows{background:var(--line);}
+  #txnTypeSection{background:var(--line);}
+  .rows > *, #txnTypeSection > *{background:var(--surface);}
+  .fld{
+    display:flex;align-items:center;gap:var(--sp-3);
+    min-height:var(--h-lg);padding:0 var(--sp-4);
+    transition:background-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+  }
+  .fld > .icon{color:var(--text-faint);transition:color var(--t-fast) var(--ease);}
+  .fld:focus-within{background:var(--hover);box-shadow:inset 3px 0 0 var(--green);}
+  .fld:focus-within > .icon{color:var(--green);}
+  .fld > .combo-wrap{flex:1;min-width:0;}
+  .fld .field-hint{margin:0;}
+  /* A row that does need its words (split transfer legs, open items). */
+  .fld.labeled{flex-direction:column;align-items:stretch;gap:var(--sp-1);padding:var(--sp-3) var(--sp-4);}
+  .fld.labeled > label{font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--text-muted);}
+  .fld.labeled input, .fld.labeled select{height:var(--h-sm);}
+  #splitTypeFields, #splitCustomFields{grid-template-columns:1fr;gap:1px;background:var(--line);}
+  #splitTypeFields > *, #splitCustomFields > *{background:var(--surface);}
 
   input[type="text"], input[type="date"], select, .date-box-input{
-    width:100%;height:var(--h-md);
-    padding:0 var(--sp-4);
-    border-radius:var(--r-input);
-    border:1px solid var(--line);
-    background:var(--surface);
-    font-size:var(--fs-input);font-weight:var(--fw-medium);
+    width:100%;height:var(--h-lg);
+    padding:0;
+    border:none;border-radius:0;
+    background:transparent;
+    font-size:var(--fs-input);font-weight:var(--fw-bold);
     color:var(--text);
     outline:none;appearance:none;
-    transition:border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease);
   }
   input::placeholder, .date-box-input::placeholder{color:var(--text-faint);font-weight:var(--fw-regular);}
-  input:focus, select:focus, .date-box-input:focus{border-color:var(--green);box-shadow:var(--ring);}
   input:focus-visible, select:focus-visible{outline:none;}
-  /* Inside a card the fields take the cream inset fill and turn white on
-     focus — white on white would vanish. */
-  .group input[type="text"], .group input[type="date"], .group select, .group .date-box-input{
-    background-color:var(--inset);border-color:transparent;
-  }
-  .group input[type="text"]:focus, .group select:focus, .group .date-box-input:focus{background-color:var(--surface);border-color:var(--green);}
   select{
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2369665F' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
-    background-position:right var(--sp-4) center;
-    padding-right:var(--sp-10);
+    background-position:right 0 center;
+    padding-right:var(--sp-6);
     cursor:pointer;
   }
   /* A select still on its "Choose…" option reads as a placeholder. */
   select:has(option[value=""]:checked){color:var(--text-faint);font-weight:var(--fw-regular);}
-  select option{color:var(--text);}
+  select option{color:var(--text);font-weight:var(--fw-medium);}
   option[value="Custom"], option[value="__new"]{font-style:italic;}
+  .is-invalid{box-shadow:var(--ring-error) !important;}
+  .fld.is-invalid{box-shadow:inset 3px 0 0 var(--red) !important;}
 
   /* Combo: a real <select> normally, which shrinks down to an invisible
      strip over just the arrow once Custom is chosen — the visible custom
@@ -448,96 +589,71 @@
   .combo-wrap.custom-mode > select{
     position:absolute;top:0;right:0;
     width:44px;height:100%;
-    opacity:0;padding:0;border:none;box-shadow:none;cursor:pointer;
+    opacity:0;padding:0;cursor:pointer;
   }
   input.combo-custom-input{
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2369665F' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
-    background-position:right var(--sp-4) center;
-    padding-right:var(--sp-10);
+    background-position:right 0 center;
+    padding-right:var(--sp-6);
   }
-  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);}
 
-  /* SEGMENTED CONTROL — one recessed track, one raised white thumb. Used
-     for every either/or choice. Dark-and-lime is kept for the one choice
-     per screen that decides the meaning of the entry: credit or debit. */
-  .kind-toggle, .chip-group, .sub-tabs, .seg, .seg-chips{
-    display:flex;gap:var(--sp-1);padding:var(--sp-1);
-    background:var(--inset);border-radius:var(--r-input);
-  }
-  .kind-btn, .chip, .seg button, .seg-chips button, .sub-tab{
-    flex:1;min-width:0;
-    height:var(--h-sm);padding:0 var(--sp-2);
-    display:flex;align-items:center;justify-content:center;gap:var(--sp-2);
-    border:none;border-radius:var(--r-ctl);
-    background:transparent;color:var(--text-muted);
-    font-size:var(--fs-sm);font-weight:var(--fw-bold);
-    cursor:pointer;white-space:nowrap;
-  }
-  @media (hover:hover){
-    .kind-btn:not(.on):not(.locked):hover, .chip:not(.selected):hover, .seg button:not(.on):hover,
-    .seg-chips button:not(.on):hover, .sub-tab:not(.active):hover{color:var(--text);background:rgba(255,255,255,.6);}
-  }
-  .kind-btn.on, .chip.selected, .seg button.on, .seg-chips button.on, .sub-tab.active{
-    background:var(--surface);color:var(--text);box-shadow:var(--shadow-thumb);
-  }
-  .amount-card .kind-btn.on{background:var(--ink);color:var(--lime);}
-  /* Self transfer: the money is both out and in, so neither side is
-     "the" choice — both halves sit quietly lit. */
-  .amount-card .kind-btn.locked, .amount-card .kind-btn.locked.on{
-    background:var(--surface);color:var(--text-muted);box-shadow:var(--shadow-thumb);cursor:default;
-  }
-  .kind-toggle{width:100%;}
-  .account-block{display:flex;flex-direction:column;}
-  .chip-group.vertical{flex-direction:column;}
-
-  /* TOGGLE PILL — a standalone on/off. On is mint, like every other
-     standalone "on" (Today, Yesterday). */
-  .toggle-pill{
-    display:flex;align-items:center;gap:6px;
-    height:var(--h-xs);padding:0 var(--sp-3);
-    border-radius:var(--r-pill);
-    border:1px solid var(--line);
-    background:var(--surface);
-    font-size:var(--fs-xs);font-weight:var(--fw-bold);
-    color:var(--text-muted);
-    cursor:pointer;flex-shrink:0;
-  }
-  .toggle-pill .icon{width:14px;height:14px;}
-  @media (hover:hover){ .toggle-pill[aria-pressed="false"]:hover{border-color:var(--line-strong);color:var(--text);} }
-  .toggle-pill[aria-pressed="true"]{background:var(--mint);border-color:var(--mint);color:var(--green-ink);}
-
-  .to-slot{
-    max-height:0;opacity:0;margin-top:0;overflow:hidden;
-    transition:max-height var(--t-slow) var(--ease), opacity var(--t-med) var(--ease), margin-top var(--t-slow) var(--ease);
-  }
-  .account-block.is-transfer .to-slot{max-height:120px;opacity:1;margin-top:var(--sp-4);}
-  #txnTypeSection{display:flex;flex-direction:column;gap:var(--sp-4);}
-
-  /* DATE */
-  .date-field{position:relative;}
-  .date-hint{
-    position:absolute;top:100%;right:0;
-    margin-top:var(--sp-1);max-width:72%;
-    text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    font-size:var(--fs-2xs);line-height:12px;
-    pointer-events:none;z-index:1;
-    transition:color var(--t-fast);
-  }
-  .date-hint.is-warn{color:var(--amber-ink);font-weight:var(--fw-medium);}
-  .date-hint.is-error{color:var(--red);font-weight:var(--fw-medium);}
-  .date-row{display:flex;gap:var(--sp-2);align-items:stretch;}
-  .date-row .date-box-input{flex:1 1 auto;min-width:0;}
-  .quick-date-row{display:flex;gap:var(--sp-2);}
+  /* DATE — the row is the date; the two shortcuts sit at its end. */
+  .date-field{flex-wrap:wrap;row-gap:0;}
+  .date-field .date-box-input{flex:1 1 0;min-width:0;}
   .quick-date-btn{
-    flex-shrink:0;padding:0 var(--sp-3);
-    border:none;border-radius:var(--r-input);
+    flex-shrink:0;height:var(--h-xs);padding:0 var(--sp-3);
+    border:none;border-radius:var(--r-pill);
     background:var(--inset);color:var(--text-muted);
     font-size:var(--fs-xs);font-weight:var(--fw-bold);
     cursor:pointer;
   }
   @media (hover:hover){ .quick-date-btn:not(.active):hover{color:var(--text);} }
   .quick-date-btn.active{background:var(--mint);color:var(--green-ink);}
+  .date-hint{
+    flex-basis:100%;order:5;
+    padding:0 0 var(--sp-3) calc(var(--icon) + var(--sp-3));
+    font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);
+  }
+  .date-hint:empty{display:none;}
+  .date-hint.is-warn{color:var(--amber-ink);}
+  .date-hint.is-error{color:var(--red);}
+
+  /* 4 · GET IT BACK — a question and its answer on one line. Saying Yes
+     opens the rows underneath. */
+  #backGroup{flex-direction:column;gap:0;padding:0;overflow:hidden;}
+  .back-row{display:flex;align-items:center;gap:var(--sp-3);min-height:var(--h-lg);padding:var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-4);}
+  .back-row > .icon{color:var(--text-faint);}
+  .back-q{flex:1;min-width:0;font-size:var(--fs-md);font-weight:var(--fw-bold);color:var(--text);}
+  #backGroup .fld.labeled{border-top:1px solid var(--line);}
+
+  /* SEGMENTED CONTROL — one recessed track; the chosen option is solid
+     dark with lime type, the same as the nav. */
+  .kind-toggle, .sub-tabs, .seg, .seg-chips{
+    display:flex;gap:var(--sp-1);padding:var(--sp-1);
+    background:var(--inset);border-radius:var(--r-input);
+  }
+  .kind-btn, .seg button, .seg-chips button, .sub-tab, .chip{
+    display:flex;align-items:center;justify-content:center;
+    border:none;cursor:pointer;
+    font-size:var(--fs-sm);font-weight:var(--fw-bold);
+  }
+  .kind-btn, .seg button, .seg-chips button, .sub-tab{
+    flex:1;min-width:0;
+    height:var(--h-sm);padding:0 var(--sp-2);gap:var(--sp-2);
+    border-radius:var(--r-ctl);
+    background:transparent;color:var(--text-muted);
+    white-space:nowrap;
+  }
+  @media (hover:hover){
+    .kind-btn:not(.on):not(.locked):hover, .seg button:not(.on):hover,
+    .seg-chips button:not(.on):hover, .sub-tab:not(.active):hover{color:var(--text);background:rgba(255,255,255,.6);}
+  }
+  .kind-btn.on, .seg button.on, .seg-chips button.on, .sub-tab.active{background:var(--ink);color:var(--lime);}
+  .kind-toggle{width:100%;}
+  .kind-toggle.compact{width:auto;flex-shrink:0;}
+  .kind-toggle.compact .kind-btn{flex:none;height:var(--h-xs);padding:0 var(--sp-4);}
+  .kind-btn .icon{width:16px;height:16px;stroke-width:2.4;}
 
   /* SWITCH (settings) */
   .switch-row{
@@ -564,10 +680,17 @@
   .switch input:checked + .slider::before{transform:translateX(18px);}
   .switch input:focus-visible + .slider{box-shadow:var(--ring);}
 
-  /* SAVE — the screen's one primary action. Dimmed, not disabled, while
-     something is missing: tapping it still points at what's missing. */
+  /* SAVE — the sheet's one primary action, pinned to its foot. Dimmed, not
+     disabled, while something is missing: tapping it still points at what. */
+  .cta-wrap{
+    position:sticky;bottom:0;z-index:3;
+    display:flex;flex-direction:column;gap:var(--sp-2);
+    margin:var(--sp-1) calc(-1 * var(--gutter)) 0;
+    padding:var(--sp-4) var(--gutter) calc(var(--sp-4) + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, var(--canvas) 72%, transparent);
+  }
   .cta-save{
-    width:100%;height:var(--h-lg);margin-top:var(--sp-1);
+    width:100%;height:var(--h-lg);
     display:flex;align-items:center;justify-content:center;gap:var(--sp-2);
     border:none;border-radius:var(--r-panel);
     background:var(--green);color:var(--on-ink);
@@ -585,7 +708,6 @@
   }
   .cta-dot .icon{width:14px;height:14px;stroke-width:2.6;}
   .cta-caption{
-    margin-top:calc(-1 * var(--sp-1));
     text-align:center;
     font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);
   }
@@ -602,26 +724,47 @@
   }
   .sub-tab .badge{background:var(--amber);color:var(--text);}
   .sub-tab .count{background:rgba(255,255,255,.6);color:var(--text-muted);}
-  .sub-tab.active .count{background:var(--inset);}
+  .sub-tab.active .count{background:rgba(255,255,255,.14);color:var(--on-ink-muted);}
 
-  /* MONTH — the screen's title, with the arrows beside it. */
-  .month-toggle{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-1) 0;}
-  .mt-center{order:-1;flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
-  .mt-label{font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);line-height:var(--lh-tight);color:var(--text);}
+  /* MONTH — the screen's title. Tap it to jump to any month. */
+  .month-toggle{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:var(--sp-1) var(--sp-1) 0;}
+  .month-title{
+    display:inline-flex;align-items:center;gap:var(--sp-2);
+    margin:0 0 0 calc(-1 * var(--sp-1));padding:var(--sp-1);
+    border:none;border-radius:var(--r-ctl);background:transparent;
+    font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+    color:var(--text);cursor:pointer;
+  }
+  .month-title .chev{
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;background:var(--track);color:var(--text-muted);
+    transition:background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  .month-title .chev .icon{width:14px;height:14px;stroke-width:2.4;}
+  @media (hover:hover){ .month-title:hover .chev{background:var(--ink);color:var(--lime);} }
   .mt-sub{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);}
+  .mt-sub:empty{display:none;}
   .mt-sub b{font-size:var(--fs-md);font-weight:var(--fw-heavy);}
   .mt-sub b.out{color:var(--text);}
   .mt-sub b.in{color:var(--green);}
-  .mt-arrow{
-    width:var(--h-sm);height:var(--h-sm);padding:0;
-    display:flex;align-items:center;justify-content:center;
-    border:none;border-radius:var(--r-input);
-    background:var(--surface);color:var(--text);
-    box-shadow:var(--shadow-1);
-    cursor:pointer;flex-shrink:0;
+
+  /* MONTH PICKER — every month in one list; the chosen one is ticked. */
+  .month-list{
+    display:flex;flex-direction:column;gap:1px;
+    max-height:calc(52vh / var(--ui-scale));overflow-y:auto;
+    background:var(--line);border-radius:var(--r-panel);box-shadow:var(--shadow-1);
   }
-  @media (hover:hover){ .mt-arrow:not(:disabled):hover{background:var(--ink);color:var(--lime);} }
-  .mt-arrow:disabled{opacity:.35;cursor:default;box-shadow:none;background:transparent;}
+  .month-opt{
+    display:flex;align-items:center;gap:var(--sp-3);flex-shrink:0;
+    height:var(--h-lg);padding:0 var(--sp-4);
+    border:none;background:var(--surface);cursor:pointer;
+    font-size:var(--fs-lg);font-weight:var(--fw-bold);color:var(--text);text-align:left;
+  }
+  .month-opt .mo-name{flex:1;min-width:0;}
+  .month-opt .mo-meta{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);}
+  .month-opt .icon{color:var(--green);stroke-width:2.6;}
+  .month-opt.on{background:var(--mint);color:var(--green-ink);}
+  @media (hover:hover){ .month-opt:not(.on):hover{background:var(--hover);} }
 
   /* DAYS — the date is a label above its card and sticks while that day's
      rows scroll past. */
@@ -955,11 +1098,11 @@
     font-size:var(--fs-2xs);font-weight:var(--fw-bold);
     cursor:pointer;
   }
-  .leg-btn.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow-thumb);}
+  .leg-btn.on{background:var(--ink);color:var(--lime);}
 
   /* TOAST */
   .toast{
-    position:fixed;left:50%;bottom:calc(var(--sp-8) + env(safe-area-inset-bottom));z-index:60;
+    position:fixed;left:50%;bottom:calc(var(--sp-10) + var(--h-md) + var(--sp-6) + env(safe-area-inset-bottom));z-index:60;
     transform:translate(-50%, 8px);
     max-width:min(90vw, 420px);
     padding:var(--sp-3) var(--sp-5);
@@ -978,8 +1121,18 @@
 <!-- ICONS — one stroke family, drawn once, used everywhere with <use>. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></symbol>
-  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
-  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 21V11M12 21V4M19 21v-7"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+  <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
@@ -987,228 +1140,23 @@
 </svg>
 <div class="app">
 
-  <div class="topbar">
+  <header class="topbar">
     <div>
       <h1>Ledger</h1>
       <div class="sub" id="dateSub">—</div>
     </div>
-    <div class="gear-wrap">
-      <button type="button" class="gear-btn" id="openSettings" aria-label="Settings and sync">
-        <span class="gear-inner"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-user"/></svg></span>
+    <div class="top-actions">
+      <div class="gear-wrap">
+        <button type="button" class="icon-btn" id="openActivity" aria-label="Needs your attention">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-bell"/></svg>
+        </button>
+        <span class="pending-count" id="actCount" style="display:none;" aria-hidden="true">0</span>
+      </div>
+      <button type="button" class="icon-btn gear-btn" id="openSettings" aria-label="Settings and sync">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-user"/></svg>
       </button>
-      <span class="pending-count" id="pendingCount" style="display:none;" aria-label="entries waiting to be sent">0</span>
     </div>
-  </div>
-
-  <div class="top-tabs-wrap">
-    <div class="top-tabs" role="tablist" aria-label="Screens">
-      <button type="button" class="top-tab active" data-tab="add" role="tab" aria-selected="true">Add Payment</button>
-      <button type="button" class="top-tab" data-tab="history" role="tab" aria-selected="false">History</button>
-      <button type="button" class="top-tab" data-tab="stats" role="tab" aria-selected="false">Stats</button>
-    </div>
-  </div>
-
-  <!-- NOTICES — all under the nav, so the nav never moves. -->
-  <div class="update-bar" id="monthBar" style="display:none;" role="status">
-    <span class="update-label" id="monthLabel">—</span>
-    <button type="button" class="btn-sm" id="monthAckBtn">Done</button>
-  </div>
-
-  <div class="backup-bar" id="backupBar" style="display:none;" role="status">
-    <span class="backup-label" id="backupLabel">Back up today's entries</span>
-    <button type="button" class="btn-sm quiet" id="backupLaterBtn">Later</button>
-    <button type="button" class="btn-sm" id="backupNowBtn">Save file</button>
-  </div>
-
-  <div class="update-bar" id="updateBar" style="display:none;" role="status">
-    <span class="update-label">A newer version is ready</span>
-    <button type="button" class="btn-sm" id="updateBtn">Reload</button>
-  </div>
-
-  <div class="sync-bar" id="syncBar" style="display:none;">
-    <span class="sync-dot"></span>
-    <span class="sync-label" id="syncLabel">—</span>
-    <button type="button" class="btn-sm" id="syncNowBtn">Send to sheet</button>
-  </div>
-
-  <!-- ADD PAYMENT SCREEN -->
-  <form id="entryForm">
-
-    <div class="edit-banner" id="editBanner" style="display:none;" role="status">
-      <div class="eb-text">
-        <span class="eb-title">Editing an entry</span>
-        <span class="eb-sub" id="editBannerSub">—</span>
-      </div>
-      <button type="button" class="btn-sm secondary" id="editCancelBtn">Cancel</button>
-    </div>
-
-    <!-- 1 · AMOUNT -->
-    <div class="amount-card">
-      <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">INR</span></div>
-      <div class="amt-display-wrap">
-        <span class="rupee" id="rupeeSymbol" aria-hidden="true">₹</span>
-        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00">
-      </div>
-      <div class="amt-note" id="amountNote" style="display:none;" role="status"></div>
-      <div class="kind-toggle">
-        <button type="button" class="kind-btn credit" id="creditBtn">Credit</button>
-        <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
-      </div>
-    </div>
-
-    <!-- 2 · ACCOUNT -->
-    <div class="group account-group">
-    <div class="group-title">Which account</div>
-    <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
-      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-swap"/></svg>Self transfer
-    </button>
-
-    <div class="account-block" id="accountRow">
-
-      <div class="field" id="singleAccountField">
-        <div class="field-label" id="accountLabel">Account</div>
-        <div class="chip-group" id="accountChips" role="group" aria-labelledby="accountLabel">
-          <button type="button" class="chip" data-val="Domestic" aria-pressed="false">Domestic</button>
-          <button type="button" class="chip" data-val="International" aria-pressed="false">International</button>
-          <button type="button" class="chip" data-val="Cash" aria-pressed="false">Cash</button>
-        </div>
-      </div>
-
-      <div class="to-slot" id="toAccountField">
-        <div class="field">
-          <div class="field-label" id="toAccountLabel">To account</div>
-          <div class="chip-group" id="toChips" role="group" aria-labelledby="toAccountLabel">
-            <button type="button" class="chip" data-val="Domestic" aria-pressed="false">Domestic</button>
-            <button type="button" class="chip" data-val="International" aria-pressed="false">International</button>
-            <button type="button" class="chip" data-val="Cash" aria-pressed="false">Cash</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    </div><!-- /group: which account -->
-
-    <!-- 3 · WHAT IT WAS -->
-    <div class="group">
-    <div class="group-title">What it was</div>
-
-    <!-- The name is picked, not typed. Free text is what splits "Rapido"
-         from "rapido" and makes spend-by-name meaningless, so the list is
-         the field and adding to it is a deliberate, one-time act. -->
-    <div class="field">
-      <label for="expenseName">Transaction name</label>
-      <div class="combo-wrap" id="expenseNameWrap">
-        <select id="expenseName"></select>
-        <input type="text" id="expenseNameCustomInput" class="combo-custom-input" style="display:none;" placeholder="Name this one" autocomplete="off" aria-label="New transaction name">
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="moreInfo">Note <span class="opt">(optional)</span></label>
-      <input type="text" id="moreInfo" placeholder="Add a note">
-    </div>
-
-    <div class="field date-field">
-      <label for="dateTextInput">Date</label>
-      <div class="date-row">
-        <input type="text" id="dateTextInput" class="date-box-input" placeholder="e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
-        <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
-        <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
-      </div>
-      <div class="field-hint date-hint" id="dateHint">Day and month, separated — the year is worked out</div>
-    </div>
-
-    <div id="txnTypeSection">
-      <!-- single mode (default) -->
-      <div class="field" id="singleTypeField">
-        <label for="txnType">Category</label>
-        <div class="combo-wrap" id="txnTypeWrap">
-          <select id="txnType">
-            <option>Payment</option>
-            <option>Refund</option>
-            <option>Cashback</option>
-            <option>Payment Split</option>
-            <option>Salary</option>
-            <option>Sent Transfer</option>
-            <option>Received Transfer</option>
-            <option value="Custom">Custom…</option>
-          </select>
-          <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter a category of your own" autocomplete="off" aria-label="Custom category">
-        </div>
-      </div>
-
-      <!-- self-transfer mode: the category splits into the two legs -->
-      <div class="row-2" id="splitTypeFields" style="display:none;">
-        <div class="field">
-          <label for="txnTypeFrom">Sent leg category</label>
-          <select id="txnTypeFrom">
-            <option>Payment</option>
-            <option>Refund</option>
-            <option>Cashback</option>
-            <option>Payment Split</option>
-            <option>Salary</option>
-            <option>Sent Transfer</option>
-            <option>Received Transfer</option>
-            <option value="Custom">Custom…</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="txnTypeTo">Received leg category</label>
-          <select id="txnTypeTo">
-            <option>Payment</option>
-            <option>Refund</option>
-            <option>Cashback</option>
-            <option>Payment Split</option>
-            <option>Salary</option>
-            <option>Sent Transfer</option>
-            <option>Received Transfer</option>
-            <option value="Custom">Custom…</option>
-          </select>
-        </div>
-      </div>
-      <div class="row-2" id="splitCustomFields" style="display:none;">
-        <div class="field" id="customFromField" style="display:none;">
-          <label for="customTypeFromInput">Custom (sent)</label>
-          <input type="text" id="customTypeFromInput" placeholder="Type your own">
-        </div>
-        <div class="field" id="customToField" style="display:none;">
-          <label for="customTypeToInput">Custom (received)</label>
-          <input type="text" id="customTypeToInput" placeholder="Type your own">
-        </div>
-      </div>
-    </div>
-    </div><!-- /group: what it was -->
-
-    <!-- 4 · WILL I GET THIS BACK -->
-    <div class="group" id="backGroup">
-    <div class="group-title">Will I get this back?</div>
-
-    <div class="field">
-      <div class="kind-toggle" id="backToggle" role="group" aria-label="Will I get this back">
-        <button type="button" class="kind-btn" data-back="Y" aria-pressed="false">Yes</button>
-        <button type="button" class="kind-btn on" data-back="N" aria-pressed="true">No</button>
-      </div>
-    </div>
-
-    <div class="field" id="backKindField" style="display:none;">
-      <label for="backKind">Which one</label>
-      <select id="backKind">
-        <option value="new">New — I am lending or paying out now</option>
-        <option value="old">Old — this is money coming back</option>
-      </select>
-    </div>
-
-    <div class="field" id="openItemField" style="display:none;">
-      <label for="openItemSelect">Which open item</label>
-      <select id="openItemSelect"></select>
-    </div>
-    </div><!-- /group: will I get this back -->
-
-    <button type="submit" class="cta-save" id="saveBtn">
-      <span class="cta-dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span>
-      <span id="ctaMainText">Add Entry</span>
-    </button>
-    <div class="cta-caption" id="ctaCaption">Fill in the details above</div>
-  </form>
+  </header>
 
   <!-- HISTORY -->
   <div class="stats-screen" id="historyScreen" style="display:none;">
@@ -1222,13 +1170,12 @@
         <span>Owed to me</span><span class="badge" id="duesBadge" style="display:none;">0</span>
       </button>
     </div>
-    <div class="month-toggle" id="historyMonthToggle" role="group" aria-label="Month">
-      <button type="button" class="mt-arrow" id="monthPrevBtn" aria-label="Previous month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-left"/></svg></button>
-      <span class="mt-center">
-        <span class="mt-label" id="monthToggleLabel">—</span>
-        <span class="mt-sub" id="monthToggleSub"></span>
-      </span>
-      <button type="button" class="mt-arrow" id="monthNextBtn" aria-label="Next month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-right"/></svg></button>
+    <div class="month-toggle" id="historyMonthToggle">
+      <button type="button" class="month-title" data-month-picker aria-haspopup="dialog">
+        <span id="monthToggleLabel">—</span>
+        <span class="chev" aria-hidden="true"><svg class="icon" focusable="false"><use href="#i-chev-down"/></svg></span>
+      </button>
+      <span class="mt-sub" id="monthToggleSub"></span>
     </div>
     <div id="recentPane"></div>
     <div id="duesPane" style="display:none;"></div>
@@ -1237,13 +1184,11 @@
   <!-- STATS — the same month selector as History, so the two screens are
        always talking about the same period. -->
   <div class="stats-screen" id="statsScreen" style="display:none;">
-    <div class="month-toggle" role="group" aria-label="Month">
-      <button type="button" class="mt-arrow" id="statsPrevBtn" aria-label="Previous month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-left"/></svg></button>
-      <span class="mt-center">
-        <span class="mt-label" id="statsMonthLabel">—</span>
-        <span class="mt-sub" id="statsMonthSub"></span>
-      </span>
-      <button type="button" class="mt-arrow" id="statsNextBtn" aria-label="Next month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-right"/></svg></button>
+    <div class="month-toggle">
+      <button type="button" class="month-title" data-month-picker aria-haspopup="dialog">
+        <span id="statsMonthLabel">—</span>
+        <span class="chev" aria-hidden="true"><svg class="icon" focusable="false"><use href="#i-chev-down"/></svg></span>
+      </button>
     </div>
     <div id="statsPane"></div>
   </div>
@@ -1318,6 +1263,265 @@
   </div>
 </div>
 
+<!-- DOCK — Stats is home; History is next to it; Add payment is always one
+     thumb away and opens as a sheet over whatever you were looking at. -->
+<nav class="dock" aria-label="Screens">
+  <div class="dock-inner">
+    <div class="dock-tabs" role="tablist">
+      <button type="button" class="dock-tab active" data-tab="stats" role="tab" aria-selected="true">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chart"/></svg><span>Stats</span>
+      </button>
+      <button type="button" class="dock-tab" data-tab="history" role="tab" aria-selected="false">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-list"/></svg><span>History</span>
+      </button>
+    </div>
+    <button type="button" class="dock-add" id="openAdd">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg><span>Add payment</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ADD PAYMENT -->
+<div class="sheet-full" id="addSheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+  <div class="sheet-panel">
+    <div class="sheet-head">
+      <h2 id="addTitle">New entry</h2>
+      <button type="button" class="sheet-close" id="addCloseBtn" aria-label="Close">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg>
+      </button>
+    </div>
+    <div class="sheet-scroll">
+  <form id="entryForm">
+
+    <div class="edit-banner" id="editBanner" style="display:none;" role="status">
+      <div class="eb-text">
+        <span class="eb-title">Editing an entry</span>
+        <span class="eb-sub" id="editBannerSub">—</span>
+      </div>
+      <button type="button" class="btn-sm secondary" id="editCancelBtn">Cancel</button>
+    </div>
+
+    <!-- 1 · AMOUNT -->
+    <div class="amount-card">
+      <label class="sr-only" for="amountInput">Amount in rupees</label>
+      <div class="amt-display-wrap">
+        <span class="rupee" id="rupeeSymbol" aria-hidden="true">₹</span>
+        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00">
+      </div>
+      <div class="amt-note" id="amountNote" style="display:none;" role="status"></div>
+      <div class="kind-toggle" role="group" aria-label="Money in or out">
+        <button type="button" class="kind-btn credit" id="creditBtn"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-down"/></svg>Credit</button>
+        <button type="button" class="kind-btn debit" id="debitBtn"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-up"/></svg>Debit</button>
+      </div>
+    </div>
+
+    <!-- 2 · ACCOUNT -->
+    <section class="account-group">
+      <div class="acct-head">
+        <span class="overline" id="accountLabel">Account</span>
+        <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-swap"/></svg>Self transfer
+        </button>
+      </div>
+
+      <div class="account-block" id="accountRow">
+
+        <div class="field" id="singleAccountField">
+          <div class="chip-group" id="accountChips" role="group" aria-labelledby="accountLabel">
+            <button type="button" class="chip" data-val="Domestic" aria-pressed="false"><span class="chip-tile">D</span>Domestic<svg class="icon chip-check" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button>
+            <button type="button" class="chip" data-val="International" aria-pressed="false"><span class="chip-tile">I</span>International<svg class="icon chip-check" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button>
+            <button type="button" class="chip" data-val="Cash" aria-pressed="false"><span class="chip-tile">C</span>Cash<svg class="icon chip-check" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button>
+          </div>
+        </div>
+
+        <div class="to-slot" id="toAccountField">
+          <div class="field">
+            <div class="overline" id="toAccountLabel">To account</div>
+            <div class="chip-group" id="toChips" role="group" aria-labelledby="toAccountLabel">
+              <button type="button" class="chip" data-val="Domestic" aria-pressed="false"><span class="chip-tile">D</span>Domestic<svg class="icon chip-check" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button>
+              <button type="button" class="chip" data-val="International" aria-pressed="false"><span class="chip-tile">I</span>International<svg class="icon chip-check" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button>
+              <button type="button" class="chip" data-val="Cash" aria-pressed="false"><span class="chip-tile">C</span>Cash<svg class="icon chip-check" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · THE DETAILS — a list of icon-led rows. The name is picked, not
+         typed: free text is what splits "Rapido" from "rapido" and makes
+         spend-by-name meaningless, so the list is the field and adding to
+         it is a deliberate, one-time act. -->
+    <div class="rows">
+      <div class="fld">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-tag"/></svg>
+        <div class="combo-wrap" id="expenseNameWrap">
+          <label class="sr-only" for="expenseName">Transaction name</label>
+          <select id="expenseName"></select>
+          <input type="text" id="expenseNameCustomInput" class="combo-custom-input" style="display:none;" placeholder="Name this one" autocomplete="off" aria-label="New transaction name">
+        </div>
+      </div>
+
+      <div class="fld">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-note"/></svg>
+        <label class="sr-only" for="moreInfo">Note (optional)</label>
+        <input type="text" id="moreInfo" placeholder="Add a note">
+      </div>
+
+      <div class="fld date-field">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-calendar"/></svg>
+        <label class="sr-only" for="dateTextInput">Date</label>
+        <input type="text" id="dateTextInput" class="date-box-input" placeholder="Date, e.g. 5.9" inputmode="decimal" autocomplete="off" aria-describedby="dateHint">
+        <button type="button" class="quick-date-btn" id="todayBtn">Today</button>
+        <button type="button" class="quick-date-btn" id="yesterdayBtn">Yesterday</button>
+        <div class="field-hint date-hint" id="dateHint"></div>
+      </div>
+
+      <div id="txnTypeSection">
+        <!-- single mode (default) -->
+        <div class="fld" id="singleTypeField">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-grid"/></svg>
+          <div class="combo-wrap" id="txnTypeWrap">
+            <label class="sr-only" for="txnType">Category</label>
+            <select id="txnType">
+              <option>Payment</option>
+              <option>Refund</option>
+              <option>Cashback</option>
+              <option>Payment Split</option>
+              <option>Salary</option>
+              <option>Sent Transfer</option>
+              <option>Received Transfer</option>
+              <option value="Custom">Custom…</option>
+            </select>
+            <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter a category of your own" autocomplete="off" aria-label="Custom category">
+          </div>
+        </div>
+
+        <!-- self-transfer mode: the category splits into the two legs -->
+        <div class="row-2" id="splitTypeFields" style="display:none;">
+          <div class="fld labeled">
+            <label for="txnTypeFrom">Sent leg category</label>
+            <select id="txnTypeFrom">
+              <option>Payment</option>
+              <option>Refund</option>
+              <option>Cashback</option>
+              <option>Payment Split</option>
+              <option>Salary</option>
+              <option>Sent Transfer</option>
+              <option>Received Transfer</option>
+              <option value="Custom">Custom…</option>
+            </select>
+          </div>
+          <div class="fld labeled">
+            <label for="txnTypeTo">Received leg category</label>
+            <select id="txnTypeTo">
+              <option>Payment</option>
+              <option>Refund</option>
+              <option>Cashback</option>
+              <option>Payment Split</option>
+              <option>Salary</option>
+              <option>Sent Transfer</option>
+              <option>Received Transfer</option>
+              <option value="Custom">Custom…</option>
+            </select>
+          </div>
+        </div>
+        <div class="row-2" id="splitCustomFields" style="display:none;">
+          <div class="fld labeled" id="customFromField" style="display:none;">
+            <label for="customTypeFromInput">Custom (sent)</label>
+            <input type="text" id="customTypeFromInput" placeholder="Type your own">
+          </div>
+          <div class="fld labeled" id="customToField" style="display:none;">
+            <label for="customTypeToInput">Custom (received)</label>
+            <input type="text" id="customTypeToInput" placeholder="Type your own">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 · WILL I GET THIS BACK -->
+    <div class="group" id="backGroup">
+      <div class="back-row">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-undo"/></svg>
+        <span class="back-q" id="backQ">Will I get this back?</span>
+        <div class="kind-toggle compact" id="backToggle" role="group" aria-labelledby="backQ">
+          <button type="button" class="kind-btn" data-back="Y" aria-pressed="false">Yes</button>
+          <button type="button" class="kind-btn on" data-back="N" aria-pressed="true">No</button>
+        </div>
+      </div>
+
+      <div class="fld labeled" id="backKindField" style="display:none;">
+        <label for="backKind">Which one</label>
+        <select id="backKind">
+          <option value="new">New — I am lending or paying out now</option>
+          <option value="old">Old — this is money coming back</option>
+        </select>
+      </div>
+
+      <div class="fld labeled" id="openItemField" style="display:none;">
+        <label for="openItemSelect">Which open item</label>
+        <select id="openItemSelect"></select>
+      </div>
+    </div>
+
+    <div class="cta-wrap">
+      <div class="cta-caption" id="ctaCaption">Fill in the details above</div>
+      <button type="submit" class="cta-save" id="saveBtn">
+        <span class="cta-dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span>
+        <span id="ctaMainText">Add Entry</span>
+      </button>
+    </div>
+  </form>
+    </div>
+  </div>
+</div>
+
+<!-- NEEDS ATTENTION — every bar that used to sit under the nav -->
+<div class="modal-overlay" id="activitySheet" role="dialog" aria-modal="true" aria-labelledby="activityTitle">
+  <div class="modal">
+    <button type="button" class="sheet-close" id="activityCloseBtn" aria-label="Close"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+    <div class="sheet-title" id="activityTitle">Needs attention</div>
+    <div id="actListWrap">
+      <div class="act-list" id="actList">
+        <div class="sync-bar" id="syncBar" style="display:none;">
+          <span class="sync-dot"></span>
+          <span class="sync-label" id="syncLabel">—</span>
+          <button type="button" class="btn-sm" id="syncNowBtn">Send to sheet</button>
+        </div>
+        <div class="edits-bar" id="editsBar" style="display:none;">
+          <div class="eb-label"><span id="editsLabel">—</span><span class="eb-hint" id="editsHint"></span></div>
+          <button type="button" class="btn-sm" id="pushEditsBtn">Push</button>
+        </div>
+        <div class="update-bar" id="updateBar" style="display:none;" role="status">
+          <span class="update-label">A newer version is ready</span>
+          <button type="button" class="btn-sm" id="updateBtn">Reload</button>
+        </div>
+        <div class="backup-bar" id="backupBar" style="display:none;" role="status">
+          <span class="backup-label" id="backupLabel">Back up today's entries</span>
+          <button type="button" class="btn-sm quiet" id="backupLaterBtn">Later</button>
+          <button type="button" class="btn-sm" id="backupNowBtn">Save file</button>
+        </div>
+        <div class="update-bar" id="monthBar" style="display:none;" role="status">
+          <span class="update-label" id="monthLabel">—</span>
+          <button type="button" class="btn-sm" id="monthAckBtn">Done</button>
+        </div>
+      </div>
+    </div>
+    <div class="act-empty" id="actEmpty">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>
+      <span>All caught up</span>
+    </div>
+  </div>
+</div>
+
+<!-- MONTH PICKER -->
+<div class="modal-overlay" id="monthSheet" role="dialog" aria-modal="true" aria-labelledby="monthSheetTitle">
+  <div class="modal">
+    <button type="button" class="sheet-close" id="monthCloseBtn" aria-label="Close"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+    <div class="sheet-title" id="monthSheetTitle">Choose a month</div>
+    <div class="month-list" id="monthList"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="confirmSheet" role="dialog" aria-modal="true" aria-labelledby="confirmTitleText">
   <div class="modal">
     <button type="button" class="sheet-close" id="confirmCloseBtn" aria-label="Close without saving"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
@@ -1382,6 +1586,8 @@
     // negative is further back. Never positive — there is no such thing as
     // a future entry, so Next stops here.
     monthOffset: 0,
+    // Which screen is behind the Add payment sheet.
+    screen: 'stats',
     // Why a month could not be read, keyed by sheet name. Set by a failed
     // or unrecognisable read so the pane can say what happened rather than
     // looking simply empty.
@@ -1497,11 +1703,6 @@
   function monthLabelFor(off){
     return monthDateFor(off).toLocaleDateString('en-GB', { month:'long', year:'numeric' });
   }
-  function monthSubFor(off){
-    if(off === 0) return 'Current month';
-    if(off === -1) return 'Last month';
-    return `${-off} months ago`;
-  }
   function selectedSheet(){ return monthNamesForOffset(state.monthOffset).sheet; }
 
   // Rows that belong to a given month, from wherever this device holds them.
@@ -1510,36 +1711,56 @@
     return allRows().filter(r => r.dateISO && monthNamesFor(r.dateISO).sheet === sheet);
   }
 
-  function shiftMonth(step){
-    const next = state.monthOffset + step;
-    if(next > 0 || next < -MONTHS_BACK_MAX) return;
-    state.monthOffset = next;
+  function setMonth(off){
+    if(off > 0 || off < -MONTHS_BACK_MAX) return;
+    state.monthOffset = off;
     state.historyShown = 40;
     state.breakdownAll = false;
     renderHistory();
     renderStats();
   }
 
-  // The two toggles are the same control drawn twice; this keeps them in
-  // step without either screen owning the state.
+  // The month is the screen's title on both History and Stats; this keeps
+  // the two in step without either screen owning the state. History's title
+  // also carries the month's headline numbers, so the list has something to
+  // sit under; Stats shows its own figures below.
   function renderMonthToggles(){
     const off = state.monthOffset;
-    [['monthToggleLabel','monthToggleSub','monthPrevBtn','monthNextBtn'],
-     ['statsMonthLabel','statsMonthSub','statsPrevBtn','statsNextBtn']].forEach(ids => {
-      $(ids[0]).textContent = monthLabelFor(off);
-      $(ids[1]).textContent = monthSubFor(off);
-      $(ids[2]).disabled = off <= -MONTHS_BACK_MAX;
-      $(ids[3]).disabled = off >= 0;
-    });
-    // History's month title carries the month's headline numbers, so the
-    // list has something to sit under; Stats keeps its own figures below.
+    $('monthToggleLabel').textContent = monthLabelFor(off);
+    $('statsMonthLabel').textContent = monthLabelFor(off);
     const t = monthTotals(off);
     $('monthToggleSub').innerHTML = t.count
       ? `<b class="out">₹${money(t.spent)}</b> spent · <b class="in">₹${money(t.income)}</b> in`
-      : esc(monthSubFor(off));
+      : '';
   }
-  ['monthPrevBtn','statsPrevBtn'].forEach(id => $(id).addEventListener('click', () => shiftMonth(-1)));
-  ['monthNextBtn','statsNextBtn'].forEach(id => $(id).addEventListener('click', () => shiftMonth(1)));
+
+  // Every month in one list, the chosen one ticked.
+  function renderMonthList(){
+    const cache = loadSheetCache();
+    let html = '';
+    for(let off = 0; off >= -MONTHS_BACK_MAX; off--){
+      const on = off === state.monthOffset;
+      const read = !!cache[monthNamesForOffset(off).sheet];
+      html += `<button type="button" class="month-opt${on ? ' on' : ''}" data-off="${off}">
+        <span class="mo-name">${esc(monthLabelFor(off))}</span>
+        ${read ? '<span class="mo-meta">read from sheet</span>' : ''}
+        ${on ? '<svg class="icon" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>' : ''}
+      </button>`;
+    }
+    $('monthList').innerHTML = html;
+    const cur = $('monthList').querySelector('.on');
+    if(cur) cur.scrollIntoView({ block:'center' });
+  }
+  wireOverlay('monthSheet', null, 'monthCloseBtn');
+  document.querySelectorAll('[data-month-picker]').forEach(b => {
+    b.addEventListener('click', () => { renderMonthList(); $('monthSheet').classList.add('open'); });
+  });
+  $('monthList').addEventListener('click', (e) => {
+    const b = e.target.closest('.month-opt');
+    if(!b) return;
+    $('monthSheet').classList.remove('open');
+    setMonth(Number(b.dataset.off));
+  });
 
   // ---------- DATE PARSING ----------
   const SEPARATORS = /[.\-\/\s]+/;
@@ -1626,7 +1847,7 @@
     };
 
     if(res.empty){
-      say('Day and month, separated — the year is worked out');
+      say('');
       return;
     }
     if(res.error){
@@ -2307,6 +2528,7 @@
     state.editing = null;
     const eb = $('editBanner');
     if(eb) eb.style.display = 'none';
+    $('addTitle').textContent = 'New entry';
     $('entryForm').reset();
     exitTxnTypeCustomMode();
     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
@@ -2398,6 +2620,7 @@
   }
   function saveEdits(){
     lsSet(LS_EDITS, state.edits);
+    renderEditsItem();
   }
   function markHistorySent(uids, sent){
     const set = new Set(uids);
@@ -2575,10 +2798,8 @@
     const bar = $('syncBar');
     const label = $('syncLabel');
     const btn = $('syncNowBtn');
-    if(!bar) return;
 
-    const onAddScreen = $('entryForm').style.display !== 'none';
-    bar.style.display = (n > 0 && onAddScreen) ? 'flex' : 'none';
+    bar.style.display = n > 0 ? 'flex' : 'none';
     if(typeof renderAccountScreen === 'function' && $('accountScreen').style.display !== 'none'){
       renderAccountScreen();
     }
@@ -2594,11 +2815,6 @@
             : held;
       btn.disabled = state.syncing || offline;
       btn.textContent = state.syncing ? 'Sending…' : offline ? 'Waiting for signal' : 'Send to sheet';
-    }
-    const count = $('pendingCount');
-    if(count){
-      count.style.display = n > 0 ? 'inline-flex' : 'none';
-      count.textContent = n;
     }
   }
 
@@ -3015,9 +3231,8 @@
     rc.style.display = all.length ? 'inline-block' : 'none';
 
     if(!all.length){
-      pane.innerHTML = editsBar() + emptyMonthCard(ms, off);
+      pane.innerHTML = emptyMonthCard(ms, off);
       wireImportButton(pane);
-      wireEditsBar(pane);
       return;
     }
 
@@ -3046,7 +3261,7 @@
 
     // The read status leads only while the month still needs reading; once
     // it has been read it drops to the foot of the list as fine print.
-    let html = (ms.pulled ? '' : monthReadRow(ms)) + editsBar() + `<div class="day-list">${cards}</div>`;
+    let html = (ms.pulled ? '' : monthReadRow(ms)) + `<div class="day-list">${cards}</div>`;
     if(all.length > state.historyShown) html += `<button type="button" class="show-more" id="showMoreBtn">Show earlier in ${ms.sheet}</button>`;
     if(ms.pulled) html += monthReadRow(ms);
 
@@ -3055,7 +3270,6 @@
     if(more) more.addEventListener('click', () => { state.historyShown += 40; renderRecent(); });
     wireImportButton(pane);
     wireRows(pane);
-    wireEditsBar(pane);
   }
 
   function wireRows(pane){
@@ -3073,27 +3287,24 @@
     const months = new Set(state.edits.map(e => e.sheet)).size;
     return months * 3 + state.edits.length * 2;
   }
-  function editsBar(){
+  function renderEditsItem(){
     const n = state.edits.length;
-    if(!n) return '';
-    return `<div class="edits-bar">
-      <div class="eb-label">${n === 1 ? '1 edit' : n + ' edits'} not in the sheet yet
-        <span class="eb-hint">Shown here already · pushing costs ${editsOpsCost()} Make operations</span>
-      </div>
-      <button type="button" class="btn-sm" id="pushEditsBtn">Push</button>
-    </div>`;
+    $('editsBar').style.display = n ? 'flex' : 'none';
+    if(!n) return;
+    $('editsLabel').textContent = `${n === 1 ? '1 edit' : n + ' edits'} not in the sheet yet`;
+    $('editsHint').textContent = `Shown here already · pushing costs ${editsOpsCost()} Make operations`;
   }
-  function wireEditsBar(pane){
-    const btn = pane.querySelector('#pushEditsBtn');
-    if(!btn) return;
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      btn.textContent = 'Pushing…';
-      const r = await pushEdits();
-      renderRecent();
-      showToast(r.msg, 4200);
-    });
-  }
+  $('pushEditsBtn').addEventListener('click', async () => {
+    const btn = $('pushEditsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Pushing…';
+    const r = await pushEdits();
+    btn.disabled = false;
+    btn.textContent = 'Push';
+    renderEditsItem();
+    renderRecent();
+    showToast(r.msg, 4200);
+  });
 
   // ---------- ENTRY DETAIL ----------
   function statusOf(row){
@@ -3290,11 +3501,13 @@
     $('editBannerSub').textContent =
       `${row.id} · ${formatDisplayDate(row.dateISO)} · ₹${money(row.amount)}`;
     updateCTA();
-    window.scrollTo({ top:0, behavior:'smooth' });
+    $('addTitle').textContent = 'Edit entry';
+    document.querySelector('.sheet-scroll').scrollTo({ top:0 });
   }
 
   function cancelEdit(){
     fullReset();
+    closeAdd();
     showToast('Edit cancelled — nothing changed');
   }
   $('editCancelBtn').addEventListener('click', cancelEdit);
@@ -3666,13 +3879,22 @@
     return bal;
   }
 
-  // Spending is the one figure transfers and rollovers must be kept out of,
-  // so the rows are folded first — exactly as the history list folds them.
+  // The rules the sheet runs on, said once:
+  //   Money in = one-way payments into any account. A loan coming back is
+  //              not income — it was already yours.
+  //   Spent    = one-way payments out, plus loans (Y items) still open —
+  //              money that has gone and not yet come back. A loan that has
+  //              been settled nets to nothing, so it counts as neither.
+  // Self transfers and rollover rows are never either one, so the rows are
+  // folded first — exactly as the history list folds them.
+  function isY(r){ return typeof r.id === 'string' && r.id.startsWith('Y'); }
   function spendRows(rows){
-    return foldTransfers(rows).filter(r => !r.transfer && r.isOut && !isCarry(r));
+    const open = new Set(computeOpenYIds());
+    return foldTransfers(rows).filter(r =>
+      !r.transfer && r.isOut && !isCarry(r) && (!isY(r) || open.has(r.id)));
   }
   function incomeRows(rows){
-    return foldTransfers(rows).filter(r => !r.transfer && !r.isOut && !isCarry(r));
+    return foldTransfers(rows).filter(r => !r.transfer && !r.isOut && !isCarry(r) && !isY(r));
   }
   function sum(list){ return list.reduce((n, r) => n + r.amount, 0); }
 
@@ -3691,13 +3913,7 @@
   // In/Out pair both read this, so the two screens can never disagree.
   function monthTotals(off){
     const rows = rowsForMonth(off);
-    const statsSnap = loadStatsSnap()[monthState(off).sheet];
-    // Rows already synced to the sheet are already inside J5; only what this
-    // device holds that isn't in the sheet yet needs adding on top.
-    const spent = statsSnap
-      ? statsSnap.spent + sum(spendRows(rows.filter(r => r.src !== 'sheet')))
-      : sum(spendRows(rows));
-    return { spent, income: sum(incomeRows(rows)), count: rows.length };
+    return { spent: sum(spendRows(rows)), income: sum(incomeRows(rows)), count: rows.length };
   }
 
   function signedMoney(v){ return `${v < 0 ? '−' : ''}₹${money(Math.abs(v))}`; }
@@ -3765,7 +3981,7 @@
     const spendDays = new Set(spend.map(r => r.dateISO)).size;
 
     const facts = [
-      ['Entries', `${rows.length}`],
+      ['Entries', `${foldTransfers(rows).filter(r => !isCarry(r)).length}`],
       ['Biggest expense', biggest ? `${biggest.expenseName} · ₹${money(biggest.amount)}` : '—'],
       ['Average a day', `₹${money(Math.round(perDay))} over ${elapsed} ${elapsed === 1 ? 'day' : 'days'}`],
       ['Days with spending', `${spendDays} of ${elapsed}`],
@@ -4107,28 +4323,72 @@
 
 
   // ---------- SCREEN NAVIGATION ----------
+  // Stats, History and Account are screens. Add payment is a sheet that
+  // rises over whichever one is behind it, so closing it puts you back.
+  function openAdd(){
+    $('addSheet').classList.add('open');
+    document.body.classList.add('sheet-open');
+    setTimeout(() => amountInput.focus({ preventScroll:true }), 60);
+  }
+  function closeAdd(){
+    // Leaving mid-edit abandons the edit, so the form is never left
+    // half-editing out of sight. A half-typed new entry is kept.
+    if(state.editing) fullReset();
+    $('addSheet').classList.remove('open');
+    document.body.classList.remove('sheet-open');
+  }
+
   function showScreen(name){
-    $('entryForm').style.display = name === 'add' ? 'flex' : 'none';
+    if(name === 'add'){ openAdd(); return; }
+    closeAdd();
+    state.screen = name;
     $('historyScreen').style.display = name === 'history' ? 'flex' : 'none';
     $('statsScreen').style.display = name === 'stats' ? 'flex' : 'none';
     $('accountScreen').style.display = name === 'account' ? 'flex' : 'none';
-    $('syncBar').style.display = (name === 'add' && state.queue.length) ? 'flex' : 'none';
     $('openSettings').classList.toggle('active', name === 'account');
     if(name === 'account'){ renderAccountScreen(); renderBackupStatus(); }
     if(name === 'history'){ state.historyShown = 40; renderHistory(); }
     if(name === 'stats'){ renderStats(); }
-    document.querySelectorAll('.top-tab').forEach(b => {
+    document.querySelectorAll('.dock-tab').forEach(b => {
       const on = b.dataset.tab === name;
       b.classList.toggle('active', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+    window.scrollTo(0, 0);
   }
 
-  document.querySelectorAll('.top-tab').forEach(btn => {
+  document.querySelectorAll('.dock-tab').forEach(btn => {
     btn.addEventListener('click', () => showScreen(btn.dataset.tab));
   });
-
+  $('openAdd').addEventListener('click', openAdd);
+  const dismissAdd = () => { if(state.editing) cancelEdit(); else closeAdd(); };
+  $('addCloseBtn').addEventListener('click', dismissAdd);
+  $('addSheet').addEventListener('click', (e) => { if(e.target === $('addSheet')) dismissAdd(); });
   $('openSettings').addEventListener('click', () => showScreen('account'));
+
+  // ---------- NEEDS ATTENTION ----------
+  // Every notice (entries to send, edits to push, a new version, a backup
+  // nudge, a new month) lives in one panel behind the bell. The notices
+  // keep switching themselves on and off exactly as before; this just
+  // counts whichever are showing.
+  function renderActivity(){
+    const n = [...$('actList').children].filter(el => el.style.display !== 'none').length;
+    $('actCount').style.display = n ? 'block' : 'none';
+    $('actCount').textContent = n;
+    $('actListWrap').hidden = !n;
+    $('actEmpty').style.display = n ? 'none' : 'flex';
+  }
+  new MutationObserver(renderActivity)
+    .observe($('actList'), { attributes:true, attributeFilter:['style'], subtree:true });
+  renderActivity();
+
+  function wireOverlay(sheetId, openBtnId, closeBtnId, onOpen){
+    const sheet = $(sheetId);
+    if(openBtnId) $(openBtnId).addEventListener('click', () => { if(onOpen) onOpen(); sheet.classList.add('open'); });
+    $(closeBtnId).addEventListener('click', () => sheet.classList.remove('open'));
+    sheet.addEventListener('click', (e) => { if(e.target === sheet) sheet.classList.remove('open'); });
+  }
+  wireOverlay('activitySheet', 'openActivity', 'activityCloseBtn', renderActivity);
 
   // ---------- SYNC CONTROLS ----------
   $('syncNowBtn').addEventListener('click', () => syncQueue());
@@ -4235,6 +4495,9 @@
   applyDefaultDate();
   updateAmountWidth();
   updateCTA();
+  renderEditsItem();
+  renderActivity();
+  showScreen('stats');
 
   if(state.queue.length && navigator.onLine && state.syncMode !== 'manual'){
     if(overdue() || state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
