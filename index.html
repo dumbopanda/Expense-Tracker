@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ledger — Add Payment</title>
+<title>Ledger</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F4F1EA">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-maskable-512.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ledger">
@@ -31,7 +31,7 @@
     --text:#181C1A;
     --text-2:#3E423F;          /* user-written content (notes) */
     --text-muted:#69665F;      /* labels, metadata — 4.6:1 on white */
-    --text-faint:#8E8A80;      /* ranks, placeholders — never sole carrier of meaning */
+    --text-faint:#716D63;      /* ranks, placeholders — 4.6:1 on the page */
     --text-ghost:#CFCBC0;      /* empty amount */
     --on-ink:#FFFFFF;
     --on-ink-muted:#9EAD9C;    /* sage: secondary text on the dark surface */
@@ -58,7 +58,8 @@
 
     /* LINES */
     --line:#E9E6DE;            /* between rows inside one object */
-    --line-strong:#D4D0C4;     /* outlines, switch-off */
+    --line-strong:#D4D0C4;     /* outlines */
+    --switch-off:#918D82;      /* a switch that is off — 3:1 on white */
 
     /* TYPE — one family, ten sizes, four weights */
     --font:'Plus Jakarta Sans', system-ui, sans-serif;
@@ -159,8 +160,17 @@
     transform var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease);}
   button:not(:disabled):active{transform:scale(.97);}
   :focus-visible{outline:2px solid var(--green);outline-offset:2px;}
-  /* Small controls draw at 32px but take a 44px touch. */
-  .btn-sm, .toggle-pill, .sheet-close, .mini-btn{position:relative;}
+  /* TAP AREAS — small controls look the size they are but take a thumb-size
+     touch: an invisible band around each, never wider than the gap between
+     neighbours, so nothing changes on screen. */
+  .pill-act, .quick-date-btn, .kind-toggle.compact .kind-btn, .seg button, .mini-btn,
+  .month-title, .month-chip, .dock-tab, .icon-btn, .sub-tab, .kind-btn, .seg-chips button,
+  .leg-btn, .btn-sm, .toggle-pill, .sheet-close{position:relative;}
+  .pill-act::after, .quick-date-btn::after, .kind-toggle.compact .kind-btn::after, .seg button::after,
+  .mini-btn::after, .month-title::after, .month-chip::after, .dock-tab::after, .icon-btn::after,
+  .sub-tab::after, .kind-btn::after, .seg-chips button::after, .leg-btn::after{
+    content:"";position:absolute;inset:-7px 0;
+  }
   .btn-sm::after, .toggle-pill::after, .sheet-close::after{content:"";position:absolute;inset:-6px;}
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{transition:none !important;animation:none !important;}
@@ -307,20 +317,21 @@
     display:inline-flex;align-items:center;gap:6px;
     height:var(--h-xs);padding:0 var(--sp-3);
     border:none;border-radius:var(--r-pill);
+    background:var(--surface);color:var(--text);box-shadow:var(--shadow-1);
     font-size:var(--fs-xs);font-weight:var(--fw-heavy);
     cursor:pointer;white-space:nowrap;
-    background:var(--green);color:var(--on-ink);
   }
+  /* One look for all of them; the dot says which kind. Only an update is
+     inverted, because it is the one that interrupts. */
+  .pill-act::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
   .pill-act[hidden]{display:none;}
+  .pill-act.push::before{background:var(--amber-dot);}
+  .pill-act.backup::before{background:var(--acct-dom-dot);}
+  .pill-act.month::before{background:var(--text-faint);}
   .pill-act.update{background:var(--ink);color:var(--lime);}
-  .pill-act.push{background:var(--amber);color:var(--ink);}
-  .pill-act.backup{background:var(--surface);color:var(--green-ink);box-shadow:var(--shadow-1);}
-  .pill-act.month{background:var(--track);color:var(--text);}
+  .pill-act.update::before{background:var(--lime);}
   .pill-act:disabled{opacity:.6;cursor:default;}
-  @media (hover:hover){
-    .pill-act.send:not(:disabled):hover{background:var(--green-hover);}
-    .pill-act.backup:hover{background:var(--hover);}
-  }
+  @media (hover:hover){ .pill-act:not(.update):not(:disabled):hover{background:var(--hover);} }
 
   /* EDIT MODE — the one notice that changes what the whole form means, so
      it's the one that's tinted. */
@@ -377,6 +388,7 @@
   .sheet-panel{
     position:relative;width:100%;max-width:480px;
     height:calc(94vh / var(--ui-scale));
+    height:calc(94dvh / var(--ui-scale));
     display:flex;flex-direction:column;
     background:var(--canvas);
     border-radius:var(--r-sheet) var(--r-sheet) 0 0;
@@ -415,7 +427,7 @@
     width:100%;padding:var(--sp-2) 0;
   }
   .amt-display-wrap .rupee, #amountInput{
-    font-size:var(--fs-4xl);font-weight:var(--fw-heavy);
+    font-size:var(--amt-fs, var(--fs-4xl));font-weight:var(--fw-heavy);
     letter-spacing:var(--ls-display);line-height:var(--lh-tight);
     color:var(--lime);
   }
@@ -426,7 +438,7 @@
     border:none;background:transparent;box-shadow:none;outline:none;padding:0;
     text-align:left;
   }
-  #amountInput::placeholder{color:rgba(255,255,255,.3);font-weight:var(--fw-heavy);opacity:1;}
+  #amountInput::placeholder{color:rgba(255,255,255,.4);font-weight:var(--fw-heavy);opacity:1;}
   .amt-note{
     margin-top:calc(-1 * var(--sp-2));
     padding:var(--sp-1) var(--sp-3);
@@ -573,6 +585,25 @@
     padding-right:var(--sp-6);
   }
 
+  /* FREQUENT NAMES — the few you use most, one tap each. */
+  .chips-row{min-height:0;padding:var(--sp-2) var(--sp-4);}
+  .name-chips{
+    display:flex;gap:var(--sp-2);width:100%;
+    overflow-x:auto;scrollbar-width:none;
+    margin:0 calc(-1 * var(--sp-4));padding:0 var(--sp-4);
+  }
+  .name-chips::-webkit-scrollbar{display:none;}
+  .name-chip{
+    position:relative;flex-shrink:0;
+    height:var(--h-xs);padding:0 var(--sp-3);
+    border:none;border-radius:var(--r-pill);
+    background:var(--inset);color:var(--text-muted);
+    font-size:var(--fs-xs);font-weight:var(--fw-bold);cursor:pointer;
+  }
+  .name-chip::after{content:"";position:absolute;inset:-7px 0;}
+  .name-chip.on{background:var(--ink);color:var(--lime);}
+  @media (hover:hover){ .name-chip:not(.on):hover{color:var(--text);} }
+
   /* DATE — the row is the date; the two shortcuts sit at its end. */
   .date-field{flex-wrap:wrap;row-gap:0;}
   .date-field .date-box-input{flex:1 1 0;min-width:0;}
@@ -642,7 +673,7 @@
   .switch input{opacity:0;width:0;height:0;}
   .slider{
     position:absolute;inset:0;cursor:pointer;
-    background:var(--line-strong);border-radius:var(--r-pill);
+    background:var(--switch-off);border-radius:var(--r-pill);
     transition:background-color var(--t-med) var(--ease);
   }
   .slider::before{
@@ -674,7 +705,9 @@
     cursor:pointer;
   }
   @media (hover:hover){ .cta-save:not(:disabled):not(.is-incomplete):hover{background:var(--green-hover);} }
-  .cta-save.is-incomplete{opacity:.55;box-shadow:none;}
+  /* Not ready yet: grey and readable, not a faded green. */
+  .cta-save.is-incomplete{background:var(--track);color:var(--text-muted);box-shadow:none;}
+  .cta-save.is-incomplete .cta-dot{background:var(--surface);}
   .cta-save:disabled{opacity:.7;}
   .cta-dot{
     width:22px;height:22px;border-radius:50%;flex-shrink:0;
@@ -692,14 +725,12 @@
      ===================================================================== */
   /* Sub-tabs sit on the page, so their track is a step darker. */
   .sub-tabs{background:var(--track);}
-  .sub-tab .badge, .sub-tab .count{
+  .sub-tab .badge{
     min-width:20px;padding:0 6px;
     border-radius:var(--r-pill);
     font-size:var(--fs-2xs);font-weight:var(--fw-heavy);line-height:19px;
   }
   .sub-tab .badge{background:var(--amber);color:var(--text);}
-  .sub-tab .count{background:rgba(255,255,255,.6);color:var(--text-muted);}
-  .sub-tab.active .count{background:rgba(255,255,255,.14);color:var(--on-ink-muted);}
 
   /* MONTH — the screen's title. Tap it to jump to any month. */
   .month-toggle{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:var(--sp-1) var(--sp-1) 0;}
@@ -753,7 +784,22 @@
   .day-head .net.in{color:var(--green);}
 
   /* MONTH on History — a chip, not a title: the list is the point. */
-  .month-row{display:flex;}
+  .month-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);}
+  .month-row .icon-btn{width:var(--h-sm);height:var(--h-sm);}
+  .icon-btn[aria-expanded="true"]{background:var(--ink);color:var(--lime);}
+  .search-row{
+    display:flex;align-items:center;gap:var(--sp-3);
+    height:var(--h-md);padding:0 var(--sp-4);
+    background:var(--surface);border-radius:var(--r-input);box-shadow:var(--shadow-1);
+  }
+  .search-row[hidden]{display:none;}
+  .search-row .icon{color:var(--text-faint);}
+  .search-row:focus-within{box-shadow:var(--shadow-1), var(--ring);}
+  .search-row input{
+    flex:1;min-width:0;height:100%;padding:0;border:none;background:transparent;outline:none;appearance:none;
+    font-size:var(--fs-input);font-weight:var(--fw-medium);color:var(--text);
+  }
+  .search-row input::placeholder{color:var(--text-faint);font-weight:var(--fw-regular);}
   .month-chip{
     display:inline-flex;align-items:center;gap:var(--sp-2);
     height:var(--h-sm);padding:0 var(--sp-3) 0 var(--sp-3);
@@ -848,7 +894,8 @@
   .txn.tappable:focus-visible{outline:2px solid var(--green);outline-offset:-2px;border-radius:var(--r-card);}
 
   /* Owed to me: settled items stay, faded — same shape as an open row. */
-  .txn.due.closed{opacity:.55;}
+  /* Settled: quieter, not faded — still readable when you tap one to fix it. */
+  .txn.due.closed .name, .txn.due.closed .amt{color:var(--text-muted);}
   .txn.due.closed .tile{background:var(--inset);color:var(--text-muted);}
   .due .amt{color:var(--text);}
 
@@ -910,10 +957,17 @@
     box-shadow:var(--shadow-2);
   }
   .hero-key{font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--on-ink-muted);}
+  .hero-key{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);}
+  .hero-chip{
+    padding:0 var(--sp-2);border-radius:var(--r-pill);
+    background:var(--on-ink-hover);color:var(--on-ink-muted);
+    font-size:var(--fs-2xs);font-weight:var(--fw-bold);line-height:20px;white-space:nowrap;
+  }
+  .hero-chip.warn{background:rgba(255,222,115,.16);color:var(--amber);}
   .hero-val{
     margin-top:var(--sp-2);
     font-size:var(--fs-3xl);font-weight:var(--fw-heavy);
-    letter-spacing:var(--ls-display);line-height:var(--lh-tight);
+    letter-spacing:var(--ls-display);line-height:var(--lh-tight);white-space:nowrap;
     color:var(--lime);
   }
   .hero-val.out{color:var(--red-on-ink);}
@@ -1056,7 +1110,7 @@
   .modal{
     position:relative;
     width:100%;max-width:480px;
-    max-height:calc(85vh / var(--ui-scale));overflow-y:auto;
+    max-height:calc(85vh / var(--ui-scale));max-height:calc(85dvh / var(--ui-scale));overflow-y:auto;
     display:flex;flex-direction:column;gap:var(--sp-4);
     padding:var(--sp-8) var(--gutter) calc(var(--sp-5) + env(safe-area-inset-bottom));
     background:var(--canvas);
@@ -1147,6 +1201,7 @@
   <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></symbol>
   <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
@@ -1176,7 +1231,7 @@
          Recent, so it hides when Owed to me (all-time) is showing. -->
     <div class="sub-tabs" role="tablist" aria-label="History">
       <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
-        <span>Recent</span><span class="count" id="recentCount" style="display:none;">0</span>
+        <span>Activity</span>
       </button>
       <button type="button" class="sub-tab" id="tabDues" data-sub="dues" role="tab" aria-selected="false">
         <span>Owed to me</span><span class="badge" id="duesBadge" style="display:none;">0</span>
@@ -1188,6 +1243,13 @@
         <span id="monthToggleLabel">—</span>
         <svg class="icon chev" aria-hidden="true" focusable="false"><use href="#i-chev-down"/></svg>
       </button>
+      <button type="button" class="icon-btn" id="searchToggle" aria-label="Search this month" aria-expanded="false">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
+      </button>
+    </div>
+    <div class="search-row" id="searchRow" hidden>
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
+      <input type="search" id="historySearch" placeholder="Name, note, category or account" autocomplete="off" aria-label="Search this month">
     </div>
     <div id="recentPane"></div>
     <div id="duesPane" style="display:none;"></div>
@@ -1381,6 +1443,10 @@
           <input type="text" id="expenseNameCustomInput" class="combo-custom-input" style="display:none;" placeholder="Name this one" autocomplete="off" aria-label="New transaction name">
         </div>
       </div>
+      <div class="fld chips-row" id="nameChipsRow" style="display:none;">
+        <div class="name-chips" id="nameChips" role="group" aria-label="Names you use most"></div>
+      </div>
+
 
       <div class="fld">
         <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-note"/></svg>
@@ -1534,6 +1600,18 @@
   </div>
 </div>
 
+
+<!-- ASK — a plain yes/no, in the app's own style instead of the phone's pop-up -->
+<div class="modal-overlay" id="askSheet" role="alertdialog" aria-modal="true" aria-labelledby="askTitle">
+  <div class="modal">
+    <div class="sheet-title" id="askTitle">—</div>
+    <p class="sheet-line" id="askText">—</p>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-outline" id="askCancelBtn">Cancel</button>
+      <button type="button" class="btn btn-danger" id="askOkBtn">Delete</button>
+    </div>
+  </div>
+</div>
 <!-- MONTH PICKER -->
 <div class="modal-overlay" id="monthSheet" role="dialog" aria-modal="true" aria-labelledby="monthSheetTitle">
   <div class="modal">
@@ -1576,7 +1654,7 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
   // ---------- STATE ----------
   const state = {
@@ -1609,6 +1687,8 @@
     monthOffset: 0,
     // Which screen is behind the Add payment sheet.
     screen: 'stats',
+    search: '',
+    searchOpen: false,
     // Why a month could not be read, keyed by sheet name. Set by a failed
     // or unrecognisable read so the pane can say what happened rather than
     // looking simply empty.
@@ -1996,6 +2076,31 @@
     updateCTA();
   }
 
+  // The names you use most, newest habits first: counted over the last 90
+  // days so a name you stopped using drops off by itself.
+  function renderNameChips(){
+    const since = Date.now() - 90 * 86400000;
+    const counts = {};
+    allRows().forEach(r => {
+      const n = String(r.expenseName || '').trim();
+      if(!n || isSelfName(r)) return;
+      if((Date.parse(r.dateISO + 'T00:00:00') || r.at || 0) < since) return;
+      counts[n] = (counts[n] || 0) + 1;
+    });
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(e => e[0]);
+    $('nameChips').innerHTML = top.map(n => `<button type="button" class="name-chip" data-name="${esc(n)}">${esc(n)}</button>`).join('');
+    $('nameChipsRow').style.display = top.length && !state.isSelfTransfer ? '' : 'none';
+    markNameChips();
+  }
+  function markNameChips(){
+    const cur = expenseNameValue();
+    document.querySelectorAll('#nameChips .name-chip').forEach(b => b.classList.toggle('on', b.dataset.name === cur));
+  }
+  $('nameChips').addEventListener('click', (e) => {
+    const b = e.target.closest('.name-chip');
+    if(b) setExpenseName(b.dataset.name);
+  });
+
   $('expenseName').addEventListener('change', (e) => {
     if(e.target.value === '__new'){
       enterNameCustomMode();
@@ -2018,6 +2123,7 @@
     const on = state.isSelfTransfer;
     selfTransferToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     $('accountRow').classList.toggle('is-transfer', on);
+    renderNameChips();
     $('accountLabel').textContent = on ? 'From account' : 'Account';
 
     $('singleTypeField').style.display = on ? 'none' : 'flex';
@@ -2327,14 +2433,41 @@
   }
 
   const amountMeasureCanvas = document.createElement('canvas').getContext('2d');
+  // The amount is the biggest type in the app. It starts at full size and
+  // only steps down when the number would not fit the card, so an ordinary
+  // amount looks exactly as before and a huge one stays fully visible.
+  const AMOUNT_FS_MAX = 48, AMOUNT_FS_MIN = 22;
   function updateAmountWidth(){
     const cs = getComputedStyle(amountInput);
-    amountMeasureCanvas.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    if('letterSpacing' in amountMeasureCanvas) amountMeasureCanvas.letterSpacing = cs.letterSpacing;
     const text = amountInput.value || amountInput.placeholder;
-    const width = amountMeasureCanvas.measureText(text).width;
+    const lsRatio = (parseFloat(cs.letterSpacing) || 0) / (parseFloat(cs.fontSize) || AMOUNT_FS_MAX);
+    const avail = amountInput.parentElement.clientWidth;
+    let size = AMOUNT_FS_MAX, width = 0;
+    for(; size >= AMOUNT_FS_MIN; size--){
+      amountMeasureCanvas.font = `${cs.fontWeight} ${size}px ${cs.fontFamily}`;
+      if('letterSpacing' in amountMeasureCanvas) amountMeasureCanvas.letterSpacing = (lsRatio * size) + 'px';
+      width = amountMeasureCanvas.measureText(text).width;
+      // The rupee sign is about 0.62 of a digit-height wide, plus its margin.
+      if(!avail || width + size * 0.62 + 8 <= avail) break;
+    }
+    amountInput.closest('.amount-card').style.setProperty('--amt-fs', Math.max(size, AMOUNT_FS_MIN) + 'px');
     amountInput.style.width = Math.ceil(width) + 3 + 'px';
   }
+
+  // Big figures on Stats step down the same way instead of being cut off.
+  function fitText(el, minPx){
+    el.style.fontSize = '';
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while(el.scrollWidth > el.clientWidth + 1 && size > minPx){
+      size -= 1;
+      el.style.fontSize = size + 'px';
+    }
+  }
+  function fitFigures(){
+    document.querySelectorAll('.hero-val').forEach(el => fitText(el, 22));
+    document.querySelectorAll('.hero-acct .v, .duo .v').forEach(el => fitText(el, 11));
+  }
+  window.addEventListener('resize', fitFigures);
 
   function toCleanPos(display, pos){
     let n = 0;
@@ -2487,6 +2620,7 @@
     const amt = formattedAmount();
     const raw = amountRawNumber();
     renderAmountNote(raw);
+    markNameChips();
 
     const verb = state.editing ? 'Save Changes' : 'Add Entry';
     if(state.isSelfTransfer){
@@ -3037,8 +3171,13 @@
     rememberName(p.expenseName);
     if(!p.isSelfTransfer) applyYId(p.savedId);
 
-    showToast(p.isSelfTransfer ? `Transfer added · ${p.savedId}` : `Added · ${p.savedId}`);
+    // Done: close the sheet and land back where you were, with the screen
+    // redrawn so Stats shows the new balance straight away.
     fullReset();
+    showScreen(state.screen);
+    showToast(p.isSelfTransfer
+      ? `Transfer of ₹${money(p.amount)} added`
+      : `₹${money(p.amount)} ${p.debit ? 'out' : 'in'} · ${p.account}`);
   }
 
   function dismissConfirm(){
@@ -3050,11 +3189,6 @@
   $('confirmCloseBtn').addEventListener('click', dismissConfirm);
   $('confirmSheet').addEventListener('click', (e) => {
     if(e.target === $('confirmSheet')) dismissConfirm();
-  });
-  document.addEventListener('keydown', (e) => {
-    if(e.key !== 'Escape') return;
-    if($('confirmSheet').classList.contains('open')) dismissConfirm();
-    else if($('detailSheet').classList.contains('open')) closeDetail();
   });
 
   function newUid(){
@@ -3269,11 +3403,16 @@
     const pane = $('recentPane');
     const off = state.monthOffset;
     const ms = monthState(off);
-    const all = rowsForMonth(off).sort((a,b) => b.at - a.at);
+    const everything = rowsForMonth(off);
+    const all = everything.filter(matchesSearch).sort((a,b) => b.at - a.at);
 
-    const rc = $('recentCount');
-    rc.textContent = all.length;
-    rc.style.display = all.length ? 'inline-block' : 'none';
+    if(everything.length && !all.length){
+      pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
+        <h2>No matches</h2>
+        <p>Nothing in ${esc(monthLabelFor(off))} matches “${esc(state.search.trim())}”.</p>
+      </div></div>`;
+      return;
+    }
 
     if(!all.length){
       pane.innerHTML = emptyMonthCard(ms, off);
@@ -3480,9 +3619,14 @@
     const r = state.rowIndex[state.detailKey];
     if(r) beginEdit(r);
   });
-  $('detailDeleteBtn').addEventListener('click', () => {
+  $('detailDeleteBtn').addEventListener('click', async () => {
     const key = state.detailKey;
-    if(key && confirm('Delete this entry? This cannot be undone.')) deleteEntry(key);
+    if(!key) return;
+    const r = state.rowIndex[key];
+    const text = r && r.transfer
+      ? 'Both halves of this transfer will be deleted. This cannot be undone.'
+      : 'This cannot be undone.';
+    if(await ask('Delete this entry?', text, 'Delete')) deleteEntry(key);
   });
 
   // ---------- DELETE ----------
@@ -3704,7 +3848,7 @@
     pruneOpenYIds();
 
     fullReset();
-    showScreen('history');
+    showScreen(state.screen);
 
     showToast(staged
       ? (staged === 1 ? 'Updated here · push it to reach the sheet'
@@ -3885,7 +4029,7 @@
     const loaded = Object.keys(loadSheetCache());
     const scope = loaded.length
       ? `Counted across this device and ${loaded.length === 1 ? loaded[0] : loaded.length + ' months'} read from the sheet.`
-      : 'Counted from this device only. Pull earlier months in Recent to include them.';
+      : 'Counted from this device only. Pull earlier months in Activity to include them.';
 
     items.forEach(it => { registerDueRow(it.openRow); registerDueRow(it.closeRow); });
 
@@ -3907,6 +4051,8 @@
     $('recentPane').style.display = recent ? 'flex' : 'none';
     $('duesPane').style.display = recent ? 'none' : 'flex';
     $('historyMonthToggle').style.display = recent ? 'flex' : 'none';
+    $('searchRow').hidden = !(recent && state.searchOpen);
+    $('searchToggle').setAttribute('aria-expanded', state.searchOpen ? 'true' : 'false');
     document.querySelectorAll('.sub-tab').forEach(t => {
       const on = t.dataset.sub === state.subTab;
       t.classList.toggle('active', on);
@@ -3916,6 +4062,29 @@
     renderRecent();
     renderDues();
   }
+
+  // ---------- SEARCH ----------
+  // Narrows the month's list as you type: every word has to appear in the
+  // name, note, category, account or amount. It changes only what is shown.
+  function matchesSearch(r){
+    const q = state.search.trim().toLowerCase();
+    if(!q) return true;
+    const hay = [r.expenseName, r.moreInfo, r.txnType, r.account, r.debit || r.credit, r.id]
+      .join(' ').toLowerCase();
+    return q.split(/\s+/).every(w => hay.includes(w));
+  }
+  $('searchToggle').addEventListener('click', () => {
+    state.searchOpen = !state.searchOpen;
+    if(!state.searchOpen) state.search = '';
+    $('historySearch').value = state.search;
+    renderHistory();
+    if(state.searchOpen) $('historySearch').focus();
+  });
+  $('historySearch').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    state.historyShown = 40;
+    renderRecent();
+  });
 
   document.querySelectorAll('.sub-tab').forEach(t => {
     t.addEventListener('click', () => { state.subTab = t.dataset.sub; renderHistory(); });
@@ -4087,6 +4256,15 @@
     // A month that has been read says so in its read row instead.
     const scope = `Added up from this device only — ${ms.sheet} has not been read, so last month's rollover is not counted yet.`;
 
+    // How much to trust "Total have": a month that was never read from the
+    // sheet is added up from this phone alone (no carried-in balance), and a
+    // month read a while ago may have moved since.
+    const age = ms.pulled ? Date.now() - ms.pulledAt : 0;
+    const agoText = age < 3600e3 ? 'just now' : age < 86400e3 ? Math.floor(age / 3600e3) + 'h ago' : Math.floor(age / 86400e3) + 'd ago';
+    const chip = !ms.pulled
+      ? '<span class="hero-chip warn">from this phone only</span>'
+      : (off === 0 && age > 6 * 3600e3 ? `<span class="hero-chip">read ${agoText}</span>` : '');
+
     // Hierarchy, top down: what you have (hero), how the month moved it
     // (in / out), where the spending went, then the small facts. Where the
     // numbers came from is fine print: it only goes on top while the month
@@ -4094,7 +4272,7 @@
     pane.innerHTML = `
       ${ms.pulled ? '' : monthReadRow(ms)}
       <div class="hero">
-        <div class="hero-key">Total have</div>
+        <div class="hero-key"><span>Total have</span>${chip}</div>
         <div class="hero-val${have < 0 ? ' out' : ''}">${signedMoney(have)}</div>
         <div class="hero-accts">${accts}</div>
       </div>
@@ -4114,6 +4292,7 @@
       ${factsPanel(rows)}
       ${ms.pulled ? monthReadRow(ms) : `<div class="scope-note">${esc(scope)}</div>`}`;
 
+    fitFigures();
     pane.querySelectorAll('#brkSeg button').forEach(b => {
       b.addEventListener('click', () => {
         state.breakdown = b.dataset.brk;
@@ -4369,6 +4548,23 @@
   $('confirmToggle').addEventListener('change', (e) => setRequireConfirm(e.target.checked));
 
 
+
+  // ---------- A YES/NO IN THE APP'S OWN STYLE ----------
+  let askResolve = null;
+  function ask(title, text, okLabel){
+    $('askTitle').textContent = title;
+    $('askText').textContent = text;
+    $('askOkBtn').textContent = okLabel;
+    $('askSheet').classList.add('open');
+    return new Promise(res => { askResolve = res; });
+  }
+  function settleAsk(answer){
+    $('askSheet').classList.remove('open');
+    if(askResolve){ const r = askResolve; askResolve = null; r(answer); }
+  }
+  $('askOkBtn').addEventListener('click', () => settleAsk(true));
+  $('askCancelBtn').addEventListener('click', () => settleAsk(false));
+  $('askSheet').addEventListener('click', (e) => { if(e.target === $('askSheet')) settleAsk(false); });
   // ---------- SCREEN NAVIGATION ----------
   // Stats, History and Account are screens. Add payment is a sheet that
   // rises over whichever one is behind it, so closing it puts you back.
@@ -4378,6 +4574,8 @@
     // Always from the top, whatever the last visit scrolled to. The keyboard
     // stays down until you tap the amount yourself.
     document.querySelector('.sheet-scroll').scrollTop = 0;
+    renderNameChips();
+    updateAmountWidth();
   }
   function closeAdd(){
     // Leaving mid-edit abandons the edit, so the form is never left
@@ -4456,6 +4654,51 @@
   });
   $('monthNoteLaterBtn').addEventListener('click', () => $('monthNoteSheet').classList.remove('open'));
   wireOverlay('monthNoteSheet', null, 'monthNoteCloseBtn');
+
+  // ---------- SHEETS AND THE BACK BUTTON ----------
+  // Every sheet takes a step in the browser's history when it opens, so the
+  // phone's back gesture (or Escape) closes the top sheet instead of leaving
+  // the app. Nothing here changes how a sheet looks or opens.
+  const SHEET_CLOSERS = {
+    addSheet: () => { if(state.editing) cancelEdit(); else closeAdd(); },
+    confirmSheet: () => dismissConfirm(),
+    detailSheet: () => closeDetail(),
+    monthSheet: () => $('monthSheet').classList.remove('open'),
+    monthNoteSheet: () => $('monthNoteSheet').classList.remove('open'),
+    askSheet: () => settleAsk(false)
+  };
+  const sheetStack = [];
+  let skipPop = 0;
+  Object.keys(SHEET_CLOSERS).forEach(id => {
+    const el = $(id);
+    let was = false;
+    new MutationObserver(() => {
+      const open = el.classList.contains('open');
+      if(open === was) return;
+      was = open;
+      if(open){
+        sheetStack.push(id);
+        history.pushState({ sheet:id }, '');
+      } else {
+        const i = sheetStack.lastIndexOf(id);
+        // Closed by a button: give back the history step it took.
+        if(i > -1){
+          sheetStack.splice(i, 1);
+          if(history.state && history.state.sheet){ skipPop++; history.back(); }
+        }
+      }
+    }).observe(el, { attributes:true, attributeFilter:['class'] });
+  });
+  window.addEventListener('popstate', () => {
+    if(skipPop){ skipPop--; return; }
+    const id = sheetStack.pop();
+    if(id) SHEET_CLOSERS[id]();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key !== 'Escape') return;
+    const id = sheetStack[sheetStack.length - 1];
+    if(id) SHEET_CLOSERS[id]();
+  });
 
   // ---------- SYNC CONTROLS ----------
   $('syncNowBtn').addEventListener('click', () => syncQueue());
@@ -4582,7 +4825,7 @@
   });
   window.addEventListener('offline', renderSyncState);
   if(document.fonts && document.fonts.ready){
-    document.fonts.ready.then(updateAmountWidth);
+    document.fonts.ready.then(() => { updateAmountWidth(); fitFigures(); });
   }
 
   // ---------- SERVICE WORKER ----------
