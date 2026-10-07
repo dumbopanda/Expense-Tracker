@@ -140,7 +140,7 @@
   }
   button, input, select{font-family:var(--font);}
   /* Money lines up digit for digit wherever it appears. */
-  .amt, .net, .brk-val, .fact .v, .hero-val, .hero-acct .v, .duo .v, .mt-sub b, #amountInput, .sheet-prop .v{
+  .amt, .net, .brk-val, .fact .v, .hero-val, .hero-acct .v, .duo .v, #amountInput, .sheet-prop .v{
     font-variant-numeric:tabular-nums;
   }
   .app{
@@ -245,8 +245,7 @@
     font-size:var(--fs-sm);font-weight:var(--fw-medium);
     color:var(--text-muted);margin-top:var(--sp-1);
   }
-  .top-actions{display:flex;align-items:center;gap:var(--sp-2);flex-shrink:0;}
-  .gear-wrap{position:relative;flex-shrink:0;}
+  .top-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:var(--sp-2);min-width:0;}
   .icon-btn{
     width:var(--h-sm);height:var(--h-sm);padding:0;
     display:flex;align-items:center;justify-content:center;
@@ -257,15 +256,6 @@
   }
   @media (hover:hover){ .icon-btn:not(.active):hover{background:var(--hover);} }
   .icon-btn.active{background:var(--ink);color:var(--lime);}
-  .gear-inner{display:flex;align-items:center;justify-content:center;}
-  .pending-count{
-    position:absolute;top:-2px;right:-2px;
-    min-width:18px;height:18px;padding:0 5px;
-    border-radius:var(--r-pill);
-    background:var(--green);color:var(--on-ink);
-    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);line-height:18px;text-align:center;
-    box-shadow:0 0 0 2px var(--canvas);
-  }
 
   /* =====================================================================
      DOCK — where you are (Stats, History) and the one thing you do
@@ -309,43 +299,28 @@
   .app{padding-bottom:calc(var(--sp-10) + var(--h-md) + env(safe-area-inset-bottom));}
 
   /* =====================================================================
-     ATTENTION — everything that used to be a bar under the nav lives in
-     one panel behind the bell: entries waiting to send, edits to push, a
-     new version, a backup nudge, a new month. The bell carries a count.
+     WHAT NEEDS DOING — small buttons in the header, there only while
+     there is something to do, and each does it in one tap: send what is
+     waiting, push edits, update, back up, acknowledge a new month.
      ===================================================================== */
-  .act-list{
-    display:flex;flex-direction:column;gap:1px;
-    background:var(--line);
-    border-radius:var(--r-panel);box-shadow:var(--shadow-1);overflow:hidden;
+  .pill-act{
+    display:inline-flex;align-items:center;gap:6px;
+    height:var(--h-xs);padding:0 var(--sp-3);
+    border:none;border-radius:var(--r-pill);
+    font-size:var(--fs-xs);font-weight:var(--fw-heavy);
+    cursor:pointer;white-space:nowrap;
+    background:var(--green);color:var(--on-ink);
   }
-  .act-list > *{
-    display:flex;align-items:center;gap:var(--sp-3);
-    min-height:var(--h-lg);
-    padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
-    background:var(--surface);
+  .pill-act[hidden]{display:none;}
+  .pill-act.update{background:var(--ink);color:var(--lime);}
+  .pill-act.push{background:var(--amber);color:var(--ink);}
+  .pill-act.backup{background:var(--surface);color:var(--green-ink);box-shadow:var(--shadow-1);}
+  .pill-act.month{background:var(--track);color:var(--text);}
+  .pill-act:disabled{opacity:.6;cursor:default;}
+  @media (hover:hover){
+    .pill-act.send:not(:disabled):hover{background:var(--green-hover);}
+    .pill-act.backup:hover{background:var(--hover);}
   }
-  .update-bar::before, .backup-bar::before, .edits-bar::before, .sync-dot{
-    content:"";width:8px;height:8px;border-radius:50%;flex-shrink:0;
-    background:var(--green);
-  }
-  .update-bar::before, .edits-bar::before{background:var(--amber-dot);}
-  .update-label, .backup-label, .sync-label, .edits-bar .eb-label{
-    flex:1;min-width:0;
-    font-size:var(--fs-md);font-weight:var(--fw-medium);line-height:var(--lh-snug);
-    color:var(--text);
-  }
-  .edits-bar .eb-label{font-weight:var(--fw-bold);}
-  .edits-bar .eb-hint{display:block;margin-top:2px;font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);}
-  /* Offline is a normal state here, not a failure — the entry is already
-     safe on the device. */
-  .sync-bar.is-offline .sync-dot{background:var(--text-faint);}
-  .act-empty{
-    display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);
-    padding:var(--sp-6) var(--sp-4);
-    text-align:center;color:var(--text-muted);
-    font-size:var(--fs-md);font-weight:var(--fw-medium);
-  }
-  .act-empty .icon{width:28px;height:28px;color:var(--green);}
 
   /* EDIT MODE — the one notice that changes what the whole form means, so
      it's the one that's tinted. */
@@ -742,11 +717,6 @@
   }
   .month-title .chev .icon{width:14px;height:14px;stroke-width:2.4;}
   @media (hover:hover){ .month-title:hover .chev{background:var(--ink);color:var(--lime);} }
-  .mt-sub{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);}
-  .mt-sub:empty{display:none;}
-  .mt-sub b{font-size:var(--fs-md);font-weight:var(--fw-heavy);}
-  .mt-sub b.out{color:var(--text);}
-  .mt-sub b.in{color:var(--green);}
 
   /* MONTH PICKER — every month in one list; the chosen one is ticked. */
   .month-list{
@@ -766,23 +736,51 @@
   .month-opt.on{background:var(--mint);color:var(--green-ink);}
   @media (hover:hover){ .month-opt:not(.on):hover{background:var(--hover);} }
 
-  /* DAYS — the date is a label above its card and sticks while that day's
-     rows scroll past. */
-  .day-list{display:flex;flex-direction:column;gap:var(--sp-4);}
-  .day-group{display:flex;flex-direction:column;gap:var(--sp-1);}
+  /* DAYS — a day is one card: its name and date and what it moved sit in
+     the card's own header, so the label belongs to the rows beneath it. */
+  .day-list{display:flex;flex-direction:column;gap:var(--sp-3);}
   .day-head{
-    position:sticky;top:0;z-index:2;
-    display:flex;align-items:baseline;justify-content:space-between;
-    padding:var(--sp-2) var(--sp-1);
-    background:var(--canvas);
+    display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+    padding:var(--sp-3) var(--sp-4);
+    background:var(--hover);
+    border-bottom:1px solid var(--line);
   }
-  .day-head .day{
-    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);
-    letter-spacing:var(--ls-caps);text-transform:uppercase;
-    color:var(--text-muted);
-  }
-  .day-head .net{font-size:var(--fs-sm);font-weight:var(--fw-bold);color:var(--text-muted);}
+  .day-name{display:flex;align-items:baseline;gap:var(--sp-2);min-width:0;}
+  .day-head .day{font-size:var(--fs-lg);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);color:var(--text);}
+  .day-head .day-date{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .day-head .net{flex-shrink:0;font-size:var(--fs-md);font-weight:var(--fw-heavy);color:var(--text-muted);}
+  .day-head .net.out{color:var(--text);}
   .day-head .net.in{color:var(--green);}
+
+  /* MONTH on History — a chip, not a title: the list is the point. */
+  .month-row{display:flex;}
+  .month-chip{
+    display:inline-flex;align-items:center;gap:var(--sp-2);
+    height:var(--h-sm);padding:0 var(--sp-3) 0 var(--sp-3);
+    border:none;border-radius:var(--r-pill);
+    background:var(--surface);color:var(--text);
+    box-shadow:var(--shadow-1);
+    font-size:var(--fs-md);font-weight:var(--fw-bold);
+    cursor:pointer;
+  }
+  .month-chip .icon{width:16px;height:16px;color:var(--text-muted);}
+  .month-chip .chev{width:14px;height:14px;stroke-width:2.4;}
+  @media (hover:hover){ .month-chip:hover{background:var(--hover);} }
+
+  /* OWED TO ME — one number first, then what makes it up. */
+  .owed-sum{
+    padding:var(--sp-4);
+    background:var(--amber-soft);color:var(--amber-ink);
+    border-radius:var(--r-card);
+  }
+  .owed-k{font-size:var(--fs-xs);font-weight:var(--fw-bold);}
+  .owed-v{
+    margin-top:var(--sp-1);
+    font-size:var(--fs-3xl);font-weight:var(--fw-heavy);
+    letter-spacing:var(--ls-display);line-height:var(--lh-tight);
+    color:var(--ink);font-variant-numeric:tabular-nums;
+  }
+  .owed-s{margin-top:var(--sp-1);font-size:var(--fs-sm);font-weight:var(--fw-medium);}
 
   /* ROW — name and amount share the top line; account and category are
      quiet metadata; only states that need a second look get a tag; the
@@ -807,7 +805,8 @@
   }
   .txn .tile.acct-International{background:var(--acct-int-bg);color:var(--acct-int-ink);}
   .txn .tile.acct-Cash{background:var(--acct-cash-bg);color:var(--acct-cash-ink);}
-  .txn .tile.transfer{background:var(--inset);color:var(--text-muted);}
+  .txn .tile.transfer{background:var(--inset);color:var(--text-muted);box-shadow:inset 0 0 0 1.5px var(--line-strong);}
+  .txn.self .name{font-weight:var(--fw-medium);color:var(--text-2);}
   .txn .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
   .txn .line1{display:flex;align-items:baseline;gap:var(--sp-3);}
   .txn .name{
@@ -838,7 +837,8 @@
     font-size:var(--fs-2xs);font-weight:var(--fw-bold);line-height:18px;
     white-space:nowrap;
   }
-  .tag.owed{background:var(--mint);color:var(--green-ink);}
+  .tag.loan-open{background:var(--amber-soft);color:var(--amber-ink);}
+  .tag.loan-done{background:var(--mint);color:var(--green-ink);}
   .tag.held{background:var(--amber-soft);color:var(--amber-ink);}
   .tag.edited{background:var(--amber-soft);color:var(--amber-ink);}
   .tag.settled{background:var(--inset);color:var(--text-muted);}
@@ -1013,6 +1013,16 @@
   .acct-row.stack .s{margin-top:var(--sp-3);}
   .acct-row .grow{flex:1;min-width:0;}
   .acct-row .actions{display:flex;gap:var(--sp-2);flex-shrink:0;}
+  .acc-label{padding:var(--sp-2) var(--sp-1) 0;margin-bottom:calc(-1 * var(--sp-2));}
+  .acc-ico{
+    width:var(--tile);height:var(--tile);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:var(--r-ctl);background:var(--mint);color:var(--green-ink);
+  }
+  .acc-ico .icon{width:var(--icon);height:var(--icon);}
+  .acc-actions{display:flex;gap:var(--sp-2);padding:0 var(--sp-4) var(--sp-4);}
+  .acc-actions .mini-btn{flex:1;height:var(--h-md);}
+  .acc-actions .mini-btn.primary{flex:2;}
   .seg-chips{padding:var(--sp-1);}
   .seg-chips button{height:var(--h-sm);}
   details.fold > summary{
@@ -1137,6 +1147,9 @@
   <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
 </svg>
 <div class="app">
 
@@ -1146,13 +1159,12 @@
       <div class="sub" id="dateSub">—</div>
     </div>
     <div class="top-actions">
-      <div class="gear-wrap">
-        <button type="button" class="icon-btn" id="openActivity" aria-label="Needs your attention">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-bell"/></svg>
-        </button>
-        <span class="pending-count" id="actCount" style="display:none;" aria-hidden="true">0</span>
-      </div>
-      <button type="button" class="icon-btn gear-btn" id="openSettings" aria-label="Settings and sync">
+      <button type="button" class="pill-act update" id="pillUpdate" hidden>Update</button>
+      <button type="button" class="pill-act send" id="pillSend" hidden>Send</button>
+      <button type="button" class="pill-act push" id="pillPush" hidden>Push</button>
+      <button type="button" class="pill-act backup" id="pillBackup" hidden>Back up</button>
+      <button type="button" class="pill-act month" id="pillMonth" hidden>New month</button>
+      <button type="button" class="icon-btn gear-btn" id="openSettings" aria-label="Account, sync and backup">
         <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-user"/></svg>
       </button>
     </div>
@@ -1170,12 +1182,12 @@
         <span>Owed to me</span><span class="badge" id="duesBadge" style="display:none;">0</span>
       </button>
     </div>
-    <div class="month-toggle" id="historyMonthToggle">
-      <button type="button" class="month-title" data-month-picker aria-haspopup="dialog">
+    <div class="month-row" id="historyMonthToggle">
+      <button type="button" class="month-chip" data-month-picker aria-haspopup="dialog">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-calendar"/></svg>
         <span id="monthToggleLabel">—</span>
-        <span class="chev" aria-hidden="true"><svg class="icon" focusable="false"><use href="#i-chev-down"/></svg></span>
+        <svg class="icon chev" aria-hidden="true" focusable="false"><use href="#i-chev-down"/></svg>
       </button>
-      <span class="mt-sub" id="monthToggleSub"></span>
     </div>
     <div id="recentPane"></div>
     <div id="duesPane" style="display:none;"></div>
@@ -1196,10 +1208,28 @@
   <!-- ACCOUNT / SYNC SCREEN — one line per thing. Anything only touched
        when something has gone wrong is folded away. -->
   <div class="account-screen" id="accountScreen" style="display:none;">
-    <h2 class="screen-title">Sync &amp; backup</h2>
+    <h2 class="screen-title">Account</h2>
 
+    <div class="overline acc-label">Backup</div>
     <div class="panel">
       <div class="acct-row">
+        <span class="acc-ico"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-download"/></svg></span>
+        <div class="grow">
+          <div class="k">Entries on this device</div>
+          <div class="s" id="backupStatus">—</div>
+        </div>
+      </div>
+      <div class="acc-actions">
+        <button type="button" class="mini-btn primary" id="exportBtn">Save a backup</button>
+        <button type="button" class="mini-btn" id="importBtn">Restore</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none;" aria-label="Choose a backup file">
+      </div>
+    </div>
+
+    <div class="overline acc-label">Sending</div>
+    <div class="panel">
+      <div class="acct-row">
+        <span class="acc-ico"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-send"/></svg></span>
         <div class="grow">
           <div class="k">Waiting to be sent</div>
           <div class="s" id="queueSummary">Nothing waiting</div>
@@ -1217,21 +1247,12 @@
       </div>
     </div>
 
+    <div class="overline acc-label">Sheet</div>
     <div class="panel">
       <div class="acct-row">
+        <span class="acc-ico"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-table"/></svg></span>
         <div class="grow">
-          <div class="k">Backup</div>
-          <div class="s" id="backupStatus">—</div>
-        </div>
-        <div class="actions">
-          <button type="button" class="mini-btn" id="importBtn">Restore</button>
-          <button type="button" class="mini-btn primary" id="exportBtn">Save</button>
-        </div>
-        <input type="file" id="importFile" accept="application/json,.json" style="display:none;" aria-label="Choose a backup file">
-      </div>
-      <div class="acct-row">
-        <div class="grow">
-          <div class="k">The sheet</div>
+          <div class="k">This month's sheet</div>
           <div class="s" id="monthSummary">—</div>
         </div>
         <button type="button" class="mini-btn" id="refreshBtn">Re-read</button>
@@ -1475,40 +1496,40 @@
   </div>
 </div>
 
-<!-- NEEDS ATTENTION — every bar that used to sit under the nav -->
-<div class="modal-overlay" id="activitySheet" role="dialog" aria-modal="true" aria-labelledby="activityTitle">
+<!-- WHAT NEEDS DOING — the app flips these on and off as things happen (an
+     entry to send, an edit to push, a new version, a backup due, a new
+     month). They are never shown as bars: the header pills mirror them and
+     do the work in one tap. -->
+<div id="actList" hidden aria-hidden="true">
+  <div class="sync-bar" id="syncBar" style="display:none;">
+    <span class="sync-label" id="syncLabel">—</span>
+    <button type="button" id="syncNowBtn">Send to sheet</button>
+  </div>
+  <div class="edits-bar" id="editsBar" style="display:none;">
+    <span id="editsLabel">—</span><span id="editsHint"></span>
+    <button type="button" id="pushEditsBtn">Push</button>
+  </div>
+  <div class="update-bar" id="updateBar" style="display:none;">
+    <button type="button" id="updateBtn">Reload</button>
+  </div>
+  <div class="backup-bar" id="backupBar" style="display:none;">
+    <button type="button" id="backupNowBtn">Save file</button>
+  </div>
+  <div class="update-bar" id="monthBar" style="display:none;">
+    <span id="monthLabel">—</span>
+    <button type="button" id="monthAckBtn">Done</button>
+  </div>
+</div>
+
+<!-- NEW MONTH — a reminder with one thing to do -->
+<div class="modal-overlay" id="monthNoteSheet" role="dialog" aria-modal="true" aria-labelledby="monthNoteTitle">
   <div class="modal">
-    <button type="button" class="sheet-close" id="activityCloseBtn" aria-label="Close"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
-    <div class="sheet-title" id="activityTitle">Needs attention</div>
-    <div id="actListWrap">
-      <div class="act-list" id="actList">
-        <div class="sync-bar" id="syncBar" style="display:none;">
-          <span class="sync-dot"></span>
-          <span class="sync-label" id="syncLabel">—</span>
-          <button type="button" class="btn-sm" id="syncNowBtn">Send to sheet</button>
-        </div>
-        <div class="edits-bar" id="editsBar" style="display:none;">
-          <div class="eb-label"><span id="editsLabel">—</span><span class="eb-hint" id="editsHint"></span></div>
-          <button type="button" class="btn-sm" id="pushEditsBtn">Push</button>
-        </div>
-        <div class="update-bar" id="updateBar" style="display:none;" role="status">
-          <span class="update-label">A newer version is ready</span>
-          <button type="button" class="btn-sm" id="updateBtn">Reload</button>
-        </div>
-        <div class="backup-bar" id="backupBar" style="display:none;" role="status">
-          <span class="backup-label" id="backupLabel">Back up today's entries</span>
-          <button type="button" class="btn-sm quiet" id="backupLaterBtn">Later</button>
-          <button type="button" class="btn-sm" id="backupNowBtn">Save file</button>
-        </div>
-        <div class="update-bar" id="monthBar" style="display:none;" role="status">
-          <span class="update-label" id="monthLabel">—</span>
-          <button type="button" class="btn-sm" id="monthAckBtn">Done</button>
-        </div>
-      </div>
-    </div>
-    <div class="act-empty" id="actEmpty">
-      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>
-      <span>All caught up</span>
+    <button type="button" class="sheet-close" id="monthNoteCloseBtn" aria-label="Close"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+    <div class="sheet-title" id="monthNoteTitle">New month</div>
+    <p class="sheet-line" id="monthNoteText">—</p>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-outline" id="monthNoteLaterBtn">Not yet</button>
+      <button type="button" class="btn btn-save" id="monthNoteDoneBtn">Done</button>
     </div>
   </div>
 </div>
@@ -1628,8 +1649,6 @@
   const LS_NAMES = 'ledger.names.v1';
   const SHEET_CACHE_MONTHS = 12;
   const LS_BACKUP = 'ledger.lastBackup.v1';
-  const LS_SNOOZE = 'ledger.backupSnooze.v1';
-  const BACKUP_HOUR = 22;
   const LS_MONTHACK = 'ledger.monthAck.v1';
   const LS_CONFIRM = 'ledger.requireConfirm.v1';
   const CONFIRM_TOKEN = 'LEDGER_OK';
@@ -1720,18 +1739,13 @@
     renderStats();
   }
 
-  // The month is the screen's title on both History and Stats; this keeps
-  // the two in step without either screen owning the state. History's title
-  // also carries the month's headline numbers, so the list has something to
-  // sit under; Stats shows its own figures below.
+  // The month is a title on Stats and a chip on History; this keeps the two
+  // in step without either screen owning the state. Totals live on Stats
+  // only — History is the list.
   function renderMonthToggles(){
     const off = state.monthOffset;
     $('monthToggleLabel').textContent = monthLabelFor(off);
     $('statsMonthLabel').textContent = monthLabelFor(off);
-    const t = monthTotals(off);
-    $('monthToggleSub').innerHTML = t.count
-      ? `<b class="out">₹${money(t.spent)}</b> spent · <b class="in">₹${money(t.income)}</b> in`
-      : '';
   }
 
   // Every month in one list, the chosen one ticked.
@@ -2595,6 +2609,7 @@
   function saveHistory(){
     if(state.history.length > HIST_MAX) state.history = state.history.slice(-HIST_MAX);
     lsSet(LS_HIST, state.history);
+    renderBackupBar();
   }
   function recordHistory(entries){
     entries.forEach(e => state.history.push({
@@ -2816,6 +2831,9 @@
       btn.disabled = state.syncing || offline;
       btn.textContent = state.syncing ? 'Sending…' : offline ? 'Waiting for signal' : 'Send to sheet';
     }
+    const pill = $('pillSend');
+    pill.textContent = state.syncing ? 'Sending…' : offline ? `${n} waiting · offline` : `Send ${n}`;
+    pill.disabled = state.syncing || offline;
   }
 
   $('entryForm').addEventListener('submit', async (e) => {
@@ -3050,25 +3068,36 @@
       maximumFractionDigits: 2
     });
   }
-  function dayLabel(iso){
-    if(iso === isoToday(0)) return 'Today';
-    if(iso === isoToday(-1)) return 'Yesterday';
+  // A day is a name and a date: "Today / Wednesday, 7 Oct", "Monday / 5 Oct".
+  function dayParts(iso){
     const d = new Date(iso + 'T00:00:00');
     const sameYear = d.getFullYear() === new Date().getFullYear();
-    return d.toLocaleDateString('en-GB', sameYear
-      ? { weekday:'short', day:'numeric', month:'short' }
+    const date = d.toLocaleDateString('en-GB', sameYear
+      ? { day:'numeric', month:'short' }
       : { day:'numeric', month:'short', year:'numeric' });
+    const weekday = d.toLocaleDateString('en-GB', { weekday:'long' });
+    if(iso === isoToday(0)) return { main:'Today', sub:`${weekday}, ${date}` };
+    if(iso === isoToday(-1)) return { main:'Yesterday', sub:`${weekday}, ${date}` };
+    return { main:weekday, sub:date };
   }
   const esc = (t) => String(t == null ? '' : t)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+  // The name the form gives both legs of a self transfer.
+  const isSelfName = (r) => /^self transfer$/i.test(String(r.expenseName || '').trim());
+
+  // Two rows are the two legs of one self transfer when they share an id
+  // and swap debit and credit. Rows typed here share the moment they were
+  // made; rows read back from the sheet do not (each carries its own row
+  // number), so for those the name is what says they belong together.
   function foldTransfers(rows){
     const out = [];
     const used = new Set();
     rows.forEach((r, i) => {
       if(used.has(i)) return;
       const j = rows.findIndex((o, k) => k > i && !used.has(k) &&
-        o.id === r.id && o.at === r.at &&
+        o.id === r.id &&
+        (o.at === r.at || (isSelfName(o) && isSelfName(r) && o.dateISO === r.dateISO)) &&
         Number(o.debit || 0) === Number(r.credit || 0) &&
         Number(o.credit || 0) === Number(r.debit || 0));
       if(j > -1){
@@ -3094,6 +3123,15 @@
   // line, and everything that used to be crushed into a single ellipsised
   // strip — account, category, whether it is owed, whether the sheet has it
   // — becomes tags on the line below, which wrap instead of being cut off.
+  // Three kinds of row, told apart at a glance:
+  //   a payment      account-coloured letter tile
+  //   a self transfer  grey tile with the swap icon, "Domestic → Cash" —
+  //                    your own money moving, nothing to track
+  //   a loan (Y item)  the same tile, plus a tag saying where it stands:
+  //                    Owed (still out), Settled, or Paid back (the way in)
+  let openYSet = null;
+  const isOpenY = (id) => (openYSet || (openYSet = new Set(computeOpenYIds()))).has(id);
+
   function txnRow(r){
     const acct = esc(r.account || '');
     const members = r.members || [r];
@@ -3105,15 +3143,21 @@
       : `<div class="amt ${r.isOut ? 'out' : 'in'}">${r.isOut ? '−' : '+'} ₹${money(r.amount)}</div>`;
 
     // Account and category are quiet text; only states that need a second
-    // look (owed, not sent, edited) are drawn as coloured tags.
-    const meta = [r.transfer ? `${acct} → ${esc(r.toAccount || '')}` : acct];
-    if(r.txnType) meta.push(esc(r.txnType));
+    // look (loan standing, not sent, edited) are drawn as coloured tags.
+    const meta = r.transfer
+      ? [`${acct} → ${esc(r.toAccount || '')}`]
+      : [acct].concat(r.txnType ? [esc(r.txnType)] : []);
     const tags = [`<span class="meta">${meta.join(' · ')}</span>`];
-    if(!r.transfer && String(r.id || '').startsWith('Y')) tags.push('<span class="tag owed">Owed</span>');
+    if(!r.transfer && String(r.id || '').startsWith('Y')){
+      const open = isOpenY(r.id);
+      tags.push(r.isOut
+        ? (open ? '<span class="tag loan-open">Owed</span>' : '<span class="tag loan-done">Settled</span>')
+        : (open ? '<span class="tag loan-open">Borrowed</span>' : '<span class="tag loan-done">Paid back</span>'));
+    }
     if(members.some(m => !m.sent)) tags.push('<span class="tag held">on this device</span>');
     if(members.some(hasPendingEdit)) tags.push('<span class="tag edited">edited</span>');
 
-    return `<div class="txn tappable" data-key="${esc(r.uid)}" role="button" tabindex="0">
+    return `<div class="txn tappable${r.transfer ? ' self' : ''}" data-key="${esc(r.uid)}" role="button" tabindex="0">
       <div class="${tile}">${mark}</div>
       <div class="body">
         <div class="line1"><div class="name">${name}</div>${amt}</div>
@@ -3221,6 +3265,7 @@
   }
 
   function renderRecent(){
+    openYSet = null;
     const pane = $('recentPane');
     const off = state.monthOffset;
     const ms = monthState(off);
@@ -3253,9 +3298,13 @@
       const net = rows.reduce((n, r) => n + (r.transfer ? 0 : (r.isOut ? -r.amount : r.amount)), 0);
       const netText = net === 0 ? '' : (net > 0 ? '+ ₹' : '− ₹') + money(Math.abs(net));
       const netCls = net === 0 ? '' : (net > 0 ? ' in' : ' out');
-      cards += `<section class="day-group">
-        <div class="day-head"><span class="day">${dayLabel(iso)}</span><span class="net${netCls}">${netText}</span></div>
-        <div class="ledger-card">${rows.map(txnRow).join('')}</div>
+      const dp = dayParts(iso);
+      cards += `<section class="day-group ledger-card">
+        <div class="day-head">
+          <div class="day-name"><span class="day">${dp.main}</span><span class="day-date">${dp.sub}</span></div>
+          <span class="net${netCls}">${netText}</span>
+        </div>
+        ${rows.map(txnRow).join('')}
       </section>`;
     });
 
@@ -3293,6 +3342,7 @@
     if(!n) return;
     $('editsLabel').textContent = `${n === 1 ? '1 edit' : n + ' edits'} not in the sheet yet`;
     $('editsHint').textContent = `Shown here already · pushing costs ${editsOpsCost()} Make operations`;
+    $('pillPush').textContent = `Push ${n}`;
   }
   $('pushEditsBtn').addEventListener('click', async () => {
     const btn = $('pushEditsBtn');
@@ -3742,7 +3792,12 @@
     // A device-known open id with no local row data (opened before this
     // device had the sheet) still belongs in the list.
     const ids = new Set([...Object.keys(byId), ...state.openYIds]);
-    return [...ids].map(id => {
+    return [...ids].filter(id => {
+      // A self transfer is your own money moving between your accounts. It
+      // closes itself the moment it is made, so there is nothing to track.
+      const legs = byId[id] || [];
+      return !(legs.length && foldTransfers(legs).every(r => r.transfer));
+    }).map(id => {
       const legs = (byId[id] || []).sort((a,b) => a.at - b.at);
       const open = legs[0] || null;
       const close = legs.length > 1 ? legs[legs.length - 1] : null;
@@ -3775,14 +3830,16 @@
       <div class="body"><div class="line1"><div class="name">${esc(it.name)}</div></div>
       <div class="note">Opened before this device had a record of it</div></div>
     </div>`;
-    const dates = closed
-      ? `Opened ${esc(formatDisplayDate(it.openDateISO))} · Closed ${esc(formatDisplayDate(it.closeDateISO))}`
-      : `Opened ${esc(formatDisplayDate(it.openDateISO))}`;
+    const lent = esc(formatDisplayDate(it.openDateISO));
+    const days = daysAgo(it.openDateISO);
+    const when = closed
+      ? `${lent} → ${esc(formatDisplayDate(it.closeDateISO))}`
+      : `${lent} · ${days <= 0 ? 'today' : days === 1 ? '1 day' : days + ' days'}`;
     return `<div class="${cls}"${attrs}>
       <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
       <div class="body">
         <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
-        <div class="tags"><span class="meta">${acct} · ${dates}</span></div>
+        <div class="tags"><span class="meta">${acct} · ${when}</span>${closed ? '<span class="tag loan-done">Settled</span>' : ''}</div>
       </div>
     </div>`;
   }
@@ -3793,17 +3850,21 @@
     state.rowIndex[norm.uid] = norm;
   }
 
-  // One list, one place to look — open items on top in their own card,
-  // closed ones below in theirs, grayed out. Never two tabs to check.
-  function duesSection(label, list, closed){
+  // One list, one place to look — what is still out on top, what has come
+  // back below it, grayed. Same card and header as a day in Recent.
+  function duesSection(main, sub, list, closed){
     if(!list.length) return '';
-    return `<section class="day-group">
-      <div class="day-head"><span class="day">${esc(label)}</span><span class="net">${list.length}</span></div>
-      <div class="ledger-card">${list.map(it => duesRow(it, closed)).join('')}</div>
+    return `<section class="day-group ledger-card">
+      <div class="day-head">
+        <div class="day-name"><span class="day">${esc(main)}</span><span class="day-date">${esc(sub)}</span></div>
+        <span class="net">${list.length}</span>
+      </div>
+      ${list.map(it => duesRow(it, closed)).join('')}
     </section>`;
   }
 
   function renderDues(){
+    openYSet = null;
     const pane = $('duesPane');
     const items = yGroups();
     const openList = items.filter(it => !it.closed)
@@ -3816,7 +3877,7 @@
     if(!items.length){
       pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
         <h2>Nothing here yet</h2>
-        <p>Anything you mark "Yes, I'll get this back" shows up here, open or settled.</p>
+        <p>Money you lend or pay out and expect back shows up here until it returns. Transfers between your own accounts don't.</p>
       </div></div>`;
       return;
     }
@@ -3828,7 +3889,15 @@
 
     items.forEach(it => { registerDueRow(it.openRow); registerDueRow(it.closeRow); });
 
-    pane.innerHTML = `<div class="day-list">${duesSection('Open', openList, false)}${duesSection('Closed', closedList, true)}</div>`
+    const owed = openList.reduce((n, it) => n + (it.amount || 0), 0);
+    const summary = `<div class="owed-sum">
+      <div class="owed-k">Still to come back</div>
+      <div class="owed-v">${owed ? '₹' + money(owed) : 'Nothing'}</div>
+      <div class="owed-s">${openList.length === 0 ? 'Everything has come back' : openList.length === 1 ? '1 open item' : openList.length + ' open items'}</div>
+    </div>`;
+
+    pane.innerHTML = summary
+      + `<div class="day-list">${duesSection('Open', 'Not back yet', openList, false)}${duesSection('Settled', 'Came back', closedList, true)}</div>`
       + `<div class="scope-note">${esc(scope)}</div>`;
     wireRows(pane);
   }
@@ -4006,6 +4075,7 @@
 
     const bal = balancesFor(rows);
     const { spent, income } = monthTotals(off);
+    const lent = sum(spendRows(rows).filter(isY));
     const have = Object.keys(bal).reduce((n, k) => n + bal[k], 0);
 
     const names = ACCOUNTS.concat(Object.keys(bal).filter(k => !ACCOUNTS.includes(k)));
@@ -4032,12 +4102,12 @@
         <div>
           <div class="k"><i class="o" aria-hidden="true"><svg class="icon"><use href="#i-minus"/></svg></i>Spent</div>
           <div class="v">₹${money(spent)}</div>
-          <div class="s">this month</div>
+          <div class="s">${lent ? `incl. ₹${money(lent)} not back yet` : 'this month'}</div>
         </div>
         <div>
           <div class="k"><i class="n" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></i>Money in</div>
           <div class="v">₹${money(income)}</div>
-          <div class="s">transfers left out</div>
+          <div class="s">one-way payments in</div>
         </div>
       </div>
       ${breakdownPanel(rows)}
@@ -4156,42 +4226,19 @@
       : `${n} ${n === 1 ? 'entry' : 'entries'} · ${new Date(last).toLocaleString('en-GB', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`;
   }
 
-  function lastBackupCutoff(){
-    const now = new Date();
-    const cut = new Date(now);
-    cut.setHours(BACKUP_HOUR, 0, 0, 0);
-    if(cut > now) cut.setDate(cut.getDate() - 1);
-    return cut.getTime();
-  }
-  const BACKUP_WINDOW_MS = 12 * 60 * 60 * 1000;
+  // A backup is due whenever there is an entry newer than the last one
+  // saved — not at a fixed hour — and the header offers it as a button.
   function backupDue(){
-    if(!state.history.length) return false;
-    const cut = lastBackupCutoff();
-    if(Date.now() - cut > BACKUP_WINDOW_MS) return false;
-    return lsGet(LS_BACKUP, 0) < cut && lsGet(LS_SNOOZE, 0) < cut;
+    const last = lsGet(LS_BACKUP, 0);
+    return state.history.some(h => (h.at || 0) > last);
   }
   function hideBackupBar(){ $('backupBar').style.display = 'none'; }
   function renderBackupBar(){
     $('backupBar').style.display = backupDue() ? 'flex' : 'none';
   }
 
-  let backupTimer = null;
-  function scheduleBackupCheck(){
-    clearTimeout(backupTimer);
-    renderBackupBar();
-    const next = new Date();
-    next.setHours(BACKUP_HOUR, 0, 5, 0);
-    if(next <= new Date()) next.setDate(next.getDate() + 1);
-    backupTimer = setTimeout(() => { renderBackupBar(); scheduleBackupCheck(); },
-                             Math.min(next - Date.now(), 6 * 60 * 60 * 1000));
-  }
-
   $('backupNowBtn').addEventListener('click', exportBackup);
   $('exportBtn').addEventListener('click', exportBackup);
-  $('backupLaterBtn').addEventListener('click', () => {
-    lsSet(LS_SNOOZE, Date.now());
-    hideBackupBar();
-  });
   $('importBtn').addEventListener('click', () => $('importFile').click());
   $('importFile').addEventListener('change', (e) => {
     const f = e.target.files && e.target.files[0];
@@ -4328,7 +4375,9 @@
   function openAdd(){
     $('addSheet').classList.add('open');
     document.body.classList.add('sheet-open');
-    setTimeout(() => amountInput.focus({ preventScroll:true }), 60);
+    // Always from the top, whatever the last visit scrolled to. The keyboard
+    // stays down until you tap the amount yourself.
+    document.querySelector('.sheet-scroll').scrollTop = 0;
   }
   function closeAdd(){
     // Leaving mid-edit abandons the edit, so the form is never left
@@ -4361,26 +4410,32 @@
     btn.addEventListener('click', () => showScreen(btn.dataset.tab));
   });
   $('openAdd').addEventListener('click', openAdd);
+  // The whole dark card is the amount field, not just the digits.
+  document.querySelector('.amount-card').addEventListener('click', (e) => {
+    if(!e.target.closest('.kind-toggle')) amountInput.focus();
+  });
   const dismissAdd = () => { if(state.editing) cancelEdit(); else closeAdd(); };
   $('addCloseBtn').addEventListener('click', dismissAdd);
   $('addSheet').addEventListener('click', (e) => { if(e.target === $('addSheet')) dismissAdd(); });
   $('openSettings').addEventListener('click', () => showScreen('account'));
 
-  // ---------- NEEDS ATTENTION ----------
-  // Every notice (entries to send, edits to push, a new version, a backup
-  // nudge, a new month) lives in one panel behind the bell. The notices
-  // keep switching themselves on and off exactly as before; this just
-  // counts whichever are showing.
-  function renderActivity(){
-    const n = [...$('actList').children].filter(el => el.style.display !== 'none').length;
-    $('actCount').style.display = n ? 'block' : 'none';
-    $('actCount').textContent = n;
-    $('actListWrap').hidden = !n;
-    $('actEmpty').style.display = n ? 'none' : 'flex';
+  // ---------- WHAT NEEDS DOING ----------
+  // The app switches the five hidden notices on and off as things happen
+  // (an entry to send, an edit to push, a new version, a backup due, a new
+  // month). The header pills mirror them, and a tap does the work — nothing
+  // to open first.
+  function renderPills(){
+    const on = (bar) => $(bar).style.display !== 'none';
+    $('pillUpdate').hidden = !on('updateBar');
+    $('pillSend').hidden = !on('syncBar');
+    $('pillPush').hidden = !on('editsBar');
+    $('pillBackup').hidden = !on('backupBar');
+    $('pillMonth').hidden = !on('monthBar');
   }
-  new MutationObserver(renderActivity)
+  new MutationObserver(renderPills)
     .observe($('actList'), { attributes:true, attributeFilter:['style'], subtree:true });
-  renderActivity();
+  [['pillSend', 'syncNowBtn'], ['pillPush', 'pushEditsBtn'], ['pillUpdate', 'updateBtn'], ['pillBackup', 'backupNowBtn']]
+    .forEach(([pill, btn]) => $(pill).addEventListener('click', () => $(btn).click()));
 
   function wireOverlay(sheetId, openBtnId, closeBtnId, onOpen){
     const sheet = $(sheetId);
@@ -4388,7 +4443,19 @@
     $(closeBtnId).addEventListener('click', () => sheet.classList.remove('open'));
     sheet.addEventListener('click', (e) => { if(e.target === sheet) sheet.classList.remove('open'); });
   }
-  wireOverlay('activitySheet', 'openActivity', 'activityCloseBtn', renderActivity);
+
+  // The new-month reminder has a sentence to read and one thing to confirm,
+  // so it opens a small sheet rather than acting on tap.
+  $('pillMonth').addEventListener('click', () => {
+    $('monthNoteText').textContent = $('monthLabel').textContent;
+    $('monthNoteSheet').classList.add('open');
+  });
+  $('monthNoteDoneBtn').addEventListener('click', () => {
+    $('monthAckBtn').click();
+    $('monthNoteSheet').classList.remove('open');
+  });
+  $('monthNoteLaterBtn').addEventListener('click', () => $('monthNoteSheet').classList.remove('open'));
+  wireOverlay('monthNoteSheet', null, 'monthNoteCloseBtn');
 
   // ---------- SYNC CONTROLS ----------
   $('syncNowBtn').addEventListener('click', () => syncQueue());
@@ -4487,7 +4554,7 @@
   setSyncMode(loadSyncMode());
   renderSyncState();
   renderBackupStatus();
-  scheduleBackupCheck();
+  renderBackupBar();
   setRequireConfirm(lsGet(LS_CONFIRM, false));
   renderMonthBar();
   renderMonthToggles();
@@ -4496,7 +4563,7 @@
   updateAmountWidth();
   updateCTA();
   renderEditsItem();
-  renderActivity();
+  renderPills();
   showScreen('stats');
 
   if(state.queue.length && navigator.onLine && state.syncMode !== 'manual'){
