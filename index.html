@@ -12,69 +12,135 @@
 <meta name="apple-mobile-web-app-title" content="Ledger">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* =====================================================================
+     LEDGER DESIGN TOKENS
+     Every value below is used by name. Nothing further down this sheet
+     carries a raw colour, size, space, radius, height or shadow.
+     ===================================================================== */
   :root{
-    --canvas-light:#F4F1EA;
-    --canvas-dark:#121614;
-    --green:#0E7955;
-    --green-deep:#0A6446;
-    --lime:#CCF244;
+    /* COLOUR — surfaces */
+    --canvas:#F4F1EA;          /* the page */
+    --surface:#FFFFFF;         /* cards, sheets' inner panels */
+    --inset:#F4F1EA;           /* fields and tracks sitting inside a card */
+    --track:#E9E5DB;           /* a track sitting straight on the page */
+    --hover:#FAF8F3;           /* row / quiet-button hover on white */
+    --ink:#121614;             /* the dark brand surface: nav, hero */
+    --ink-hover:#000000;
+
+    /* COLOUR — text */
+    --text:#181C1A;
+    --text-2:#3E423F;          /* user-written content (notes) */
+    --text-muted:#69665F;      /* labels, metadata — 4.6:1 on white */
+    --text-faint:#8E8A80;      /* ranks, placeholders — never sole carrier of meaning */
+    --text-ghost:#CFCBC0;      /* empty amount */
+    --on-ink:#FFFFFF;
+    --on-ink-muted:#9EAD9C;    /* sage: secondary text on the dark surface */
+
+    /* COLOUR — brand & meaning */
+    --lime:#CCF244;            /* selection on dark: active tab, credit/debit */
+    --green:#0E7955;           /* the primary action; money in */
+    --green-hover:#0A6446;
+    --green-ink:#14614A;
     --mint:#DDF3E4;
+    --green-bar:#8CCBA9;
     --amber:#FFDE73;
-    --white:#FFFFFF;
+    --amber-soft:#FFF1BF;
+    --amber-ink:#6E571A;
+    --amber-dot:#E0B43A;
     --red:#D63F3F;
-    --red-soft:#FF9B9B;
-    --text-dark:#181C1A;
-    --text-muted:#69665F;
-    --text-faint:#8E8A80;
-    --sage:#9EAD9C;
-    --border:#E9E6DE;
-    /* A second, darker rule for the one place a border has to separate two
-       whole objects rather than two rows inside one. */
-    --border-strong:#D4D0C4;
-    /* Fill for anything sitting inside a white card: fields, tracks, chips. */
-    --inset:#F4F1EA;
+    --red-soft:#FBE3E3;
+    --red-on-ink:#FF9B9B;
 
-    /* RADIUS SCALE — the shape tells you what kind of thing it is.
-         sheet   26  bottom sheets
-         card    20  surfaces that hold other things
-         input   12  fields and the buttons that sit beside them
-         ctl     10  small buttons, segment thumbs, icon tiles
-         pill        tags, badges, the nav — nothing else              */
-    --radius-sheet:26px;
-    --radius-card:20px;
-    --radius-input:12px;
-    --radius-ctl:10px;
-    --radius-pill:9999px;
+    /* COLOUR — the three accounts, one swatch family each */
+    --acct-dom-bg:var(--mint);        --acct-dom-ink:var(--green-ink);   --acct-dom-dot:#7FD3A4;
+    --acct-int-bg:var(--amber-soft);  --acct-int-ink:var(--amber-ink);   --acct-int-dot:var(--amber);
+    --acct-cash-bg:#EEE9DD;           --acct-cash-ink:#6B6045;           --acct-cash-dot:#D9D2BF;
 
-    /* ELEVATION — cards lift off the cream instead of being outlined. */
+    /* LINES */
+    --line:#E9E6DE;            /* between rows inside one object */
+    --line-strong:#D4D0C4;     /* outlines, switch-off */
+
+    /* TYPE — one family, ten sizes, four weights */
+    --font:'Plus Jakarta Sans', system-ui, sans-serif;
+    --fs-2xs:11px;   /* tags, badges, tiny meta */
+    --fs-xs:12px;    /* labels, metadata, captions */
+    --fs-sm:13px;    /* secondary text, small buttons */
+    --fs-md:14px;    /* body, buttons, table values */
+    --fs-lg:15px;    /* row names, card titles */
+    --fs-input:16px; /* fields (keeps iOS from zooming) */
+    --fs-xl:20px;    /* screen & sheet titles */
+    --fs-2xl:24px;   /* app title, secondary figures */
+    --fs-3xl:40px;   /* hero figure */
+    --fs-4xl:48px;   /* the amount being typed */
+    --fw-regular:500; --fw-medium:600; --fw-bold:700; --fw-heavy:800;
+    --ls-display:-0.03em;  /* big figures */
+    --ls-title:-0.02em;    /* titles */
+    --ls-caps:0.06em;      /* small uppercase labels */
+    --lh-tight:1.15; --lh-snug:1.35; --lh-body:1.5;
+
+    /* SPACE — a 4px grid */
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+    --gutter:var(--sp-4);
+
+    /* SIZE — control heights */
+    --h-xs:32px;   /* chips, small buttons inside notices and rows */
+    --h-sm:40px;   /* segment thumbs, icon buttons, row buttons */
+    --h-md:48px;   /* fields, tracks, secondary buttons */
+    --h-lg:54px;   /* primary actions */
+    --tile:36px;   /* row icon tiles */
+    --icon:18px;   /* every stroke icon */
+
+    /* RADIUS — the shape says what kind of thing it is */
+    --r-sheet:26px;  /* bottom sheets */
+    --r-card:20px;   /* surfaces that hold other things */
+    --r-panel:14px;  /* notices, nested panels, big buttons */
+    --r-input:12px;  /* fields, tracks */
+    --r-ctl:10px;    /* thumbs, small buttons, tiles */
+    --r-xs:6px;      /* icon chips */
+    --r-pill:9999px; /* nav, tags, badges, toggles */
+
+    /* ELEVATION */
     --shadow-1:0 1px 2px rgba(24,28,26,.04), 0 2px 10px -4px rgba(24,28,26,.08);
     --shadow-2:0 1px 2px rgba(24,28,26,.05), 0 10px 28px -14px rgba(24,28,26,.28);
-    --shadow-thumb:0 1px 2px rgba(24,28,26,.18);
+    --shadow-thumb:0 1px 2px rgba(24,28,26,.12), 0 2px 6px -2px rgba(24,28,26,.12);
+    --shadow-cta:0 1px 2px rgba(14,121,85,.3), 0 10px 22px -10px rgba(14,121,85,.6);
+    --shadow-toast:0 12px 28px -10px rgba(0,0,0,.45);
     --ring:0 0 0 3px rgba(14,121,85,.18);
+    --ring-error:0 0 0 3px rgba(214,63,63,.14);
+    --scrim:rgba(18,22,20,.5);
+    --on-ink-line:rgba(255,255,255,.1);
+    --on-ink-hover:rgba(255,255,255,.06);
 
-    --gutter:16px;
+    /* MOTION */
     --ease:cubic-bezier(.2,.8,.2,1);
-    --fast:120ms;
-    --med:200ms;
+    --t-fast:120ms;  /* colour, press */
+    --t-med:200ms;   /* shadows, small moves */
+    --t-slow:280ms;  /* screens, sheets */
 
-    --font:'Plus Jakarta Sans', system-ui, sans-serif;
     /* One knob for the whole interface. Everything is drawn at full size and
        then rendered down, the way browser zoom works — so every proportion,
        gap and radius in the file stays exactly as written. */
     --ui-scale:0.9;
   }
+
+  /* =====================================================================
+     BASE
+     ===================================================================== */
   *{box-sizing:border-box;}
   body{
     zoom:var(--ui-scale);
     margin:0;
     font-family:var(--font);
-    background:var(--canvas-light);
-    color:var(--text-dark);
+    font-size:var(--fs-md);
+    line-height:var(--lh-snug);
+    background:var(--canvas);
+    color:var(--text);
     -webkit-tap-highlight-color:transparent;
     -webkit-font-smoothing:antialiased;
   }
+  button, input, select{font-family:var(--font);}
   /* Money lines up digit for digit wherever it appears. */
-  .amt, .net, .st-val, .brk-val, .fact .v, .hero-val, .hero-acct .v, .duo .v, #amountInput{
+  .amt, .net, .brk-val, .fact .v, .hero-val, .hero-acct .v, .duo .v, .mt-sub b, #amountInput, .sheet-prop .v{
     font-variant-numeric:tabular-nums;
   }
   .app{
@@ -84,251 +150,295 @@
     display:flex;
     flex-direction:column;
   }
+  .sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  .icon{width:var(--icon);height:var(--icon);flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
-  /* INTERACTION — every control answers a touch, none of them move the
-     layout around it. */
-  button{transition:background-color var(--fast) var(--ease), color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease), box-shadow var(--med) var(--ease),
-    transform var(--fast) var(--ease), opacity var(--fast) var(--ease);}
+  /* INTERACTION — every control answers a touch; none moves the layout. */
+  button{transition:background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease), box-shadow var(--t-med) var(--ease),
+    transform var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease);}
   button:not(:disabled):active{transform:scale(.97);}
   :focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+  /* Small controls draw at 32px but take a 44px touch. */
+  .btn-sm, .toggle-pill, .sheet-close, .mini-btn{position:relative;}
+  .btn-sm::after, .toggle-pill::after, .sheet-close::after{content:"";position:absolute;inset:-6px;}
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{transition:none !important;animation:none !important;}
     button:not(:disabled):active{transform:none;}
   }
 
-  /* A screen arriving rises a few pixels into place. */
   @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-  #entryForm, .stats-screen, .account-screen{animation:rise .24s var(--ease);}
+  #entryForm, .stats-screen, .account-screen{animation:rise var(--t-slow) var(--ease);}
 
-  /* HEADER */
+  /* =====================================================================
+     BUTTONS — four kinds, used the same way everywhere
+       primary    green, white text      — the one thing to do here
+       secondary  white, lifted          — an alternative
+       quiet      no fill                — dismiss / later
+       danger     white, red text        — destructive
+     Sizes: .btn-sm (32) · .mini-btn (40) · .btn / .cta-save (54)
+     ===================================================================== */
+  .btn-sm{
+    height:var(--h-xs);padding:0 var(--sp-3);
+    border:none;border-radius:var(--r-ctl);
+    font-size:var(--fs-sm);font-weight:var(--fw-bold);
+    cursor:pointer;flex-shrink:0;white-space:nowrap;
+    background:var(--green);color:var(--on-ink);
+  }
+  .btn-sm.quiet{background:transparent;color:var(--text-muted);padding:0 var(--sp-2);}
+  .btn-sm.secondary{background:var(--surface);color:var(--text);box-shadow:var(--shadow-thumb);}
+  @media (hover:hover){
+    .btn-sm:not(.quiet):not(.secondary):not(:disabled):hover{background:var(--green-hover);}
+    .btn-sm.quiet:hover{color:var(--text);}
+  }
+  .btn-sm:disabled{opacity:.6;cursor:default;}
+
+  .mini-btn{
+    flex-shrink:0;
+    height:var(--h-sm);
+    padding:0 var(--sp-4);
+    border:none;
+    border-radius:var(--r-ctl);
+    background:var(--surface);
+    box-shadow:0 0 0 1px var(--line-strong) inset;
+    font-size:var(--fs-sm);font-weight:var(--fw-bold);
+    color:var(--text);cursor:pointer;
+  }
+  .mini-btn.primary{background:var(--green);color:var(--on-ink);box-shadow:none;}
+  @media (hover:hover){
+    .mini-btn:not(:disabled):not(.primary):hover{background:var(--hover);}
+    .mini-btn.primary:not(:disabled):hover{background:var(--green-hover);}
+  }
+  .mini-btn:disabled{opacity:.55;cursor:default;}
+  .mini-btn.primary:disabled{background:var(--inset);color:var(--text-faint);opacity:1;}
+
+  .btn{
+    height:var(--h-lg);
+    border-radius:var(--r-panel);
+    border:none;
+    font-size:var(--fs-input);font-weight:var(--fw-bold);
+    cursor:pointer;
+  }
+  .btn-save{background:var(--green);color:var(--on-ink);}
+  .btn-outline{background:var(--surface);color:var(--text);box-shadow:var(--shadow-1);}
+  .btn-danger{background:var(--surface);color:var(--red);box-shadow:var(--shadow-1);}
+  @media (hover:hover){
+    .btn-save:hover{background:var(--green-hover);}
+    .btn-outline:hover{background:var(--hover);}
+    .btn-danger:hover{background:var(--red-soft);}
+  }
+
+  /* =====================================================================
+     HEADER
+     ===================================================================== */
   .topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:20px var(--gutter) 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+    padding:var(--sp-5) var(--gutter) var(--sp-4);
   }
   .topbar h1{
-    font-size:26px;
-    font-weight:800;
-    margin:0;
-    letter-spacing:-0.6px;
-    line-height:1.1;
-    color:var(--text-dark);
+    font-size:var(--fs-2xl);font-weight:var(--fw-heavy);
+    letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+    margin:0;color:var(--text);
   }
   .topbar .sub{
-    font-size:13px;
-    color:var(--text-muted);
-    margin-top:3px;
-    font-weight:600;
+    font-size:var(--fs-sm);font-weight:var(--fw-medium);
+    color:var(--text-muted);margin-top:var(--sp-1);
   }
-  /* Three layers, same as a tab sitting in the nav track: a black outer
-     fill, a lime ring inside it, and an inner fill that is what actually
-     changes. */
+  /* The account button: a dark disc that turns lime while you're on it —
+     the same selected colour as the nav. */
+  .gear-wrap{position:relative;flex-shrink:0;}
   .gear-btn{
-    padding:4px;
-    width:46px;height:46px;
-    border-radius:var(--radius-pill);
-    background:var(--canvas-dark);
-    border:none;
+    width:var(--h-sm);height:var(--h-sm);padding:0;
+    border-radius:var(--r-pill);border:none;
+    background:var(--ink);color:var(--on-ink-muted);
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
-    flex-shrink:0;
   }
-  .gear-inner{
-    width:100%;height:100%;
-    border-radius:var(--radius-pill);
-    border:2px solid var(--lime);
-    background:var(--canvas-dark);
-    display:flex;align-items:center;justify-content:center;
-    transition:background-color var(--fast) var(--ease);
-  }
-  .gear-btn svg{width:18px;height:18px;stroke:var(--sage);transition:stroke var(--fast) var(--ease);}
-  @media (hover:hover){ .gear-btn:hover svg{stroke:var(--lime);} }
-
-  .gear-wrap{position:relative;flex-shrink:0;}
+  .gear-inner{display:flex;align-items:center;justify-content:center;}
+  .gear-btn svg{width:var(--icon);height:var(--icon);stroke:currentColor;}
+  @media (hover:hover){ .gear-btn:not(.active):hover{color:var(--lime);} }
+  .gear-btn.active{background:var(--lime);color:var(--ink);}
   .pending-count{
-    position:absolute;
-    top:-4px;right:-4px;
-    min-width:20px;height:20px;
-    padding:0 5px;
-    border-radius:var(--radius-pill);
-    background:var(--lime);
-    color:var(--text-dark);
-    font-size:11px;font-weight:800;
+    position:absolute;top:calc(-1 * var(--sp-1));right:calc(-1 * var(--sp-1));
+    min-width:20px;height:20px;padding:0 5px;
+    border-radius:var(--r-pill);
+    background:var(--lime);color:var(--ink);
+    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);
     align-items:center;justify-content:center;
-    border:2px solid var(--canvas-light);
+    box-shadow:0 0 0 2px var(--canvas);
   }
 
-  /* NOTICES — update, backup, new month, sync. One family: a slim strip,
-     a short line, one small action. They inform; they don't take over. */
-  .update-bar, .backup-bar, .sync-bar{
-    margin:0 var(--gutter) 8px;
-    padding:8px 8px 8px 14px;
-    min-height:48px;
-    border-radius:14px;
-    display:flex;align-items:center;gap:10px;
-  }
-  .update-bar{background:var(--amber);}
-  .backup-bar{background:var(--mint);}
-  .sync-bar{background:var(--mint);margin:10px var(--gutter) 0;}
-  .update-label, .backup-label, .sync-label{
-    flex:1;min-width:0;
-    font-size:13px;font-weight:600;line-height:1.35;
-  }
-  .update-label{color:#5A4708;font-weight:700;}
-  .backup-label, .sync-label{color:var(--text-dark);}
-  .update-btn, .backup-btn, .sync-btn{
-    border:none;
-    border-radius:var(--radius-ctl);
-    padding:0 14px;height:34px;
-    font-family:var(--font);font-size:13px;font-weight:700;
-    cursor:pointer;flex-shrink:0;
-  }
-  .update-btn{background:var(--text-dark);color:var(--lime);}
-  .backup-btn, .sync-btn{background:var(--green);color:var(--white);}
-  @media (hover:hover){
-    .backup-btn:hover, .sync-btn:hover{background:var(--green-deep);}
-    .update-btn:hover{background:#000;}
-  }
-  .backup-later{
-    border:none;background:transparent;color:var(--text-muted);
-    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
-    padding:0 6px;height:34px;flex-shrink:0;border-radius:var(--radius-ctl);
-  }
-  .sync-dot{
-    width:8px;height:8px;border-radius:50%;
-    background:var(--green);flex-shrink:0;
-    box-shadow:0 0 0 4px rgba(14,121,85,.15);
-  }
-  /* Offline is a normal state here, not a failure — the entry is already
-     safe on the device. */
-  .sync-bar.is-offline{background:var(--white);box-shadow:var(--shadow-1);}
-  .sync-bar.is-offline .sync-dot{background:var(--text-muted);box-shadow:none;}
-  .sync-btn:disabled{opacity:.6;}
-
-  .account-screen{
-    padding:6px var(--gutter) 32px;
-    display:flex;flex-direction:column;gap:12px;
-  }
-  .btn-outline{
-    background:var(--white);
-    border:1px solid var(--border-strong);
-    color:var(--text-dark);
-  }
-
-  /* TOP TABS (page switcher) — the one pill-shaped nav. Only the active
-     tab is drawn; the others are just words on the track. */
-  .top-tabs-wrap{
-    padding:0 var(--gutter) 4px;
-  }
+  /* =====================================================================
+     NAV — the one dark pill. Only the active tab is drawn.
+     ===================================================================== */
+  .top-tabs-wrap{padding:0 var(--gutter);}
   .top-tabs{
-    display:flex;
-    background:var(--canvas-dark);
-    border-radius:var(--radius-pill);
-    padding:5px;
-    gap:4px;
+    display:flex;gap:var(--sp-1);padding:var(--sp-1);
+    background:var(--ink);border-radius:var(--r-pill);
   }
   .top-tab{
-    flex:1;
-    background:transparent;
-    font-family:var(--font);
-    text-align:center;
-    padding:11px 0;
-    border-radius:var(--radius-pill);
-    border:none;
-    color:var(--sage);
-    font-size:14px;font-weight:700;
+    flex:1;height:var(--h-sm);
+    border:none;border-radius:var(--r-pill);
+    background:transparent;color:var(--on-ink-muted);
+    font-size:var(--fs-md);font-weight:var(--fw-bold);
     cursor:pointer;
   }
-  @media (hover:hover){ .top-tab:not(.active):hover{color:var(--white);background:rgba(255,255,255,.06);} }
-  .top-tab.active{
-    background:var(--lime);
-    color:var(--text-dark);
-  }
+  @media (hover:hover){ .top-tab:not(.active):hover{color:var(--on-ink);background:var(--on-ink-hover);} }
+  .top-tab.active{background:var(--lime);color:var(--ink);}
 
-  /* FORM */
-  /* The form is four cards, not nine loose fields: how much, which account,
-     what it was, and whether it comes back. */
-  form{padding:12px var(--gutter) 28px;display:flex;flex-direction:column;gap:12px;}
-
-  .group{
-    background:var(--white);
-    border-radius:var(--radius-card);
+  /* =====================================================================
+     NOTICES — backup, new version, new month, waiting to send, edits to
+     push. All one component: a white strip, a coloured dot that says what
+     kind of news it is, one line, one action. They sit under the nav.
+     ===================================================================== */
+  .notice, .update-bar, .backup-bar, .sync-bar, .edits-bar{
+    display:flex;align-items:center;gap:var(--sp-3);
+    min-height:var(--h-md);
+    padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+    background:var(--surface);
+    border-radius:var(--r-panel);
     box-shadow:var(--shadow-1);
-    padding:18px 16px 16px;
-    display:flex;flex-direction:column;gap:16px;
   }
-  /* Title hierarchy, largest to smallest:
-       L1  app title      26 / 800 / dark
-       L2  hero figure    48 / 700 / dark   (amount, total have)
-       L3  section title  15 / 800 / dark
-       L4  field label    12 / 700 / muted
-       L5  hint           12 / 500 / grey */
-  .account-group{position:relative;}
-  .account-group > .toggle-pill{
-    position:absolute;
-    top:12px;right:12px;
+  .update-bar, .backup-bar, .sync-bar{margin:var(--sp-3) var(--gutter) 0;}
+  .update-bar::before, .backup-bar::before, .edits-bar::before, .sync-dot{
+    content:"";width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    background:var(--green);
+  }
+  .update-bar::before, .edits-bar::before{background:var(--amber-dot);}
+  .update-label, .backup-label, .sync-label, .edits-bar .eb-label{
+    flex:1;min-width:0;
+    font-size:var(--fs-sm);font-weight:var(--fw-medium);line-height:var(--lh-snug);
+    color:var(--text);
+  }
+  .edits-bar .eb-hint{display:block;font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);margin-top:2px;}
+  /* Offline is a normal state here, not a failure — the entry is already
+     safe on the device. */
+  .sync-bar.is-offline .sync-dot{background:var(--text-faint);}
+
+  /* EDIT MODE — the one notice that changes what the whole form means, so
+     it's the one that's tinted. */
+  .edit-banner{
+    display:flex;align-items:center;gap:var(--sp-3);
+    min-height:var(--h-md);
+    padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+    border-radius:var(--r-panel);
+    background:var(--amber-soft);
+  }
+  .edit-banner .eb-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .edit-banner .eb-title{font-size:var(--fs-md);font-weight:var(--fw-heavy);color:var(--amber-ink);}
+  .edit-banner .eb-sub{
+    font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--amber-ink);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
 
+  /* =====================================================================
+     SCREENS — one rhythm: 16 at the sides, 12 between cards
+     ===================================================================== */
+  form, .stats-screen, .account-screen{
+    display:flex;flex-direction:column;gap:var(--sp-3);
+    padding:var(--sp-4) var(--gutter) var(--sp-8);
+  }
+  #recentPane, #duesPane, #statsPane{display:flex;flex-direction:column;gap:var(--sp-3);}
+  .screen-title{
+    margin:0 0 var(--sp-1);padding:0 var(--sp-1);
+    font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);
+  }
+
+  /* CARD — the one surface. Groups, panels, facts, folds all use it. */
+  .group, .amount-card, .panel, .facts, details.fold, .ledger-card, .duo{
+    background:var(--surface);
+    border-radius:var(--r-card);
+    box-shadow:var(--shadow-1);
+  }
+  .panel, .facts, details.fold, .ledger-card{overflow:hidden;}
+
+  /* =====================================================================
+     ADD PAYMENT
+     ===================================================================== */
+  .group{padding:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-4);}
   .group-title{
-    font-size:15px;font-weight:800;
-    letter-spacing:-0.2px;
-    color:var(--text-dark);
-    line-height:1.4;
+    font-size:var(--fs-lg);font-weight:var(--fw-heavy);
+    letter-spacing:var(--ls-title);line-height:var(--lh-snug);
+    color:var(--text);
+  }
+  .account-group{position:relative;}
+  .account-group > .toggle-pill{position:absolute;top:var(--sp-3);right:var(--sp-3);}
+  /* "Which account" already says it — the field label only appears once
+     there are two accounts to tell apart. */
+  .account-block:not(.is-transfer) #accountLabel{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+
+  /* AMOUNT — the hero of the form: biggest type, deepest shadow. */
+  .amount-card{
+    box-shadow:var(--shadow-2);
+    border:1px solid transparent;
+    padding:var(--sp-4);
+    display:flex;flex-direction:column;align-items:center;gap:var(--sp-3);
+  }
+  .amount-card .amt-label{display:flex;justify-content:space-between;align-items:baseline;width:100%;}
+  .amt-label label, .amt-label .pill-inr{font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--text-muted);}
+  .amt-label .pill-inr{color:var(--text-faint);letter-spacing:var(--ls-caps);}
+  .amt-display-wrap{
+    display:flex;align-items:baseline;justify-content:center;
+    width:100%;padding:var(--sp-1) 0 var(--sp-2);
+  }
+  .amt-display-wrap .rupee{
+    font-size:var(--fs-2xl);font-weight:var(--fw-medium);
+    color:var(--green);margin-right:var(--sp-2);
+  }
+  #amountInput{
+    flex:0 1 auto;min-width:0;max-width:100%;height:auto;
+    border:none;background:transparent;box-shadow:none;outline:none;padding:0;
+    font-size:var(--fs-4xl);font-weight:var(--fw-bold);
+    letter-spacing:var(--ls-display);line-height:var(--lh-tight);
+    color:var(--text);text-align:left;
+  }
+  #amountInput::placeholder{color:var(--text-ghost);font-weight:var(--fw-bold);opacity:1;}
+  .amt-note{
+    margin-top:calc(-1 * var(--sp-2));
+    padding:var(--sp-1) var(--sp-3);
+    border-radius:var(--r-pill);
+    background:var(--amber-soft);color:var(--amber-ink);
+    font-size:var(--fs-sm);font-weight:var(--fw-bold);
   }
 
-  /* Inside a card, white fields on a white surface would vanish — so the
-     fields take the cream inset fill, and turn white when they have focus. */
-  .group input[type="text"],
-  .group input[type="date"],
-  .group select,
-  .group .date-box-input{
-    background-color:var(--inset);
-    border-color:transparent;
-  }
-  .group input[type="text"]:focus,
-  .group select:focus,
-  .group .date-box-input:focus{background-color:var(--white);}
+  /* FIELDS */
+  .field{display:flex;flex-direction:column;gap:var(--sp-2);}
+  .field label, .field .field-label{font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--text-muted);}
+  .field label .opt{font-weight:var(--fw-regular);color:var(--text-faint);}
+  .field-hint{font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);}
+  .is-invalid{border-color:var(--red) !important;box-shadow:var(--ring-error) !important;}
 
-  .group .switch-row{
-    background:transparent;
-    border:none;
-    border-top:1px solid var(--border);
-    border-radius:0;
-    padding:14px 0 0;
+  input[type="text"], input[type="date"], select, .date-box-input{
+    width:100%;height:var(--h-md);
+    padding:0 var(--sp-4);
+    border-radius:var(--r-input);
+    border:1px solid var(--line);
+    background:var(--surface);
+    font-size:var(--fs-input);font-weight:var(--fw-medium);
+    color:var(--text);
+    outline:none;appearance:none;
+    transition:border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease);
   }
-
-  .field{display:flex;flex-direction:column;gap:7px;}
-  .field label, .field .field-label{font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.1px;}
-  .field-hint{font-size:12px;color:#6B6861;font-weight:500;margin-top:-2px;}
-  .is-invalid{border-color:var(--red) !important;box-shadow:0 0 0 3px rgba(214,63,63,.14) !important;}
-
-  input[type="text"], input[type="date"], select{
-    width:100%;
-    height:50px;
-    padding:0 14px;
-    border-radius:var(--radius-input);
-    border:1px solid var(--border);
-    background:var(--white);
-    font-family:var(--font);
-    font-size:16px;
-    font-weight:600;
-    color:var(--text-dark);
-    outline:none;
-    appearance:none;
-    transition:border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background-color var(--fast) var(--ease);
-  }
-  input::placeholder{color:var(--text-faint);font-weight:500;}
-  input:focus, select:focus{border-color:var(--green);box-shadow:var(--ring);}
+  input::placeholder, .date-box-input::placeholder{color:var(--text-faint);font-weight:var(--fw-regular);}
+  input:focus, select:focus, .date-box-input:focus{border-color:var(--green);box-shadow:var(--ring);}
   input:focus-visible, select:focus-visible{outline:none;}
+  /* Inside a card the fields take the cream inset fill and turn white on
+     focus — white on white would vanish. */
+  .group input[type="text"], .group input[type="date"], .group select, .group .date-box-input{
+    background-color:var(--inset);border-color:transparent;
+  }
+  .group input[type="text"]:focus, .group select:focus, .group .date-box-input:focus{background-color:var(--surface);border-color:var(--green);}
   select{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2378756E' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2369665F' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
-    background-position:right 14px center;
-    padding-right:36px;
+    background-position:right var(--sp-4) center;
+    padding-right:var(--sp-10);
     cursor:pointer;
   }
+  /* A select still on its "Choose…" option reads as a placeholder. */
+  select:has(option[value=""]:checked){color:var(--text-faint);font-weight:var(--fw-regular);}
+  select option{color:var(--text);}
+  option[value="Custom"], option[value="__new"]{font-style:italic;}
 
   /* Combo: a real <select> normally, which shrinks down to an invisible
      strip over just the arrow once Custom is chosen — the visible custom
@@ -336,757 +446,545 @@
   .combo-wrap{position:relative;}
   .combo-wrap > select{width:100%;}
   .combo-wrap.custom-mode > select{
-    position:absolute;
-    top:0; right:0;
-    width:44px; height:100%;
-    opacity:0;
-    padding:0;
-    border:none;
-    box-shadow:none;
-    cursor:pointer;
+    position:absolute;top:0;right:0;
+    width:44px;height:100%;
+    opacity:0;padding:0;border:none;box-shadow:none;cursor:pointer;
   }
   input.combo-custom-input{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2378756E' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2369665F' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
-    background-position:right 14px center;
-    padding-right:36px;
+    background-position:right var(--sp-4) center;
+    padding-right:var(--sp-10);
   }
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);}
 
-  /* row of two */
-  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-
-  /* SEGMENTED CONTROLS — one recessed track, one raised thumb. Used for
-     every either/or choice: credit/debit, account, yes/no, sub-tabs,
-     breakdown, sync mode. */
+  /* SEGMENTED CONTROL — one recessed track, one raised white thumb. Used
+     for every either/or choice. Dark-and-lime is kept for the one choice
+     per screen that decides the meaning of the entry: credit or debit. */
   .kind-toggle, .chip-group, .sub-tabs, .seg, .seg-chips{
-    display:flex;
-    background:var(--inset);
-    border-radius:var(--radius-input);
-    padding:4px;gap:4px;
+    display:flex;gap:var(--sp-1);padding:var(--sp-1);
+    background:var(--inset);border-radius:var(--r-input);
   }
-  .kind-btn, .chip, .seg button, .seg-chips button{
-    flex:1;
-    min-height:42px;
-    padding:0 8px;
-    border:none;
-    border-radius:var(--radius-ctl);
-    background:transparent;
-    font-family:var(--font);font-size:13px;font-weight:700;
-    color:var(--text-muted);
-    cursor:pointer;
-    text-align:center;
+  .kind-btn, .chip, .seg button, .seg-chips button, .sub-tab{
+    flex:1;min-width:0;
+    height:var(--h-sm);padding:0 var(--sp-2);
+    display:flex;align-items:center;justify-content:center;gap:var(--sp-2);
+    border:none;border-radius:var(--r-ctl);
+    background:transparent;color:var(--text-muted);
+    font-size:var(--fs-sm);font-weight:var(--fw-bold);
+    cursor:pointer;white-space:nowrap;
   }
   @media (hover:hover){
-    .kind-btn:not(.on):not(.locked):hover, .chip:not(.selected):hover,
-    .seg button:not(.on):hover, .seg-chips button:not(.on):hover{color:var(--text-dark);background:rgba(255,255,255,.6);}
+    .kind-btn:not(.on):not(.locked):hover, .chip:not(.selected):hover, .seg button:not(.on):hover,
+    .seg-chips button:not(.on):hover, .sub-tab:not(.active):hover{color:var(--text);background:rgba(255,255,255,.6);}
   }
-  /* Selected = a white thumb lifted off the track. Dark-and-lime is kept
-     for the one choice per screen that matters most (credit/debit), so
-     the eye isn't pulled to five dark pills at once. */
-  .kind-btn.on, .chip.selected, .seg button.on, .seg-chips button.on{
-    background:var(--white);color:var(--text-dark);
-    box-shadow:0 1px 2px rgba(24,28,26,.12), 0 2px 6px -2px rgba(24,28,26,.12);
+  .kind-btn.on, .chip.selected, .seg button.on, .seg-chips button.on, .sub-tab.active{
+    background:var(--surface);color:var(--text);box-shadow:var(--shadow-thumb);
   }
-  .amount-card .kind-btn.on{background:var(--text-dark);color:var(--lime);box-shadow:var(--shadow-thumb);}
-
-  /* ACCOUNT BLOCK */
+  .amount-card .kind-btn.on{background:var(--ink);color:var(--lime);}
+  /* Self transfer: the money is both out and in, so neither side is
+     "the" choice — both halves sit quietly lit. */
+  .amount-card .kind-btn.locked, .amount-card .kind-btn.locked.on{
+    background:var(--surface);color:var(--text-muted);box-shadow:var(--shadow-thumb);cursor:default;
+  }
+  .kind-toggle{width:100%;}
   .account-block{display:flex;flex-direction:column;}
   .chip-group.vertical{flex-direction:column;}
 
+  /* TOGGLE PILL — a standalone on/off. On is mint, like every other
+     standalone "on" (Today, Yesterday). */
   .toggle-pill{
-    position:relative;
     display:flex;align-items:center;gap:6px;
-    min-height:32px;
-    padding:0 12px;
-    border-radius:var(--radius-pill);
-    border:1px solid var(--border);
-    background:var(--white);
-    font-family:var(--font);font-size:12px;font-weight:700;
+    height:var(--h-xs);padding:0 var(--sp-3);
+    border-radius:var(--r-pill);
+    border:1px solid var(--line);
+    background:var(--surface);
+    font-size:var(--fs-xs);font-weight:var(--fw-bold);
     color:var(--text-muted);
     cursor:pointer;flex-shrink:0;
   }
-  .toggle-pill::after{content:"";position:absolute;inset:-6px -4px;}
-  .toggle-pill .swap{font-size:13px;line-height:1;}
-  @media (hover:hover){ .toggle-pill[aria-pressed="false"]:hover{border-color:var(--border-strong);color:var(--text-dark);} }
-  .toggle-pill[aria-pressed="true"]{
-    background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);
-  }
+  .toggle-pill .icon{width:14px;height:14px;}
+  @media (hover:hover){ .toggle-pill[aria-pressed="false"]:hover{border-color:var(--line-strong);color:var(--text);} }
+  .toggle-pill[aria-pressed="true"]{background:var(--mint);border-color:var(--mint);color:var(--green-ink);}
 
   .to-slot{
-    max-height:0;
-    opacity:0;
-    margin-top:0;
-    overflow:hidden;
-    transition:max-height .24s ease, opacity .16s ease, margin-top .24s ease;
+    max-height:0;opacity:0;margin-top:0;overflow:hidden;
+    transition:max-height var(--t-slow) var(--ease), opacity var(--t-med) var(--ease), margin-top var(--t-slow) var(--ease);
   }
-  .account-block.is-transfer .to-slot{
-    max-height:120px;
-    opacity:1;
-    margin-top:14px;
-  }
+  .account-block.is-transfer .to-slot{max-height:120px;opacity:1;margin-top:var(--sp-4);}
+  #txnTypeSection{display:flex;flex-direction:column;gap:var(--sp-4);}
 
-  #txnTypeSection{display:flex;flex-direction:column;gap:16px;}
-
-  /* DATE FIELD */
-  .date-box-input{
-    width:100%;
-    height:50px;
-    padding:0 14px;
-    border-radius:var(--radius-input);
-    border:1px solid var(--border);
-    background:var(--white);
-    font-family:var(--font);
-    font-size:16px;font-weight:600;
-    color:var(--text-dark);
-    outline:none;
-  }
-  .date-box-input::placeholder{color:var(--text-faint);font-weight:500;}
-  .date-box-input:focus{border-color:var(--green);}
-
+  /* DATE */
   .date-field{position:relative;}
   .date-hint{
-    position:absolute;
-    top:100%;right:0;
-    margin-top:4px;
-    max-width:72%;
-    text-align:right;
-    white-space:nowrap;
-    overflow:hidden;text-overflow:ellipsis;
-    font-size:11px;line-height:12px;
-    pointer-events:none;
-    z-index:1;
-    transition:color .15s;
+    position:absolute;top:100%;right:0;
+    margin-top:var(--sp-1);max-width:72%;
+    text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-size:var(--fs-2xs);line-height:12px;
+    pointer-events:none;z-index:1;
+    transition:color var(--t-fast);
   }
-  .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
-  .date-hint.is-error{color:var(--red);font-weight:600;}
-  .date-row{display:flex;gap:6px;align-items:stretch;}
+  .date-hint.is-warn{color:var(--amber-ink);font-weight:var(--fw-medium);}
+  .date-hint.is-error{color:var(--red);font-weight:var(--fw-medium);}
+  .date-row{display:flex;gap:var(--sp-2);align-items:stretch;}
   .date-row .date-box-input{flex:1 1 auto;min-width:0;}
-  .quick-date-row{display:flex;gap:6px;}
+  .quick-date-row{display:flex;gap:var(--sp-2);}
   .quick-date-btn{
-    flex-shrink:0;
-    padding:0 12px;
-    border-radius:var(--radius-input);
-    border:1px solid var(--border);
-    background:var(--white);
-    font-family:var(--font);font-size:12px;font-weight:700;
-    color:var(--text-muted);
+    flex-shrink:0;padding:0 var(--sp-3);
+    border:none;border-radius:var(--r-input);
+    background:var(--inset);color:var(--text-muted);
+    font-size:var(--fs-xs);font-weight:var(--fw-bold);
     cursor:pointer;
   }
-  @media (hover:hover){ .quick-date-btn:not(.active):hover{color:var(--text-dark);border-color:var(--border-strong);} }
-  .quick-date-btn.active{background:var(--mint);border-color:var(--mint);color:#14614A;}
+  @media (hover:hover){ .quick-date-btn:not(.active):hover{color:var(--text);} }
+  .quick-date-btn.active{background:var(--mint);color:var(--green-ink);}
 
-  /* toggle switch (settings) */
+  /* SWITCH (settings) */
   .switch-row{
-    display:flex;align-items:center;justify-content:space-between;gap:14px;
-    background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--radius-input);
-    padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
+    padding:var(--sp-4);
   }
   .switch-row .label-block{display:flex;flex-direction:column;gap:2px;}
-  .switch-row .label-block .title{font-size:14px;font-weight:700;color:var(--text-dark);}
-  .switch-row .label-block .desc{font-size:12px;color:var(--text-muted);font-weight:500;line-height:1.45;}
+  .switch-row .label-block .title{font-size:var(--fs-md);font-weight:var(--fw-bold);color:var(--text);}
+  .switch-row .label-block .desc{font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);line-height:var(--lh-body);}
   .switch{position:relative;width:46px;height:28px;flex-shrink:0;}
   .switch input{opacity:0;width:0;height:0;}
   .slider{
-    position:absolute;inset:0;
-    background:#D8D5CB;
-    border-radius:var(--radius-pill);
-    cursor:pointer;
-    transition:.2s;
+    position:absolute;inset:0;cursor:pointer;
+    background:var(--line-strong);border-radius:var(--r-pill);
+    transition:background-color var(--t-med) var(--ease);
   }
   .slider::before{
-    content:"";position:absolute;
-    width:22px;height:22px;left:3px;top:3px;
-    background:var(--white);border-radius:50%;
-    transition:.2s;
-    box-shadow:0 1px 3px rgba(0,0,0,.2);
+    content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;
+    background:var(--surface);border-radius:50%;
+    box-shadow:var(--shadow-thumb);
+    transition:transform var(--t-med) var(--ease);
   }
   .switch input:checked + .slider{background:var(--green);}
   .switch input:checked + .slider::before{transform:translateX(18px);}
   .switch input:focus-visible + .slider{box-shadow:var(--ring);}
 
-  /* AMOUNT CARD — the hero of the form: biggest type, deepest shadow. */
-  .amount-card{
-    background:var(--white);
-    border:1px solid transparent;
-    border-radius:var(--radius-card);
-    box-shadow:var(--shadow-2);
-    padding:16px 16px 16px;
-    display:flex;flex-direction:column;gap:12px;
-    align-items:center;
-  }
-  .amount-card .amt-label{
-    display:flex;justify-content:space-between;align-items:center;
-    width:100%;
-  }
-  .amt-label label{font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.1px;}
-  .amt-label .pill-inr{
-    font-size:11px;
-    background:var(--inset);
-    padding:4px 9px;
-    border-radius:var(--radius-pill);
-    font-weight:700;color:var(--text-muted);
-  }
-  .amt-display-wrap{
-    position:relative;
-    display:flex;align-items:baseline;justify-content:center;
-    width:100%;
-    padding:4px 0 10px;
-  }
-  .amt-display-wrap .rupee{font-size:30px;font-weight:600;color:var(--green);margin-right:6px;}
-  #amountInput{
-    flex:0 1 auto;
-    min-width:0;
-    max-width:100%;
-    height:auto;
-    border:none;background:transparent;
-    box-shadow:none;
-    outline:none;
-    font-family:var(--font);
-    font-size:48px;font-weight:700;
-    letter-spacing:-1.2px;
-    color:var(--text-dark);
-    text-align:left;
-    padding:0;
-  }
-  #amountInput::placeholder{color:#CFCBC0;font-weight:700;opacity:1;}
-
-  .amt-note{
-    margin-top:-6px;
-    padding:5px 12px;
-    border-radius:var(--radius-pill);
-    background:var(--amber);
-    color:#8A6D1F;
-    font-size:13px;font-weight:700;
-  }
-
-  .kind-toggle{width:100%;}
-  .kind-btn.locked{opacity:0.85;cursor:default;}
-
-  /* CTA save button */
+  /* SAVE — the screen's one primary action. Dimmed, not disabled, while
+     something is missing: tapping it still points at what's missing. */
   .cta-save{
-    width:100%;
-    display:flex;align-items:center;justify-content:center;gap:10px;
-    background:var(--green);
-    color:var(--white);
-    border:none;
-    border-radius:16px;
-    height:58px;
-    margin-top:4px;
-    font-family:var(--font);font-size:17px;font-weight:800;
-    letter-spacing:-.1px;
+    width:100%;height:var(--h-lg);margin-top:var(--sp-1);
+    display:flex;align-items:center;justify-content:center;gap:var(--sp-2);
+    border:none;border-radius:var(--r-panel);
+    background:var(--green);color:var(--on-ink);
+    font-size:var(--fs-input);font-weight:var(--fw-heavy);
+    box-shadow:var(--shadow-cta);
     cursor:pointer;
-    box-shadow:0 1px 2px rgba(14,121,85,.3), 0 10px 22px -10px rgba(14,121,85,.6);
   }
-  @media (hover:hover){ .cta-save:not(:disabled):hover{background:var(--green-deep);} }
-  .cta-save:disabled{opacity:0.7;}
-  .cta-dot{width:20px;height:20px;border-radius:50%;background:var(--lime);flex-shrink:0;}
+  @media (hover:hover){ .cta-save:not(:disabled):not(.is-incomplete):hover{background:var(--green-hover);} }
+  .cta-save.is-incomplete{opacity:.55;box-shadow:none;}
+  .cta-save:disabled{opacity:.7;}
+  .cta-dot{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    background:var(--lime);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cta-dot .icon{width:14px;height:14px;stroke-width:2.6;}
   .cta-caption{
+    margin-top:calc(-1 * var(--sp-1));
     text-align:center;
-    font-size:12px;font-weight:600;
-    color:var(--text-muted);
-    margin-top:-4px;
+    font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);
   }
 
-  /* ---------- HISTORY / STATS ---------- */
-  .stats-screen{padding:6px var(--gutter) 32px;display:flex;flex-direction:column;gap:14px;}
-  #recentPane, #duesPane, #statsPane{display:flex;flex-direction:column;gap:14px;}
-
-  /* MONTH SWITCHER — not a box. The month is the screen's title, the
-     arrows sit beside it. Next is disabled at the current month because
-     there is no such thing as a future entry. */
-  .month-toggle{
-    display:flex;align-items:center;gap:8px;
-    padding:2px 2px 0;
-  }
-  .mt-center{order:-1;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
-  .mt-label{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--text-dark);line-height:1.15;}
-  .mt-sub{font-size:12px;font-weight:600;color:var(--text-muted);}
-  .mt-sub b{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;}
-  .mt-sub b.out{color:var(--text-dark);}
-  .mt-sub b.in{color:var(--green);}
-  .mt-arrow{
-    width:44px;height:44px;
-    border-radius:var(--radius-input);
-    border:none;background:var(--white);
-    box-shadow:var(--shadow-1);
-    font-family:var(--font);font-size:20px;font-weight:700;line-height:1;
-    color:var(--text-dark);cursor:pointer;
-    flex-shrink:0;
-  }
-  @media (hover:hover){ .mt-arrow:not(:disabled):hover{background:var(--text-dark);color:var(--lime);} }
-  .mt-arrow:disabled{opacity:.35;cursor:default;box-shadow:none;background:transparent;}
-
-  /* Sub-tabs share the segmented-control language, on white so they sit
-     a step below the dark top nav. */
-  .sub-tabs{background:#E9E5DB;}
-  .sub-tab{
-    flex:1;
-    display:flex;align-items:center;justify-content:center;gap:7px;
-    min-height:40px;
-    border:none;background:transparent;
-    border-radius:var(--radius-ctl);
-    font-family:var(--font);font-size:13px;font-weight:700;
-    color:var(--text-muted);cursor:pointer;
-  }
-  @media (hover:hover){ .sub-tab:not(.active):hover{color:var(--text-dark);background:rgba(255,255,255,.5);} }
-  .sub-tab.active{background:var(--white);color:var(--text-dark);box-shadow:0 1px 2px rgba(24,28,26,.12), 0 2px 6px -2px rgba(24,28,26,.12);}
+  /* =====================================================================
+     HISTORY
+     ===================================================================== */
+  /* Sub-tabs sit on the page, so their track is a step darker. */
+  .sub-tabs{background:var(--track);}
   .sub-tab .badge, .sub-tab .count{
     min-width:20px;padding:0 6px;
-    border-radius:var(--radius-pill);
-    font-size:11px;font-weight:800;line-height:19px;
+    border-radius:var(--r-pill);
+    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);line-height:19px;
   }
-  .sub-tab .badge{background:var(--amber);color:var(--text-dark);}
+  .sub-tab .badge{background:var(--amber);color:var(--text);}
   .sub-tab .count{background:rgba(255,255,255,.6);color:var(--text-muted);}
-  .sub-tab.active .count{background:var(--inset);color:var(--text-muted);}
+  .sub-tab.active .count{background:var(--inset);}
 
-  /* DAYS — the date is a label above the card, not a black bar inside
-     it, and it sticks while that day's rows scroll past. */
-  .day-list{display:flex;flex-direction:column;gap:16px;}
-  .day-group{display:flex;flex-direction:column;gap:6px;}
+  /* MONTH — the screen's title, with the arrows beside it. */
+  .month-toggle{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-1) 0;}
+  .mt-center{order:-1;flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+  .mt-label{font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);line-height:var(--lh-tight);color:var(--text);}
+  .mt-sub{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);}
+  .mt-sub b{font-size:var(--fs-md);font-weight:var(--fw-heavy);}
+  .mt-sub b.out{color:var(--text);}
+  .mt-sub b.in{color:var(--green);}
+  .mt-arrow{
+    width:var(--h-sm);height:var(--h-sm);padding:0;
+    display:flex;align-items:center;justify-content:center;
+    border:none;border-radius:var(--r-input);
+    background:var(--surface);color:var(--text);
+    box-shadow:var(--shadow-1);
+    cursor:pointer;flex-shrink:0;
+  }
+  @media (hover:hover){ .mt-arrow:not(:disabled):hover{background:var(--ink);color:var(--lime);} }
+  .mt-arrow:disabled{opacity:.35;cursor:default;box-shadow:none;background:transparent;}
+
+  /* DAYS — the date is a label above its card and sticks while that day's
+     rows scroll past. */
+  .day-list{display:flex;flex-direction:column;gap:var(--sp-4);}
+  .day-group{display:flex;flex-direction:column;gap:var(--sp-1);}
   .day-head{
     position:sticky;top:0;z-index:2;
     display:flex;align-items:baseline;justify-content:space-between;
-    padding:8px 4px 4px;
-    background:var(--canvas-light);
+    padding:var(--sp-2) var(--sp-1);
+    background:var(--canvas);
   }
   .day-head .day{
-    font-size:12px;font-weight:800;
-    letter-spacing:0.6px;text-transform:uppercase;
+    font-size:var(--fs-2xs);font-weight:var(--fw-heavy);
+    letter-spacing:var(--ls-caps);text-transform:uppercase;
     color:var(--text-muted);
   }
-  .day-head .net{font-size:13px;font-weight:800;color:var(--text-muted);}
-  .day-head .net.out{color:var(--red);}
+  .day-head .net{font-size:var(--fs-sm);font-weight:var(--fw-bold);color:var(--text-muted);}
   .day-head .net.in{color:var(--green);}
 
-  .ledger-card{
-    background:var(--white);
-    border-radius:var(--radius-card);
-    box-shadow:var(--shadow-1);
-    overflow:hidden;
-  }
-
-  /* TRANSACTION ROW
-     Name and amount share the top line; the line below is quiet metadata,
-     and only states that need attention get a coloured tag. */
+  /* ROW — name and amount share the top line; account and category are
+     quiet metadata; only states that need a second look get a tag; the
+     note is the user's own words, so it reads darker than the metadata. */
   .txn{
     position:relative;
-    display:flex;align-items:flex-start;gap:12px;
-    padding:13px 14px;
-    transition:background-color var(--fast) var(--ease);
+    display:flex;align-items:flex-start;gap:var(--sp-3);
+    padding:var(--sp-3) var(--sp-4);
+    transition:background-color var(--t-fast) var(--ease);
   }
-  /* Dividers are inset past the icon, so a day reads as one list. */
   .txn + .txn::before{
-    content:"";position:absolute;top:0;left:62px;right:0;
-    border-top:1px solid var(--border);
+    content:"";position:absolute;top:0;right:0;
+    left:calc(var(--sp-4) + var(--tile) + var(--sp-3));
+    border-top:1px solid var(--line);
   }
   .txn .tile{
-    width:36px;height:36px;flex-shrink:0;
-    border-radius:var(--radius-ctl);
-    background:var(--mint);
+    width:var(--tile);height:var(--tile);flex-shrink:0;
+    border-radius:var(--r-ctl);
     display:flex;align-items:center;justify-content:center;
-    font-size:14px;font-weight:800;color:#14614A;
+    background:var(--acct-dom-bg);color:var(--acct-dom-ink);
+    font-size:var(--fs-md);font-weight:var(--fw-heavy);
   }
-  .txn .tile.acct-International{background:#FFF1BF;color:#6E571A;}
-  .txn .tile.acct-Cash{background:#EEE9DD;color:#6B6045;}
-  .txn .tile.transfer{background:var(--white);border:1.5px solid var(--border-strong);color:var(--text-muted);}
-  .txn .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
-  .txn .line1{display:flex;align-items:baseline;gap:10px;}
+  .txn .tile.acct-International{background:var(--acct-int-bg);color:var(--acct-int-ink);}
+  .txn .tile.acct-Cash{background:var(--acct-cash-bg);color:var(--acct-cash-ink);}
+  .txn .tile.transfer{background:var(--inset);color:var(--text-muted);}
+  .txn .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .txn .line1{display:flex;align-items:baseline;gap:var(--sp-3);}
   .txn .name{
     flex:1;min-width:0;
-    font-size:15px;font-weight:700;line-height:1.3;
-    color:var(--text-dark);
+    font-size:var(--fs-lg);font-weight:var(--fw-bold);line-height:var(--lh-snug);
+    color:var(--text);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
     overflow:hidden;overflow-wrap:anywhere;
   }
   .txn .amt{
-    font-size:15px;font-weight:800;flex-shrink:0;
-    text-align:right;white-space:nowrap;
-    line-height:1.3;
+    flex-shrink:0;white-space:nowrap;text-align:right;
+    font-size:var(--fs-lg);font-weight:var(--fw-bold);line-height:var(--lh-snug);
   }
-  .txn .amt.out{color:var(--text-dark);}
+  .txn .amt.out{color:var(--text);}
   .txn .amt.in{color:var(--green);}
   .txn .amt.flat{color:var(--text-muted);}
-
-  .txn .tags{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;}
-  .txn .meta{font-size:12px;font-weight:600;color:var(--text-muted);line-height:1.4;}
+  .txn .tags{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-1) 6px;}
+  .txn .meta{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);line-height:var(--lh-snug);}
+  .txn .note{
+    margin-top:2px;
+    font-size:var(--fs-sm);font-weight:var(--fw-regular);color:var(--text-2);
+    line-height:var(--lh-snug);overflow-wrap:anywhere;
+  }
   .tag{
-    padding:2px 8px;
-    border-radius:var(--radius-pill);
-    background:var(--inset);
-    font-size:11px;font-weight:700;line-height:16px;
-    color:var(--text-muted);
+    padding:0 var(--sp-2);
+    border-radius:var(--r-pill);
+    background:var(--inset);color:var(--text-muted);
+    font-size:var(--fs-2xs);font-weight:var(--fw-bold);line-height:18px;
     white-space:nowrap;
   }
-  .tag.owed{background:var(--mint);color:#14614A;}
-  .tag.held{background:#FFF1BF;color:#6E571A;}
-  .tag.edited{background:#FFE9C9;color:#8A5A0F;}
+  .tag.owed{background:var(--mint);color:var(--green-ink);}
+  .tag.held{background:var(--amber-soft);color:var(--amber-ink);}
+  .tag.edited{background:var(--amber-soft);color:var(--amber-ink);}
   .tag.settled{background:var(--inset);color:var(--text-muted);}
-
-  /* Owed to me: closed items sit in their own section, grayed out rather
-     than removed — same shape as an open row so nothing has to be relearned. */
-  .txn.due.closed{opacity:0.55;}
-  .txn.due.closed .tile{background:var(--inset) !important;color:var(--text-muted);}
-  .txn .note{
-    font-size:12.5px;font-weight:500;color:var(--text-muted);
-    line-height:1.4;overflow-wrap:anywhere;
-    padding-left:8px;border-left:2px solid var(--border);
-  }
-
-  .txn.tappable{cursor:pointer;-webkit-tap-highlight-color:transparent;}
-  @media (hover:hover){ .txn.tappable:hover{background:#FAF8F3;} }
+  .txn.tappable{cursor:pointer;}
+  @media (hover:hover){ .txn.tappable:hover{background:var(--hover);} }
   .txn.tappable:active{background:var(--inset);}
-  .txn.tappable:focus-visible{outline:2px solid var(--green);outline-offset:-2px;border-radius:var(--radius-card);}
+  .txn.tappable:focus-visible{outline:2px solid var(--green);outline-offset:-2px;border-radius:var(--r-card);}
 
-  /* EDIT MODE */
-  .edit-banner{
-    display:flex;align-items:center;gap:12px;
-    padding:10px 10px 10px 16px;
-    border-radius:16px;
-    background:var(--amber);
-  }
-  .edit-banner .eb-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
-  .edit-banner .eb-title{font-size:14px;font-weight:800;color:#6E571A;}
-  .edit-banner .eb-sub{
-    font-size:12px;font-weight:600;color:#8A6D1F;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .edit-banner .eb-cancel{
-    flex-shrink:0;
-    height:36px;padding:0 14px;
-    border-radius:var(--radius-ctl);
-    border:none;background:var(--text-dark);color:var(--lime);
-    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
-  }
+  /* Owed to me: settled items stay, faded — same shape as an open row. */
+  .txn.due.closed{opacity:.55;}
+  .txn.due.closed .tile{background:var(--inset);color:var(--text-muted);}
+  .due .amt{color:var(--text);}
 
-  .edits-bar{
-    display:flex;align-items:center;gap:12px;
-    padding:10px 10px 10px 14px;
-    border-radius:16px;
-    background:#FFF6D6;
-    border:1px solid #F3E2A6;
-  }
-  .edits-bar .eb-label{flex:1;min-width:0;font-size:13px;font-weight:700;color:#5A4708;}
-  .edits-bar .eb-hint{display:block;font-size:12px;font-weight:500;color:#8A6D1F;margin-top:2px;}
-  .edits-bar .eb-push{
-    flex-shrink:0;height:36px;padding:0 16px;
-    border-radius:var(--radius-ctl);
-    border:none;background:var(--text-dark);color:var(--lime);
-    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
-  }
-  .edits-bar .eb-push:disabled{opacity:.6;}
-
-  .due .body .name{font-weight:700;}
-  .due .amt{color:var(--text-dark);}
-
+  /* EMPTY — says what's missing and carries the one action that fixes it. */
   .stats-empty{
-    padding:36px 24px;text-align:center;
+    padding:var(--sp-8) var(--sp-6) var(--sp-6);
+    display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);
+    text-align:center;
   }
-  .stats-empty h2{font-size:17px;font-weight:800;margin:0 0 6px;color:var(--text-dark);letter-spacing:-.2px;}
-  .stats-empty p{font-size:14px;margin:0 auto;max-width:300px;font-weight:500;color:var(--text-muted);line-height:1.5;}
+  .stats-empty h2{margin:0;font-size:var(--fs-lg);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);color:var(--text);}
+  .stats-empty p{margin:0;max-width:300px;font-size:var(--fs-md);font-weight:var(--fw-regular);color:var(--text-muted);line-height:var(--lh-body);}
   .stats-empty .why{
-    display:inline-block;margin-top:12px;
-    padding:6px 12px;border-radius:var(--radius-pill);
-    background:var(--amber);color:#6E571A;
-    font-size:12px;font-weight:700;
+    padding:var(--sp-1) var(--sp-3);border-radius:var(--r-pill);
+    background:var(--amber-soft);color:var(--amber-ink);
+    font-size:var(--fs-xs);font-weight:var(--fw-bold);
   }
+  .stats-empty .empty-action{margin-top:var(--sp-3);width:100%;display:flex;flex-direction:column;gap:var(--sp-2);}
+  .stats-empty .empty-action .show-more{background:var(--green);color:var(--on-ink);box-shadow:none;}
+  @media (hover:hover){ .stats-empty .empty-action .show-more:not(:disabled):hover{background:var(--green-hover);} }
 
+  /* SHOW MORE — a secondary button on the page. */
   .show-more{
-    width:100%;
-    height:48px;
-    border:1px solid var(--border-strong);
-    background:transparent;
-    border-radius:var(--radius-input);
-    font-family:var(--font);font-size:14px;font-weight:700;
-    color:var(--text-dark);cursor:pointer;
+    width:100%;height:var(--h-md);
+    border:none;border-radius:var(--r-panel);
+    background:var(--surface);color:var(--text);
+    box-shadow:var(--shadow-1);
+    font-size:var(--fs-md);font-weight:var(--fw-bold);
+    cursor:pointer;
   }
-  @media (hover:hover){ .show-more:not(:disabled):hover{background:var(--white);} }
+  @media (hover:hover){ .show-more:not(:disabled):hover{background:var(--hover);} }
   .show-more:disabled{opacity:.6;}
 
-  /* STATS HERO — what you have, big, with the three accounts it is made
-     of underneath. The one dark card on the screen. */
+  /* READ STATUS — where the month's numbers came from. Fine print, not a box. */
+  .month-read-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:0 var(--sp-1);}
+  .month-read-row .mr-text{
+    display:flex;align-items:center;gap:var(--sp-2);min-width:0;
+    font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .month-read-row .mr-text::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .month-read-row .mr-text.warn{color:var(--amber-ink);}
+  .month-read-row .mr-text.warn::before{background:var(--amber-dot);}
+  .month-read-row .mini-btn{height:var(--h-xs);padding:0 var(--sp-3);font-size:var(--fs-xs);}
+  .scope-note{
+    padding:0 var(--sp-3);
+    text-align:center;
+    font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);line-height:var(--lh-body);
+  }
+
+  /* =====================================================================
+     STATS
+     ===================================================================== */
+  /* HERO — what you have, big, with the accounts it's made of. The one
+     dark card on any screen. */
   .hero{
-    background:var(--canvas-dark);
-    border-radius:var(--radius-card);
-    padding:20px 18px 16px;
-    color:var(--white);
+    background:var(--ink);color:var(--on-ink);
+    border-radius:var(--r-card);
+    padding:var(--sp-5) var(--sp-5) var(--sp-4);
     box-shadow:var(--shadow-2);
   }
-  .hero-key{font-size:12px;font-weight:700;color:var(--sage);letter-spacing:.2px;}
+  .hero-key{font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--on-ink-muted);}
   .hero-val{
-    font-size:40px;font-weight:800;letter-spacing:-1.2px;line-height:1.1;
-    margin-top:6px;color:var(--lime);
+    margin-top:var(--sp-2);
+    font-size:var(--fs-3xl);font-weight:var(--fw-heavy);
+    letter-spacing:var(--ls-display);line-height:var(--lh-tight);
+    color:var(--lime);
   }
-  .hero-val.out{color:var(--red-soft);}
+  .hero-val.out{color:var(--red-on-ink);}
   .hero-accts{
-    display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;
-    margin-top:18px;padding-top:14px;
-    border-top:1px solid rgba(255,255,255,.1);
+    display:grid;grid-template-columns:repeat(3, 1fr);gap:var(--sp-2);
+    margin-top:var(--sp-5);padding-top:var(--sp-4);
+    border-top:1px solid var(--on-ink-line);
   }
   .hero-acct{min-width:0;}
   .hero-acct .k{
     display:flex;align-items:center;gap:6px;
-    font-size:11px;font-weight:700;color:var(--sage);
+    font-size:var(--fs-2xs);font-weight:var(--fw-bold);color:var(--on-ink-muted);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .hero-acct .v{font-size:15px;font-weight:800;color:var(--white);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .hero-acct .v.out{color:var(--red-soft);}
-  .st-dot{width:8px;height:8px;border-radius:50%;background:#7FD3A4;flex-shrink:0;}
-  .st-dot.acct-International{background:var(--amber);}
-  .st-dot.acct-Cash{background:#D9D2BF;}
-
-  /* IN / OUT — the month's two flows side by side, one step below the hero. */
-  .duo{
-    display:grid;grid-template-columns:1fr 1fr;
-    background:var(--white);
-    border-radius:var(--radius-card);
-    box-shadow:var(--shadow-1);
+  .hero-acct .v{
+    margin-top:var(--sp-1);
+    font-size:var(--fs-lg);font-weight:var(--fw-heavy);color:var(--on-ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .duo > div{padding:14px 16px;min-width:0;}
-  .duo > div + div{border-left:1px solid var(--border);}
-  .duo .k{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text-muted);}
-  .duo .k i{width:18px;height:18px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:800;}
-  .duo .k i.o{background:#FBE3E3;color:var(--red);}
+  .hero-acct .v.out{color:var(--red-on-ink);}
+  .st-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--acct-dom-dot);}
+  .st-dot.acct-International{background:var(--acct-int-dot);}
+  .st-dot.acct-Cash{background:var(--acct-cash-dot);}
+
+  /* IN / OUT — the month's two flows, one step below the hero. */
+  .duo{display:grid;grid-template-columns:1fr 1fr;}
+  .duo > div{padding:var(--sp-4);min-width:0;}
+  .duo > div + div{border-left:1px solid var(--line);}
+  .duo .k{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-xs);font-weight:var(--fw-bold);color:var(--text-muted);}
+  .duo .k i{
+    width:20px;height:20px;border-radius:var(--r-xs);
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .duo .k i .icon{width:12px;height:12px;stroke-width:2.6;}
+  .duo .k i.o{background:var(--red-soft);color:var(--red);}
   .duo .k i.n{background:var(--mint);color:var(--green);}
-  .duo .v{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-top:6px;color:var(--text-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .duo .s{font-size:11px;font-weight:600;color:var(--text-muted);margin-top:2px;}
-
-  /* BREAKDOWN — one card, three ways of cutting the same spending. */
-  .panel{
-    background:var(--white);
-    border-radius:var(--radius-card);
-    box-shadow:var(--shadow-1);
-    overflow:hidden;
+  .duo .v{
+    margin-top:var(--sp-2);
+    font-size:var(--fs-2xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+    color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
+  .duo .s{margin-top:var(--sp-1);font-size:var(--fs-2xs);font-weight:var(--fw-medium);color:var(--text-muted);}
+
+  /* PANEL — a titled card: breakdown, facts. */
   .panel-head{
-    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-    padding:16px 16px 12px;
+    display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);
+    padding:var(--sp-4) var(--sp-4) var(--sp-3);
   }
-  .panel-title{font-size:15px;font-weight:800;letter-spacing:-0.2px;color:var(--text-dark);}
-  .panel-note{font-size:12px;font-weight:600;color:var(--text-muted);}
-  .seg{margin:0 16px 14px;}
-  .seg button{min-height:34px;font-size:12px;}
+  .panel-title{font-size:var(--fs-lg);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);color:var(--text);}
+  .panel-note{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);}
+  .seg{margin:0 var(--sp-4) var(--sp-4);}
+  .seg button{height:var(--h-xs);font-size:var(--fs-xs);}
 
-  .brk{padding:0 16px 14px;display:flex;flex-direction:column;gap:14px;}
-  .brk-row{display:grid;grid-template-columns:22px 1fr;column-gap:8px;row-gap:6px;align-items:baseline;}
-  .brk-rank{grid-row:1 / span 3;font-size:12px;font-weight:800;color:var(--text-faint);}
-  .brk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0;}
+  .brk{padding:0 var(--sp-4) var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-4);}
+  .brk-empty{padding:var(--sp-2) 0 var(--sp-4);}
+  .brk-row{display:grid;grid-template-columns:20px 1fr;column-gap:var(--sp-2);row-gap:6px;align-items:baseline;}
+  .brk-rank{grid-row:1 / span 3;font-size:var(--fs-xs);font-weight:var(--fw-heavy);color:var(--text-faint);}
+  .brk-top{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);min-width:0;}
   .brk-name{
-    font-size:14px;font-weight:700;color:var(--text-dark);
     min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:var(--fs-md);font-weight:var(--fw-bold);color:var(--text);
   }
-  .brk-val{font-size:14px;font-weight:800;color:var(--text-dark);flex-shrink:0;}
-  .brk-meta{font-size:11px;font-weight:600;color:var(--text-muted);}
-  .brk-bar{height:6px;border-radius:var(--radius-pill);background:var(--inset);overflow:hidden;}
-  .brk-fill{height:100%;border-radius:var(--radius-pill);background:#8CCBA9;transform-origin:left;animation:grow .5s var(--ease);}
+  .brk-val{flex-shrink:0;font-size:var(--fs-md);font-weight:var(--fw-heavy);color:var(--text);}
+  .brk-meta{font-size:var(--fs-2xs);font-weight:var(--fw-medium);color:var(--text-muted);}
+  .brk-bar{height:6px;border-radius:var(--r-pill);background:var(--inset);overflow:hidden;}
+  .brk-fill{height:100%;border-radius:var(--r-pill);background:var(--green-bar);transform-origin:left;animation:grow .5s var(--ease);}
   .brk-row:nth-child(1) .brk-fill{background:var(--green);}
   .brk-row:nth-child(1) .brk-rank{color:var(--green);}
   @keyframes grow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
-  .panel-foot{
-    border-top:1px solid var(--border);
-    display:flex;justify-content:center;
-  }
+  .panel-foot{border-top:1px solid var(--line);}
   .panel-foot button{
-    width:100%;height:46px;
+    width:100%;height:var(--h-md);
     border:none;background:transparent;
-    font-family:var(--font);font-size:13px;font-weight:700;
-    color:var(--green);cursor:pointer;
+    font-size:var(--fs-sm);font-weight:var(--fw-bold);color:var(--green);
+    cursor:pointer;
   }
-  @media (hover:hover){ .panel-foot button:hover{background:#FAF8F3;} }
+  @media (hover:hover){ .panel-foot button:hover{background:var(--hover);} }
 
-  /* FACTS — the small derived numbers that do not deserve a tile each. */
-  .facts{
-    background:var(--white);
-    border-radius:var(--radius-card);
-    box-shadow:var(--shadow-1);
-    overflow:hidden;
+  /* FACTS — key/value rows; the same row the sheets use. */
+  .facts .panel-head{padding-bottom:var(--sp-1);}
+  .fact, .sheet-prop, .acct-row{
+    display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-4);
+    padding:var(--sp-3) var(--sp-4);
   }
-  .facts .panel-head{padding-bottom:4px;}
-  .fact{
-    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
-    padding:12px 16px;
-  }
-  .fact + .fact{border-top:1px solid var(--border);}
-  .fact .k{font-size:13px;font-weight:600;color:var(--text-muted);}
-  .fact .v{font-size:14px;font-weight:800;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
+  .fact + .fact, .sheet-prop + .sheet-prop, .acct-row + .acct-row, .switch-row + .acct-row{border-top:1px solid var(--line);}
+  .fact .k, .sheet-prop .k{flex-shrink:0;font-size:var(--fs-sm);font-weight:var(--fw-medium);color:var(--text-muted);}
+  .fact .v, .sheet-prop .v{font-size:var(--fs-md);font-weight:var(--fw-bold);color:var(--text);text-align:right;overflow-wrap:anywhere;}
 
-  /* Where this month's numbers came from, and the button to refresh them —
-     a quiet line, not another box. */
-  .month-read-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px;}
-  .month-read-row .mr-text{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .month-read-row .mr-text::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
-  .month-read-row .mr-text.warn{color:#8A6D1F;}
-  .month-read-row .mr-text.warn::before{background:#E0B43A;}
-  .month-read-row .mini-btn{height:32px;padding:0 12px;font-size:12px;background:var(--white);border-color:var(--border);}
-  .scope-note{font-size:11.5px;font-weight:600;color:var(--text-muted);text-align:center;padding:0 12px;line-height:1.5;}
-
-  .gear-btn.active .gear-inner{background:var(--lime);}
-  .gear-btn.active svg{stroke:var(--text-dark);}
-
-  /* ACCOUNT SCREEN — one line per thing, and everything that is only ever
-     touched when something has gone wrong folded away behind a summary. */
-  .acct-row{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:14px 16px;
-  }
-  .acct-row + .acct-row{border-top:1px solid var(--border);}
-  .acct-row .k{font-size:14px;font-weight:700;color:var(--text-dark);}
-  .acct-row .s{font-size:12px;font-weight:500;color:var(--text-muted);margin-top:2px;line-height:1.45;}
+  /* =====================================================================
+     ACCOUNT SCREEN
+     ===================================================================== */
+  .acct-row{align-items:center;padding:var(--sp-4);}
+  .acct-row.stack{display:block;}
+  .acct-row .k{font-size:var(--fs-md);font-weight:var(--fw-bold);color:var(--text);}
+  .acct-row .s{margin-top:2px;font-size:var(--fs-xs);font-weight:var(--fw-regular);color:var(--text-muted);line-height:var(--lh-body);}
+  .acct-row.stack .k{margin-bottom:var(--sp-3);}
+  .acct-row.stack .s{margin-top:var(--sp-3);}
   .acct-row .grow{flex:1;min-width:0;}
-  .mini-btn{
-    flex-shrink:0;
-    height:36px;
-    padding:0 14px;
-    border-radius:var(--radius-ctl);
-    border:1px solid var(--border-strong);
-    background:var(--white);
-    font-family:var(--font);font-size:13px;font-weight:700;
-    color:var(--text-dark);cursor:pointer;
-  }
-  @media (hover:hover){ .mini-btn:not(:disabled):not(.primary):hover{background:var(--inset);} .mini-btn.primary:not(:disabled):hover{background:#000;} }
-  .mini-btn.primary{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
-  .mini-btn:disabled{opacity:.55;cursor:default;}
-  .mini-btn.primary:disabled{background:var(--inset);border-color:var(--border);color:var(--text-muted);}
-  details.fold{
-    background:var(--white);
-    border-radius:var(--radius-card);
-    box-shadow:var(--shadow-1);
-    overflow:hidden;
-  }
+  .acct-row .actions{display:flex;gap:var(--sp-2);flex-shrink:0;}
+  .seg-chips{padding:var(--sp-1);}
+  .seg-chips button{height:var(--h-sm);}
   details.fold > summary{
     list-style:none;cursor:pointer;
-    padding:15px 16px;
-    font-size:14px;font-weight:700;color:var(--text-dark);
     display:flex;align-items:center;justify-content:space-between;
+    padding:var(--sp-4);
+    font-size:var(--fs-md);font-weight:var(--fw-bold);color:var(--text);
   }
   details.fold > summary::-webkit-details-marker{display:none;}
   details.fold > summary::after{
     content:"";width:8px;height:8px;
     border-right:2px solid var(--text-muted);border-bottom:2px solid var(--text-muted);
     transform:translateY(-2px) rotate(45deg);
-    transition:transform var(--med) var(--ease);
+    transition:transform var(--t-med) var(--ease);
   }
   details.fold[open] > summary::after{transform:translateY(2px) rotate(-135deg);}
-  details.fold[open] > summary{border-bottom:1px solid var(--border);}
-  .fold-body{padding:4px 0;}
-  .seg-chips{padding:4px;}
-  .seg-chips button{min-height:38px;font-size:12px;}
+  details.fold[open] > summary{border-bottom:1px solid var(--line);}
 
-  /* modal */
+  /* =====================================================================
+     SHEETS
+     ===================================================================== */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(18,22,20,.5);
+    position:fixed;inset:0;z-index:50;
     display:none;align-items:flex-end;justify-content:center;
-    z-index:50;
+    background:var(--scrim);
   }
-  .modal-overlay.open{display:flex;animation:fade .2s var(--ease);}
-  .modal-overlay.open .modal{animation:sheet-up .28s var(--ease);}
+  .modal-overlay.open{display:flex;animation:fade var(--t-med) var(--ease);}
+  .modal-overlay.open .modal{animation:sheet-up var(--t-slow) var(--ease);}
   @keyframes fade{from{opacity:0;}to{opacity:1;}}
   @keyframes sheet-up{from{transform:translateY(24px);opacity:.6;}to{transform:none;opacity:1;}}
   .modal{
     position:relative;
-    background:var(--canvas-light);
     width:100%;max-width:480px;
-    border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
-    padding:28px var(--gutter) calc(20px + env(safe-area-inset-bottom));
-    display:flex;flex-direction:column;gap:14px;
     max-height:calc(85vh / var(--ui-scale));overflow-y:auto;
+    display:flex;flex-direction:column;gap:var(--sp-4);
+    padding:var(--sp-8) var(--gutter) calc(var(--sp-5) + env(safe-area-inset-bottom));
+    background:var(--canvas);
+    border-radius:var(--r-sheet) var(--r-sheet) 0 0;
   }
   /* Grabber — says "this is a sheet" at a glance. */
   .modal::before{
-    content:"";position:absolute;top:9px;left:50%;
-    width:38px;height:4px;margin-left:-19px;
-    border-radius:var(--radius-pill);background:var(--border-strong);
+    content:"";position:absolute;top:10px;left:50%;
+    width:36px;height:4px;margin-left:-18px;
+    border-radius:var(--r-pill);background:var(--line-strong);
   }
-  .modal h2{margin:0 0 4px;font-size:18px;}
-  .modal .close{align-self:flex-end;font-size:13px;color:var(--text-muted);font-weight:700;cursor:pointer;}
-
-  /* Shown only on the detail sheet for a Y id that has both legs — lets you
-     flip between editing/deleting the open (loan-out) leg and the close
-     (repayment) leg without leaving the popup. */
-  .leg-toggle{
-    position:absolute;top:24px;right:62px;
-    display:flex;background:var(--white);
-    border-radius:var(--radius-ctl);padding:3px;gap:2px;
+  .sheet-close{
+    position:absolute;top:var(--sp-6);right:var(--gutter);
+    width:var(--h-xs);height:var(--h-xs);padding:0;
+    display:flex;align-items:center;justify-content:center;
+    border:none;border-radius:50%;
+    background:var(--surface);color:var(--text-muted);
     box-shadow:var(--shadow-1);
+    cursor:pointer;
+  }
+  .sheet-close .icon{width:14px;height:14px;stroke-width:2.4;}
+  @media (hover:hover){ .sheet-close:hover{color:var(--text);} }
+  .sheet-title{
+    padding-right:var(--sp-10);
+    font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+    color:var(--text);
+  }
+  .sheet-title.has-legs{padding-right:150px;}
+  .sheet-line{margin:calc(-1 * var(--sp-2)) 0 0;font-size:var(--fs-md);font-weight:var(--fw-regular);line-height:var(--lh-body);color:var(--text-muted);}
+  .sheet-note{
+    padding:var(--sp-2) var(--sp-3);
+    border-radius:var(--r-ctl);
+    background:var(--amber-soft);color:var(--amber-ink);
+    font-size:var(--fs-xs);font-weight:var(--fw-bold);line-height:var(--lh-snug);
+  }
+  .sheet-props{background:var(--surface);border-radius:var(--r-panel);box-shadow:var(--shadow-1);overflow:hidden;}
+  .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);}
+  /* Open / Close leg switch for a loan that has both — a small segmented
+     control in the sheet's corner. */
+  .leg-toggle{
+    position:absolute;top:var(--sp-6);right:calc(var(--gutter) + var(--h-xs) + var(--sp-2));
+    display:flex;gap:2px;padding:2px;
+    background:var(--track);border-radius:var(--r-ctl);
   }
   .leg-btn{
-    border:none;background:transparent;
-    font-family:var(--font);font-size:11px;font-weight:700;
-    color:var(--text-muted);
-    padding:6px 10px;border-radius:8px;
+    height:28px;padding:0 var(--sp-3);
+    border:none;border-radius:var(--r-xs);
+    background:transparent;color:var(--text-muted);
+    font-size:var(--fs-2xs);font-weight:var(--fw-bold);
     cursor:pointer;
   }
-  .leg-btn.on{background:var(--text-dark);color:var(--lime);}
+  .leg-btn.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow-thumb);}
 
-  .sheet-close{
-    position:absolute;top:22px;right:var(--gutter);
-    width:36px;height:36px;
-    border-radius:50%;
-    border:none;
-    background:var(--white);
-    box-shadow:var(--shadow-1);
-    color:var(--text-muted);
-    font-family:var(--font);font-size:14px;font-weight:700;line-height:1;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-  }
-  @media (hover:hover){ .sheet-close:hover{color:var(--text-dark);} }
-  .sheet-close::after{content:"";position:absolute;inset:-4px;}
-  .sheet-title{font-size:21px;font-weight:800;letter-spacing:-.4px;color:var(--text-dark);padding-right:48px;line-height:1.25;}
-  .sheet-title.has-legs{padding-right:150px;}
-  .sheet-line{margin:0;font-size:14px;font-weight:500;line-height:1.55;color:var(--text-muted);}
-  .sheet-note{
-    align-self:flex-start;
-    padding:6px 12px;
-    border-radius:var(--radius-pill);
-    background:var(--amber);color:#8A6D1F;
-    font-size:12px;font-weight:700;
-  }
-  .sheet-props{
-    background:var(--white);
-    border-radius:16px;
-    box-shadow:var(--shadow-1);
-    overflow:hidden;
-  }
-  .sheet-prop{
-    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
-    padding:11px 16px;
-  }
-  .sheet-prop + .sheet-prop{border-top:1px solid var(--border);}
-  .sheet-prop .k{font-size:13px;font-weight:600;color:var(--text-muted);flex-shrink:0;}
-  .sheet-prop .v{font-size:14px;font-weight:700;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
-  .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px;}
-  .btn{
-    height:54px;
-    border-radius:14px;
-    border:none;
-    font-family:var(--font);font-size:16px;font-weight:700;
-    cursor:pointer;
-  }
-  .btn-save{background:var(--green);color:var(--white);}
-  .btn-danger{background:var(--white);border:1px solid #F0C4C4;color:var(--red);}
-  @media (hover:hover){
-    .btn-save:hover{background:var(--green-deep);}
-    .btn-danger:hover{background:#FDF0F0;}
-    .btn-outline:hover{border-color:var(--text-muted);}
-  }
+  /* TOAST */
   .toast{
-    position:fixed;bottom:calc(32px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%, 8px);
-    background:var(--text-dark);color:var(--white);
-    padding:12px 18px;border-radius:14px;
-    box-shadow:0 12px 28px -10px rgba(0,0,0,.45);
-    font-size:14px;font-weight:600;
-    opacity:0;transition:opacity .2s var(--ease), transform .2s var(--ease);
-    z-index:60;pointer-events:none;
+    position:fixed;left:50%;bottom:calc(var(--sp-8) + env(safe-area-inset-bottom));z-index:60;
+    transform:translate(-50%, 8px);
     max-width:min(90vw, 420px);
-    text-align:center;
-    white-space:normal;
+    padding:var(--sp-3) var(--sp-5);
+    border-radius:var(--r-panel);
+    background:var(--ink);color:var(--on-ink);
+    box-shadow:var(--shadow-toast);
+    font-size:var(--fs-md);font-weight:var(--fw-medium);
+    text-align:center;white-space:normal;
+    opacity:0;pointer-events:none;
+    transition:opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease);
   }
   .toast.show{opacity:1;transform:translate(-50%, 0);}
 </style>
 </head>
 <body>
+<!-- ICONS — one stroke family, drawn once, used everywhere with <use>. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+</svg>
 <div class="app">
 
   <div class="topbar">
@@ -1096,31 +994,10 @@
     </div>
     <div class="gear-wrap">
       <button type="button" class="gear-btn" id="openSettings" aria-label="Settings and sync">
-        <span class="gear-inner">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
-          </svg>
-        </span>
+        <span class="gear-inner"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-user"/></svg></span>
       </button>
       <span class="pending-count" id="pendingCount" style="display:none;" aria-label="entries waiting to be sent">0</span>
     </div>
-  </div>
-
-  <div class="update-bar" id="monthBar" style="display:none;" role="status">
-    <span class="update-label" id="monthLabel">—</span>
-    <button type="button" class="update-btn" id="monthAckBtn">Done</button>
-  </div>
-
-  <div class="backup-bar" id="backupBar" style="display:none;" role="status">
-    <span class="backup-label" id="backupLabel">Back up today's entries</span>
-    <button type="button" class="backup-later" id="backupLaterBtn">Later</button>
-    <button type="button" class="backup-btn" id="backupNowBtn">Save file</button>
-  </div>
-
-  <div class="update-bar" id="updateBar" style="display:none;" role="status">
-    <span class="update-label">A newer version is ready</span>
-    <button type="button" class="update-btn" id="updateBtn">Reload</button>
   </div>
 
   <div class="top-tabs-wrap">
@@ -1131,10 +1008,27 @@
     </div>
   </div>
 
+  <!-- NOTICES — all under the nav, so the nav never moves. -->
+  <div class="update-bar" id="monthBar" style="display:none;" role="status">
+    <span class="update-label" id="monthLabel">—</span>
+    <button type="button" class="btn-sm" id="monthAckBtn">Done</button>
+  </div>
+
+  <div class="backup-bar" id="backupBar" style="display:none;" role="status">
+    <span class="backup-label" id="backupLabel">Back up today's entries</span>
+    <button type="button" class="btn-sm quiet" id="backupLaterBtn">Later</button>
+    <button type="button" class="btn-sm" id="backupNowBtn">Save file</button>
+  </div>
+
+  <div class="update-bar" id="updateBar" style="display:none;" role="status">
+    <span class="update-label">A newer version is ready</span>
+    <button type="button" class="btn-sm" id="updateBtn">Reload</button>
+  </div>
+
   <div class="sync-bar" id="syncBar" style="display:none;">
     <span class="sync-dot"></span>
     <span class="sync-label" id="syncLabel">—</span>
-    <button type="button" class="sync-btn" id="syncNowBtn">Send to sheet</button>
+    <button type="button" class="btn-sm" id="syncNowBtn">Send to sheet</button>
   </div>
 
   <!-- ADD PAYMENT SCREEN -->
@@ -1145,12 +1039,12 @@
         <span class="eb-title">Editing an entry</span>
         <span class="eb-sub" id="editBannerSub">—</span>
       </div>
-      <button type="button" class="eb-cancel" id="editCancelBtn">Cancel</button>
+      <button type="button" class="btn-sm secondary" id="editCancelBtn">Cancel</button>
     </div>
 
     <!-- 1 · AMOUNT -->
     <div class="amount-card">
-      <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">₹ INR</span></div>
+      <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">INR</span></div>
       <div class="amt-display-wrap">
         <span class="rupee" id="rupeeSymbol" aria-hidden="true">₹</span>
         <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00">
@@ -1166,7 +1060,7 @@
     <div class="group account-group">
     <div class="group-title">Which account</div>
     <button type="button" class="toggle-pill" id="selfTransferToggle" aria-pressed="false">
-      <span class="swap" aria-hidden="true">⇄</span>Self transfer
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-swap"/></svg>Self transfer
     </button>
 
     <div class="account-block" id="accountRow">
@@ -1209,8 +1103,8 @@
     </div>
 
     <div class="field">
-      <label for="moreInfo">Note <span style="font-weight:500;">(optional)</span></label>
-      <input type="text" id="moreInfo" placeholder="Notes">
+      <label for="moreInfo">Note <span class="opt">(optional)</span></label>
+      <input type="text" id="moreInfo" placeholder="Add a note">
     </div>
 
     <div class="field date-field">
@@ -1236,7 +1130,7 @@
             <option>Salary</option>
             <option>Sent Transfer</option>
             <option>Received Transfer</option>
-            <option value="Custom" style="font-style:italic;">Custom…</option>
+            <option value="Custom">Custom…</option>
           </select>
           <input type="text" id="txnTypeCustomInput" class="combo-custom-input" style="display:none;" placeholder="Enter a category of your own" autocomplete="off" aria-label="Custom category">
         </div>
@@ -1254,7 +1148,7 @@
             <option>Salary</option>
             <option>Sent Transfer</option>
             <option>Received Transfer</option>
-            <option value="Custom" style="font-style:italic;">Custom…</option>
+            <option value="Custom">Custom…</option>
           </select>
         </div>
         <div class="field">
@@ -1267,7 +1161,7 @@
             <option>Salary</option>
             <option>Sent Transfer</option>
             <option>Received Transfer</option>
-            <option value="Custom" style="font-style:italic;">Custom…</option>
+            <option value="Custom">Custom…</option>
           </select>
         </div>
       </div>
@@ -1310,7 +1204,7 @@
     </div><!-- /group: will I get this back -->
 
     <button type="submit" class="cta-save" id="saveBtn">
-      <span class="cta-dot"></span>
+      <span class="cta-dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span>
       <span id="ctaMainText">Add Entry</span>
     </button>
     <div class="cta-caption" id="ctaCaption">Fill in the details above</div>
@@ -1329,12 +1223,12 @@
       </button>
     </div>
     <div class="month-toggle" id="historyMonthToggle" role="group" aria-label="Month">
-      <button type="button" class="mt-arrow" id="monthPrevBtn" aria-label="Previous month">‹</button>
+      <button type="button" class="mt-arrow" id="monthPrevBtn" aria-label="Previous month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-left"/></svg></button>
       <span class="mt-center">
         <span class="mt-label" id="monthToggleLabel">—</span>
         <span class="mt-sub" id="monthToggleSub"></span>
       </span>
-      <button type="button" class="mt-arrow" id="monthNextBtn" aria-label="Next month">›</button>
+      <button type="button" class="mt-arrow" id="monthNextBtn" aria-label="Next month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-right"/></svg></button>
     </div>
     <div id="recentPane"></div>
     <div id="duesPane" style="display:none;"></div>
@@ -1344,12 +1238,12 @@
        always talking about the same period. -->
   <div class="stats-screen" id="statsScreen" style="display:none;">
     <div class="month-toggle" role="group" aria-label="Month">
-      <button type="button" class="mt-arrow" id="statsPrevBtn" aria-label="Previous month">‹</button>
+      <button type="button" class="mt-arrow" id="statsPrevBtn" aria-label="Previous month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-left"/></svg></button>
       <span class="mt-center">
         <span class="mt-label" id="statsMonthLabel">—</span>
         <span class="mt-sub" id="statsMonthSub"></span>
       </span>
-      <button type="button" class="mt-arrow" id="statsNextBtn" aria-label="Next month">›</button>
+      <button type="button" class="mt-arrow" id="statsNextBtn" aria-label="Next month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-right"/></svg></button>
     </div>
     <div id="statsPane"></div>
   </div>
@@ -1357,6 +1251,7 @@
   <!-- ACCOUNT / SYNC SCREEN — one line per thing. Anything only touched
        when something has gone wrong is folded away. -->
   <div class="account-screen" id="accountScreen" style="display:none;">
+    <h2 class="screen-title">Sync &amp; backup</h2>
 
     <div class="panel">
       <div class="acct-row">
@@ -1366,14 +1261,14 @@
         </div>
         <button type="button" class="mini-btn primary" id="sendAllBtn">Send</button>
       </div>
-      <div class="acct-row" style="display:block;">
-        <div class="k" style="margin-bottom:10px;">When to send</div>
+      <div class="acct-row stack">
+        <div class="k">When to send</div>
         <div class="seg-chips" id="syncModeChips" role="group" aria-label="When to send entries">
           <button type="button" data-val="smart" aria-pressed="false">Batched</button>
           <button type="button" data-val="instant" aria-pressed="false">Instant</button>
           <button type="button" data-val="manual" aria-pressed="false">Manual</button>
         </div>
-        <div class="s" id="syncModeHint" style="margin-top:10px;"></div>
+        <div class="s" id="syncModeHint"></div>
       </div>
     </div>
 
@@ -1383,8 +1278,10 @@
           <div class="k">Backup</div>
           <div class="s" id="backupStatus">—</div>
         </div>
-        <button type="button" class="mini-btn" id="importBtn">Restore</button>
-        <button type="button" class="mini-btn primary" id="exportBtn">Save</button>
+        <div class="actions">
+          <button type="button" class="mini-btn" id="importBtn">Restore</button>
+          <button type="button" class="mini-btn primary" id="exportBtn">Save</button>
+        </div>
         <input type="file" id="importFile" accept="application/json,.json" style="display:none;" aria-label="Choose a backup file">
       </div>
       <div class="acct-row">
@@ -1399,7 +1296,7 @@
     <details class="fold">
       <summary>If something went wrong</summary>
       <div class="fold-body">
-        <div class="switch-row" style="border:none;border-radius:0;background:transparent;">
+        <div class="switch-row">
           <div class="label-block grow">
             <div class="title" id="confirmTitle">Wait for the sheet to confirm</div>
             <div class="desc">Needs the Make scenario to reply LEDGER_OK. Off until it does.</div>
@@ -1423,7 +1320,7 @@
 
 <div class="modal-overlay" id="confirmSheet" role="dialog" aria-modal="true" aria-labelledby="confirmTitleText">
   <div class="modal">
-    <button type="button" class="sheet-close" id="confirmCloseBtn" aria-label="Close without saving">✕</button>
+    <button type="button" class="sheet-close" id="confirmCloseBtn" aria-label="Close without saving"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
     <div class="sheet-title" id="confirmTitleText">Add this entry?</div>
     <p class="sheet-line" id="confirmLine">—</p>
     <div class="sheet-note" id="confirmNote" style="display:none;"></div>
@@ -1438,7 +1335,7 @@
 <!-- ENTRY DETAIL -->
 <div class="modal-overlay" id="detailSheet" role="dialog" aria-modal="true" aria-labelledby="detailTitleText">
   <div class="modal">
-    <button type="button" class="sheet-close" id="detailCloseBtn" aria-label="Close">✕</button>
+    <button type="button" class="sheet-close" id="detailCloseBtn" aria-label="Close"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
     <div class="leg-toggle" id="detailLegToggle" style="display:none;" role="group" aria-label="Which leg">
       <button type="button" class="leg-btn" data-leg="open">Open</button>
       <button type="button" class="leg-btn" data-leg="close">Close</button>
@@ -1828,7 +1725,7 @@
     const cur = keep != null ? keep : sel.value;
     sel.innerHTML = '<option value="">Choose a name…</option>'
       + knownNames().map(n => `<option>${esc(n)}</option>`).join('')
-      + '<option value="__new" style="font-style:italic;">Add a new name…</option>';
+      + '<option value="__new">Add a new name…</option>';
     if(cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
   }
   function enterNameCustomMode(){
@@ -2374,9 +2271,11 @@
         : missing.slice(0, -1).join(', ') + ' and ' + missing[missing.length - 1];
       cap.textContent = `Needs ${list}`;
       cap.style.display = 'block';
+      $('saveBtn').classList.add('is-incomplete');
     } else {
       cap.textContent = '';
       cap.style.display = 'none';
+      $('saveBtn').classList.remove('is-incomplete');
     }
   }
 
@@ -2983,7 +2882,7 @@
     const acct = esc(r.account || '');
     const members = r.members || [r];
     const tile = r.transfer ? 'tile transfer' : 'tile acct-' + acct;
-    const mark = r.transfer ? '⇄' : esc(String(r.account || '?').charAt(0).toUpperCase());
+    const mark = r.transfer ? '<svg class="icon" aria-hidden="true"><use href="#i-swap"/></svg>' : esc(String(r.account || '?').charAt(0).toUpperCase());
     const name = r.transfer ? 'Self transfer' : esc(r.expenseName || '—');
     const amt = r.transfer
       ? `<div class="amt flat">₹${money(r.amount)}</div>`
@@ -3101,7 +3000,8 @@
       <h2>${esc(h2)}</h2>
       <p>${esc(p)}</p>
       ${why ? `<span class="why">${esc(why)}</span>` : ''}
-    </div></div>` + importButton(ms);
+      <div class="empty-action">${importButton(ms)}</div>
+    </div></div>`;
   }
 
   function renderRecent(){
@@ -3180,7 +3080,7 @@
       <div class="eb-label">${n === 1 ? '1 edit' : n + ' edits'} not in the sheet yet
         <span class="eb-hint">Shown here already · pushing costs ${editsOpsCost()} Make operations</span>
       </div>
-      <button type="button" class="eb-push" id="pushEditsBtn">Push</button>
+      <button type="button" class="btn-sm" id="pushEditsBtn">Push</button>
     </div>`;
   }
   function wireEditsBar(pane){
@@ -3837,7 +3737,7 @@
             <div class="brk-meta">${pct}% · ${g.count === 1 ? '1 entry' : g.count + ' entries'}</div>
           </div>`;
         }).join('')
-      : `<div class="brk-meta" style="padding:8px 0 14px;">Nothing spent in this month yet.</div>`;
+      : `<div class="brk-meta brk-empty">Nothing spent in this month yet.</div>`;
 
     const foot = groups.length > 6
       ? `<div class="panel-foot"><button type="button" id="brkMoreBtn">${state.breakdownAll ? 'Show less' : `Show all ${groups.length}`}</button></div>`
@@ -3898,9 +3798,8 @@
     // Rollover rows only exist in the sheet, so a month that has never been
     // pulled back has balances that start from zero rather than from what
     // was carried in. Say so rather than showing a confidently wrong number.
-    const scope = ms.pulled
-      ? `${ms.sheet} read from the sheet ${new Date(ms.pulledAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}, plus anything added here since.`
-      : `Added up from this device only — ${ms.sheet} has not been read, so last month's rollover is not counted yet.`;
+    // A month that has been read says so in its read row instead.
+    const scope = `Added up from this device only — ${ms.sheet} has not been read, so last month's rollover is not counted yet.`;
 
     // Hierarchy, top down: what you have (hero), how the month moved it
     // (in / out), where the spending went, then the small facts. Where the
@@ -3915,20 +3814,19 @@
       </div>
       <div class="duo">
         <div>
-          <div class="k"><i class="o" aria-hidden="true">−</i>Spent</div>
+          <div class="k"><i class="o" aria-hidden="true"><svg class="icon"><use href="#i-minus"/></svg></i>Spent</div>
           <div class="v">₹${money(spent)}</div>
           <div class="s">this month</div>
         </div>
         <div>
-          <div class="k"><i class="n" aria-hidden="true">+</i>Money in</div>
+          <div class="k"><i class="n" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></i>Money in</div>
           <div class="v">₹${money(income)}</div>
           <div class="s">transfers left out</div>
         </div>
       </div>
       ${breakdownPanel(rows)}
       ${factsPanel(rows)}
-      ${ms.pulled ? monthReadRow(ms) : ''}
-      <div class="scope-note">${esc(scope)}</div>`;
+      ${ms.pulled ? monthReadRow(ms) : `<div class="scope-note">${esc(scope)}</div>`}`;
 
     pane.querySelectorAll('#brkSeg button').forEach(b => {
       b.addEventListener('click', () => {
