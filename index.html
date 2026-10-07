@@ -860,6 +860,10 @@
   .fact .k{font-size:13px;font-weight:600;color:var(--text-muted);}
   .fact .v{font-size:13.5px;font-weight:800;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
 
+  .month-read-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 6px;}
+  .month-read-row .mr-text{font-size:12px;font-weight:600;color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .month-read-row .mr-text.warn{color:#8A6D1F;}
+  .month-read-row .mini-btn{padding:8px 14px;}
   .scope-note{font-size:11.5px;font-weight:600;color:var(--text-muted);text-align:center;padding:0 8px;line-height:1.5;}
 
   .gear-btn.active .gear-inner{background:var(--lime);}
@@ -2966,6 +2970,17 @@
       <div class="scope-note">One read · 3 Make operations</div>`;
   }
 
+  // Top-of-screen status + read button. Same read as importButton, but
+  // reachable without scrolling.
+  function monthReadRow(ms){
+    const busy = state.monthLoading === ms.sheet;
+    const when = ms.pulled ? new Date(ms.pulledAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+    const text = ms.pulled ? `Read from sheet ${when}` : `${ms.sheet} not read yet`;
+    const label = busy ? 'Reading…' : ms.pulled ? 'Read again' : 'Get from sheet';
+    return `<div class="month-read-row"><span class="mr-text${ms.pulled ? '' : ' warn'}">${esc(text)}</span>
+      <button type="button" class="mini-btn import-month-btn" data-sheet="${ms.sheet}" data-table="${ms.table}" ${busy ? 'disabled' : ''}>${label}</button></div>`;
+  }
+
   function wireImportButton(pane){
     const btn = pane.querySelector('.import-month-btn');
     if(!btn) return;
@@ -2973,7 +2988,7 @@
       const { sheet, table } = btn.dataset;
       state.monthLoading = sheet;
       btn.disabled = true;
-      btn.textContent = `Reading ${sheet}…`;
+      btn.textContent = 'Reading…';
       const r = await importMonth(sheet, table);
       state.monthLoading = null;
       state.monthStatus[sheet] = r.ok ? null : r.why;
@@ -3050,10 +3065,8 @@
       </div>`;
     });
 
-    let html = editsBar() + `<div class="day-list">${cards}</div>`;
-    html += all.length > state.historyShown
-      ? `<button type="button" class="show-more" id="showMoreBtn">Show earlier in ${ms.sheet}</button>`
-      : importButton(ms);
+    let html = monthReadRow(ms) + editsBar() + `<div class="day-list">${cards}</div>`;
+    if(all.length > state.historyShown) html += `<button type="button" class="show-more" id="showMoreBtn">Show earlier in ${ms.sheet}</button>`;
 
     pane.innerHTML = html;
     const more = pane.querySelector('#showMoreBtn');
@@ -3800,6 +3813,7 @@
       : `Added up from this device only — ${ms.sheet} has not been read, so last month's rollover is not counted yet.`;
 
     pane.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;">
+      ${monthReadRow(ms)}
       <div class="stat-grid">${tiles}</div>
       <div class="stat-grid">
         ${statTile('Total spend', spent, { dot:false, label:'Total spend' })}
@@ -3808,7 +3822,6 @@
       ${breakdownPanel(rows)}
       ${factsPanel(rows)}
       <div class="scope-note">${esc(scope)}</div>
-      ${importButton(ms)}
     </div>`;
 
     pane.querySelectorAll('#brkSeg button').forEach(b => {
