@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ledger — Add Payment</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F4F1EA">
@@ -16,34 +16,51 @@
     --canvas-light:#F4F1EA;
     --canvas-dark:#121614;
     --green:#0E7955;
+    --green-deep:#0A6446;
     --lime:#CCF244;
     --mint:#DDF3E4;
     --amber:#FFDE73;
     --white:#FFFFFF;
-    --red:#E04848;
+    --red:#D63F3F;
+    --red-soft:#FF9B9B;
     --text-dark:#181C1A;
-    /* Darker than the brand sheet's #78756E: that one sits under 4.5:1 on cream. */
-    --text-muted:#6B6760;
+    --text-muted:#69665F;
+    --text-faint:#8E8A80;
     --sage:#9EAD9C;
-    --border:#E5E3DB;
+    --border:#E9E6DE;
+    /* A second, darker rule for the one place a border has to separate two
+       whole objects rather than two rows inside one. */
     --border-strong:#D4D0C4;
-    /* Track: the sunken strip a segmented control sits in, on the cream page. */
-    --track:#EAE6DC;
+    /* Fill for anything sitting inside a white card: fields, tracks, chips. */
+    --inset:#F4F1EA;
 
-    /* Radius scale — nested things get smaller corners than what holds them,
-       so a control never reads as a card and a card never reads as a button.
-       Pills are kept for actions only: the save button, nav, toggles. */
-    --r-sheet:28px;
-    --r-card:20px;
-    --r-control:12px;
-    --r-chip:10px;
-    --r-tag:6px;
-    --r-pill:9999px;
+    /* RADIUS SCALE — the shape tells you what kind of thing it is.
+         sheet   26  bottom sheets
+         card    20  surfaces that hold other things
+         input   12  fields and the buttons that sit beside them
+         ctl     10  small buttons, segment thumbs, icon tiles
+         pill        tags, badges, the nav — nothing else              */
+    --radius-sheet:26px;
+    --radius-card:20px;
+    --radius-input:12px;
+    --radius-ctl:10px;
+    --radius-pill:9999px;
 
-    /* Spacing scale. 24 between sections, 12 inside them, 8 between siblings. */
-    --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:20px; --s-6:24px;
+    /* ELEVATION — cards lift off the cream instead of being outlined. */
+    --shadow-1:0 1px 2px rgba(24,28,26,.04), 0 2px 10px -4px rgba(24,28,26,.08);
+    --shadow-2:0 1px 2px rgba(24,28,26,.05), 0 10px 28px -14px rgba(24,28,26,.28);
+    --shadow-thumb:0 1px 2px rgba(24,28,26,.18);
+    --ring:0 0 0 3px rgba(14,121,85,.18);
+
+    --gutter:16px;
+    --ease:cubic-bezier(.2,.8,.2,1);
+    --fast:120ms;
+    --med:200ms;
 
     --font:'Plus Jakarta Sans', system-ui, sans-serif;
+    /* One knob for the whole interface. Everything is drawn at full size and
+       then rendered down, the way browser zoom works — so every proportion,
+       gap and radius in the file stays exactly as written. */
     --ui-scale:0.9;
   }
   *{box-sizing:border-box;}
@@ -54,236 +71,368 @@
     background:var(--canvas-light);
     color:var(--text-dark);
     -webkit-tap-highlight-color:transparent;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* Money lines up digit for digit wherever it appears. */
+  .amt, .net, .st-val, .brk-val, .fact .v, .hero-val, .hero-acct .v, .duo .v, #amountInput{
     font-variant-numeric:tabular-nums;
   }
-  button{font-family:var(--font);}
-  :focus-visible{outline:2px solid var(--green);outline-offset:2px;}
   .app{
     max-width:480px;
     margin:0 auto;
     min-height:calc(100vh / var(--ui-scale));
     display:flex;
     flex-direction:column;
-    padding-bottom:calc(104px + env(safe-area-inset-bottom));
   }
+
+  /* INTERACTION — every control answers a touch, none of them move the
+     layout around it. */
+  button{transition:background-color var(--fast) var(--ease), color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease), box-shadow var(--med) var(--ease),
+    transform var(--fast) var(--ease), opacity var(--fast) var(--ease);}
+  button:not(:disabled):active{transform:scale(.97);}
+  :focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{transition:none !important;animation:none !important;}
+    button:not(:disabled):active{transform:none;}
+  }
+
+  /* A screen arriving rises a few pixels into place. */
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  #entryForm, .stats-screen, .account-screen{animation:rise .24s var(--ease);}
 
   /* HEADER */
   .topbar{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:20px 20px 8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px var(--gutter) 12px;
   }
-  .topbar h1{font-size:24px;font-weight:800;margin:0;letter-spacing:-0.5px;}
-  .topbar .sub{font-size:13px;color:var(--text-muted);margin-top:2px;font-weight:500;}
-  .gear-wrap{position:relative;flex-shrink:0;}
+  .topbar h1{
+    font-size:26px;
+    font-weight:800;
+    margin:0;
+    letter-spacing:-0.6px;
+    line-height:1.1;
+    color:var(--text-dark);
+  }
+  .topbar .sub{
+    font-size:13px;
+    color:var(--text-muted);
+    margin-top:3px;
+    font-weight:600;
+  }
+  /* Three layers, same as a tab sitting in the nav track: a black outer
+     fill, a lime ring inside it, and an inner fill that is what actually
+     changes. */
   .gear-btn{
-    width:44px;height:44px;
-    border-radius:var(--r-pill);
+    padding:4px;
+    width:46px;height:46px;
+    border-radius:var(--radius-pill);
     background:var(--canvas-dark);
     border:none;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
-    transition:background .15s;
+    flex-shrink:0;
   }
-  .gear-btn svg{width:20px;height:20px;stroke:var(--lime);}
-  .gear-btn.active{background:var(--lime);}
-  .gear-btn.active svg{stroke:var(--text-dark);}
+  .gear-inner{
+    width:100%;height:100%;
+    border-radius:var(--radius-pill);
+    border:2px solid var(--lime);
+    background:var(--canvas-dark);
+    display:flex;align-items:center;justify-content:center;
+    transition:background-color var(--fast) var(--ease);
+  }
+  .gear-btn svg{width:18px;height:18px;stroke:var(--sage);transition:stroke var(--fast) var(--ease);}
+  @media (hover:hover){ .gear-btn:hover svg{stroke:var(--lime);} }
+
+  .gear-wrap{position:relative;flex-shrink:0;}
   .pending-count{
-    position:absolute;top:-4px;right:-4px;
-    min-width:20px;height:20px;padding:0 5px;
-    border-radius:var(--r-pill);
-    background:var(--amber);color:var(--text-dark);
+    position:absolute;
+    top:-4px;right:-4px;
+    min-width:20px;height:20px;
+    padding:0 5px;
+    border-radius:var(--radius-pill);
+    background:var(--lime);
+    color:var(--text-dark);
     font-size:11px;font-weight:800;
     align-items:center;justify-content:center;
     border:2px solid var(--canvas-light);
   }
 
-  /* STATUS BARS — thin, one line, one action. */
-  .update-bar,.backup-bar,.sync-bar{
-    margin:8px 20px 0;
+  /* NOTICES — update, backup, new month, sync. One family: a slim strip,
+     a short line, one small action. They inform; they don't take over. */
+  .update-bar, .backup-bar, .sync-bar{
+    margin:0 var(--gutter) 8px;
     padding:8px 8px 8px 14px;
-    border-radius:var(--r-control);
-    display:flex;align-items:center;gap:8px;
-    font-size:13px;
+    min-height:48px;
+    border-radius:14px;
+    display:flex;align-items:center;gap:10px;
   }
   .update-bar{background:var(--amber);}
-  .backup-bar,.sync-bar{background:var(--mint);}
-  .update-label{flex:1;font-weight:700;color:#5A4708;}
-  .backup-label,.sync-label{flex:1;font-weight:600;color:var(--text-dark);}
-  .update-btn,.backup-btn,.sync-btn{
-    border:none;border-radius:var(--r-chip);
-    padding:8px 12px;
-    font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;
+  .backup-bar{background:var(--mint);}
+  .sync-bar{background:var(--mint);margin:10px var(--gutter) 0;}
+  .update-label, .backup-label, .sync-label{
+    flex:1;min-width:0;
+    font-size:13px;font-weight:600;line-height:1.35;
+  }
+  .update-label{color:#5A4708;font-weight:700;}
+  .backup-label, .sync-label{color:var(--text-dark);}
+  .update-btn, .backup-btn, .sync-btn{
+    border:none;
+    border-radius:var(--radius-ctl);
+    padding:0 14px;height:34px;
+    font-family:var(--font);font-size:13px;font-weight:700;
+    cursor:pointer;flex-shrink:0;
   }
   .update-btn{background:var(--text-dark);color:var(--lime);}
-  .backup-btn,.sync-btn{background:var(--green);color:var(--white);}
-  .sync-btn:disabled{opacity:.6;}
+  .backup-btn, .sync-btn{background:var(--green);color:var(--white);}
+  @media (hover:hover){
+    .backup-btn:hover, .sync-btn:hover{background:var(--green-deep);}
+    .update-btn:hover{background:#000;}
+  }
   .backup-later{
     border:none;background:transparent;color:var(--text-muted);
-    font-size:13px;font-weight:700;cursor:pointer;padding:8px 4px;flex-shrink:0;
+    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
+    padding:0 6px;height:34px;flex-shrink:0;border-radius:var(--radius-ctl);
   }
-  .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
-  .sync-bar.is-offline{background:var(--white);border:1px solid var(--border);}
-  .sync-bar.is-offline .sync-dot{background:var(--text-muted);}
+  .sync-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--green);flex-shrink:0;
+    box-shadow:0 0 0 4px rgba(14,121,85,.15);
+  }
+  /* Offline is a normal state here, not a failure — the entry is already
+     safe on the device. */
+  .sync-bar.is-offline{background:var(--white);box-shadow:var(--shadow-1);}
+  .sync-bar.is-offline .sync-dot{background:var(--text-muted);box-shadow:none;}
+  .sync-btn:disabled{opacity:.6;}
 
-  /* BOTTOM NAV — the only dark object on the page besides the profile
-     button, so it is never mistaken for content. Thumb reach, not header. */
-  .tabbar{
-    position:fixed;
-    left:50%;transform:translateX(-50%);
-    bottom:calc(14px + env(safe-area-inset-bottom));
-    width:calc(100% - 32px);max-width:448px;
-    display:flex;gap:4px;
-    padding:6px;
+  .account-screen{
+    padding:6px var(--gutter) 32px;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .btn-outline{
+    background:var(--white);
+    border:1px solid var(--border-strong);
+    color:var(--text-dark);
+  }
+
+  /* TOP TABS (page switcher) — the one pill-shaped nav. Only the active
+     tab is drawn; the others are just words on the track. */
+  .top-tabs-wrap{
+    padding:0 var(--gutter) 4px;
+  }
+  .top-tabs{
+    display:flex;
     background:var(--canvas-dark);
-    border-radius:var(--r-pill);
-    box-shadow:0 10px 30px -10px rgba(18,22,20,.45);
-    z-index:40;
+    border-radius:var(--radius-pill);
+    padding:5px;
+    gap:4px;
   }
   .top-tab{
     flex:1;
-    display:flex;align-items:center;justify-content:center;gap:7px;
-    min-height:50px;
-    border:none;background:transparent;
-    border-radius:var(--r-pill);
+    background:transparent;
+    font-family:var(--font);
+    text-align:center;
+    padding:11px 0;
+    border-radius:var(--radius-pill);
+    border:none;
     color:var(--sage);
     font-size:14px;font-weight:700;
     cursor:pointer;
-    transition:background .15s,color .15s;
   }
-  .top-tab svg{width:18px;height:18px;stroke:currentColor;flex-shrink:0;}
-  .top-tab.active{background:var(--lime);color:var(--text-dark);}
+  @media (hover:hover){ .top-tab:not(.active):hover{color:var(--white);background:rgba(255,255,255,.06);} }
+  .top-tab.active{
+    background:var(--lime);
+    color:var(--text-dark);
+  }
 
-  /* ---------- ADD PAYMENT ---------- */
-  form{padding:12px 20px 8px;display:flex;flex-direction:column;gap:12px;}
+  /* FORM */
+  /* The form is four cards, not nine loose fields: how much, which account,
+     what it was, and whether it comes back. */
+  form{padding:12px var(--gutter) 28px;display:flex;flex-direction:column;gap:12px;}
 
   .group{
     background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--r-card);
-    padding:18px 16px;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-1);
+    padding:18px 16px 16px;
     display:flex;flex-direction:column;gap:16px;
   }
+  /* Title hierarchy, largest to smallest:
+       L1  app title      26 / 800 / dark
+       L2  hero figure    48 / 700 / dark   (amount, total have)
+       L3  section title  15 / 800 / dark
+       L4  field label    12 / 700 / muted
+       L5  hint           12 / 500 / grey */
   .account-group{position:relative;}
-  .account-group > .toggle-pill{position:absolute;top:13px;right:14px;}
-  .group-title{font-size:15px;font-weight:700;letter-spacing:-0.2px;margin-bottom:-4px;}
+  .account-group > .toggle-pill{
+    position:absolute;
+    top:12px;right:12px;
+  }
 
-  /* Inside a white card the controls are cream and borderless — the card is
-     the container, so the controls don't each need their own outline. */
+  .group-title{
+    font-size:15px;font-weight:800;
+    letter-spacing:-0.2px;
+    color:var(--text-dark);
+    line-height:1.4;
+  }
+
+  /* Inside a card, white fields on a white surface would vanish — so the
+     fields take the cream inset fill, and turn white when they have focus. */
   .group input[type="text"],
   .group input[type="date"],
   .group select,
-  .group .date-box-input{background-color:var(--canvas-light);border-color:transparent;}
-  .group input:focus,.group select:focus,.group .date-box-input:focus{border-color:var(--green);background-color:var(--white);}
+  .group .date-box-input{
+    background-color:var(--inset);
+    border-color:transparent;
+  }
+  .group input[type="text"]:focus,
+  .group select:focus,
+  .group .date-box-input:focus{background-color:var(--white);}
 
-  .field{display:flex;flex-direction:column;gap:6px;}
-  .field label, .field .field-label{font-size:13px;font-weight:600;color:var(--text-muted);}
-  .field-hint{font-size:12px;color:var(--text-muted);font-weight:500;margin-top:-2px;}
-  .is-invalid{border-color:var(--red) !important;}
+  .group .switch-row{
+    background:transparent;
+    border:none;
+    border-top:1px solid var(--border);
+    border-radius:0;
+    padding:14px 0 0;
+  }
+
+  .field{display:flex;flex-direction:column;gap:7px;}
+  .field label, .field .field-label{font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.1px;}
+  .field-hint{font-size:12px;color:#6B6861;font-weight:500;margin-top:-2px;}
+  .is-invalid{border-color:var(--red) !important;box-shadow:0 0 0 3px rgba(214,63,63,.14) !important;}
 
   input[type="text"], input[type="date"], select{
     width:100%;
-    padding:13px 14px;
-    border-radius:var(--r-control);
+    height:50px;
+    padding:0 14px;
+    border-radius:var(--radius-input);
     border:1px solid var(--border);
     background:var(--white);
     font-family:var(--font);
-    font-size:16px;font-weight:500;
+    font-size:16px;
+    font-weight:600;
     color:var(--text-dark);
     outline:none;
     appearance:none;
-    transition:border-color .15s,background-color .15s;
+    transition:border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background-color var(--fast) var(--ease);
   }
-  input:focus, select:focus{border-color:var(--green);}
+  input::placeholder{color:var(--text-faint);font-weight:500;}
+  input:focus, select:focus{border-color:var(--green);box-shadow:var(--ring);}
+  input:focus-visible, select:focus-visible{outline:none;}
   select{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%236B6760' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2378756E' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
     background-position:right 14px center;
-    padding-right:38px;
+    padding-right:36px;
+    cursor:pointer;
   }
+
+  /* Combo: a real <select> normally, which shrinks down to an invisible
+     strip over just the arrow once Custom is chosen — the visible custom
+     text input takes over underneath it. */
   .combo-wrap{position:relative;}
   .combo-wrap > select{width:100%;}
   .combo-wrap.custom-mode > select{
-    position:absolute;top:0;right:0;
-    width:44px;height:100%;
-    opacity:0;padding:0;border:none;cursor:pointer;
+    position:absolute;
+    top:0; right:0;
+    width:44px; height:100%;
+    opacity:0;
+    padding:0;
+    border:none;
+    box-shadow:none;
+    cursor:pointer;
   }
   input.combo-custom-input{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%236B6760' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2378756E' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
     background-position:right 14px center;
-    padding-right:38px;
+    padding-right:36px;
   }
-  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-  /* SEGMENTED CONTROLS — options live in one sunken track, so a choice of
-     three reads as one control instead of three loose blocks. */
-  .kind-toggle,
-  .account-block .chip-group{
-    display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
-    gap:4px;padding:4px;
-    background:var(--canvas-light);
-    border-radius:var(--r-control);
-    width:100%;
+  /* row of two */
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* SEGMENTED CONTROLS — one recessed track, one raised thumb. Used for
+     every either/or choice: credit/debit, account, yes/no, sub-tabs,
+     breakdown, sync mode. */
+  .kind-toggle, .chip-group, .sub-tabs, .seg, .seg-chips{
+    display:flex;
+    background:var(--inset);
+    border-radius:var(--radius-input);
+    padding:4px;gap:4px;
   }
-  .kind-btn,
-  .account-block .chip{
-    border:none;background:transparent;
-    min-height:42px;padding:0 6px;
-    border-radius:var(--r-chip);
-    font-size:13px;font-weight:700;
+  .kind-btn, .chip, .seg button, .seg-chips button{
+    flex:1;
+    min-height:42px;
+    padding:0 8px;
+    border:none;
+    border-radius:var(--radius-ctl);
+    background:transparent;
+    font-family:var(--font);font-size:13px;font-weight:700;
     color:var(--text-muted);
     cursor:pointer;
-    transition:background .15s,color .15s;
+    text-align:center;
   }
-  .kind-btn.on,
-  .account-block .chip.selected{background:var(--text-dark);color:var(--lime);}
-  .kind-btn.locked{opacity:.85;cursor:default;}
+  @media (hover:hover){
+    .kind-btn:not(.on):not(.locked):hover, .chip:not(.selected):hover,
+    .seg button:not(.on):hover, .seg-chips button:not(.on):hover{color:var(--text-dark);background:rgba(255,255,255,.6);}
+  }
+  /* Selected = a white thumb lifted off the track. Dark-and-lime is kept
+     for the one choice per screen that matters most (credit/debit), so
+     the eye isn't pulled to five dark pills at once. */
+  .kind-btn.on, .chip.selected, .seg button.on, .seg-chips button.on{
+    background:var(--white);color:var(--text-dark);
+    box-shadow:0 1px 2px rgba(24,28,26,.12), 0 2px 6px -2px rgba(24,28,26,.12);
+  }
+  .amount-card .kind-btn.on{background:var(--text-dark);color:var(--lime);box-shadow:var(--shadow-thumb);}
 
+  /* ACCOUNT BLOCK */
   .account-block{display:flex;flex-direction:column;}
-  /* "Account" under "Which account" says the same thing twice; it only
-     earns a visible line once it becomes "From account". */
-  .account-block:not(.is-transfer) #accountLabel{
-    position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
-  }
-  .chip{
-    padding:10px 16px;
-    border-radius:var(--r-chip);
-    border:1px solid var(--border);
-    background:var(--white);
-    font-size:14px;font-weight:600;
-    color:var(--text-dark);
-    cursor:pointer;
-  }
-  .chip.selected{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
+  .chip-group.vertical{flex-direction:column;}
 
   .toggle-pill{
     position:relative;
-    display:flex;align-items:center;gap:5px;
-    min-height:32px;padding:0 12px;
-    border-radius:var(--r-pill);
+    display:flex;align-items:center;gap:6px;
+    min-height:32px;
+    padding:0 12px;
+    border-radius:var(--radius-pill);
     border:1px solid var(--border);
     background:var(--white);
-    font-size:12px;font-weight:700;
+    font-family:var(--font);font-size:12px;font-weight:700;
     color:var(--text-muted);
     cursor:pointer;flex-shrink:0;
   }
   .toggle-pill::after{content:"";position:absolute;inset:-6px -4px;}
   .toggle-pill .swap{font-size:13px;line-height:1;}
-  .toggle-pill[aria-pressed="true"]{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
+  @media (hover:hover){ .toggle-pill[aria-pressed="false"]:hover{border-color:var(--border-strong);color:var(--text-dark);} }
+  .toggle-pill[aria-pressed="true"]{
+    background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);
+  }
 
   .to-slot{
-    max-height:0;opacity:0;margin-top:0;overflow:hidden;
+    max-height:0;
+    opacity:0;
+    margin-top:0;
+    overflow:hidden;
     transition:max-height .24s ease, opacity .16s ease, margin-top .24s ease;
   }
-  .account-block.is-transfer .to-slot{max-height:120px;opacity:1;margin-top:14px;}
+  .account-block.is-transfer .to-slot{
+    max-height:120px;
+    opacity:1;
+    margin-top:14px;
+  }
 
   #txnTypeSection{display:flex;flex-direction:column;gap:16px;}
 
   /* DATE FIELD */
   .date-box-input{
     width:100%;
-    padding:13px 14px;
-    border-radius:var(--r-control);
+    height:50px;
+    padding:0 14px;
+    border-radius:var(--radius-input);
     border:1px solid var(--border);
     background:var(--white);
     font-family:var(--font);
@@ -291,493 +440,650 @@
     color:var(--text-dark);
     outline:none;
   }
-  .date-box-input::placeholder{color:var(--text-muted);font-weight:500;}
+  .date-box-input::placeholder{color:var(--text-faint);font-weight:500;}
+  .date-box-input:focus{border-color:var(--green);}
+
   .date-field{position:relative;}
   .date-hint{
-    position:absolute;top:100%;right:0;
-    margin-top:4px;max-width:72%;
-    text-align:right;white-space:nowrap;
+    position:absolute;
+    top:100%;right:0;
+    margin-top:4px;
+    max-width:72%;
+    text-align:right;
+    white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;
     font-size:11px;line-height:12px;
-    pointer-events:none;z-index:1;
+    pointer-events:none;
+    z-index:1;
+    transition:color .15s;
   }
   .date-hint.is-warn{color:#8A6D1F;font-weight:600;}
   .date-hint.is-error{color:var(--red);font-weight:600;}
   .date-row{display:flex;gap:6px;align-items:stretch;}
-  .date-row .date-box-input{flex:1 1 auto;min-width:0;padding:13px 12px;}
+  .date-row .date-box-input{flex:1 1 auto;min-width:0;}
+  .quick-date-row{display:flex;gap:6px;}
   .quick-date-btn{
     flex-shrink:0;
     padding:0 12px;
-    border-radius:var(--r-control);
+    border-radius:var(--radius-input);
     border:1px solid var(--border);
     background:var(--white);
-    font-size:12px;font-weight:700;
+    font-family:var(--font);font-size:12px;font-weight:700;
     color:var(--text-muted);
     cursor:pointer;
   }
-  .quick-date-btn.active{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
-
-  /* AMOUNT — the hero. Biggest type on the screen, nothing competing. */
-  .amount-card{
-    background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--r-card);
-    padding:16px 16px 16px;
-    display:flex;flex-direction:column;gap:12px;
-    align-items:center;
-  }
-  .amount-card .amt-label{width:100%;}
-  .amt-label label{font-size:13px;font-weight:600;color:var(--text-muted);}
-  .amt-display-wrap{
-    display:flex;align-items:baseline;justify-content:center;
-    width:100%;padding:4px 0 8px;
-  }
-  .amt-display-wrap .rupee{font-size:40px;font-weight:700;color:var(--green);margin-right:4px;}
-  #amountInput{
-    flex:0 1 auto;min-width:0;max-width:100%;
-    border:none;background:transparent;outline:none;
-    font-family:var(--font);
-    font-size:48px;font-weight:800;letter-spacing:-1.5px;
-    color:var(--text-dark);
-    text-align:left;padding:0;
-  }
-  #amountInput::placeholder{color:#C9C5BA;font-weight:800;opacity:1;}
-  .amt-note{
-    margin-top:-8px;
-    padding:4px 10px;
-    border-radius:var(--r-tag);
-    background:var(--amber);color:#6E571A;
-    font-size:12px;font-weight:700;
-  }
-
-  /* CTA */
-  .cta-save{
-    width:100%;
-    display:flex;align-items:center;justify-content:center;gap:10px;
-    background:var(--green);color:var(--white);
-    border:none;border-radius:var(--r-pill);
-    min-height:58px;margin-top:4px;
-    font-size:17px;font-weight:700;
-    cursor:pointer;
-    box-shadow:0 8px 20px -10px rgba(14,121,85,.7);
-  }
-  .cta-save:active{transform:translateY(1px);}
-  .cta-dot{width:20px;height:20px;border-radius:50%;background:var(--lime);flex-shrink:0;}
-  .cta-caption{text-align:center;font-size:13px;font-weight:500;color:var(--text-muted);margin-top:-4px;}
+  @media (hover:hover){ .quick-date-btn:not(.active):hover{color:var(--text-dark);border-color:var(--border-strong);} }
+  .quick-date-btn.active{background:var(--mint);border-color:var(--mint);color:#14614A;}
 
   /* toggle switch (settings) */
   .switch-row{
     display:flex;align-items:center;justify-content:space-between;gap:14px;
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--radius-input);
     padding:14px 16px;
   }
   .switch-row .label-block{display:flex;flex-direction:column;gap:2px;}
-  .switch-row .label-block .title{font-size:14px;font-weight:600;}
-  .switch-row .label-block .desc{font-size:12px;color:var(--text-muted);font-weight:500;}
+  .switch-row .label-block .title{font-size:14px;font-weight:700;color:var(--text-dark);}
+  .switch-row .label-block .desc{font-size:12px;color:var(--text-muted);font-weight:500;line-height:1.45;}
   .switch{position:relative;width:46px;height:28px;flex-shrink:0;}
   .switch input{opacity:0;width:0;height:0;}
-  .slider{position:absolute;inset:0;background:#D8D5CB;border-radius:var(--r-pill);cursor:pointer;transition:.2s;}
+  .slider{
+    position:absolute;inset:0;
+    background:#D8D5CB;
+    border-radius:var(--radius-pill);
+    cursor:pointer;
+    transition:.2s;
+  }
   .slider::before{
-    content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;
-    background:var(--white);border-radius:50%;transition:.2s;
+    content:"";position:absolute;
+    width:22px;height:22px;left:3px;top:3px;
+    background:var(--white);border-radius:50%;
+    transition:.2s;
     box-shadow:0 1px 3px rgba(0,0,0,.2);
   }
   .switch input:checked + .slider{background:var(--green);}
   .switch input:checked + .slider::before{transform:translateX(18px);}
+  .switch input:focus-visible + .slider{box-shadow:var(--ring);}
 
-  /* EDIT MODE */
-  .edit-banner{
-    display:flex;align-items:center;gap:12px;
-    padding:10px 10px 10px 16px;
-    border-radius:var(--r-control);
-    background:var(--amber);
+  /* AMOUNT CARD — the hero of the form: biggest type, deepest shadow. */
+  .amount-card{
+    background:var(--white);
+    border:1px solid transparent;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-2);
+    padding:16px 16px 16px;
+    display:flex;flex-direction:column;gap:12px;
+    align-items:center;
   }
-  .edit-banner .eb-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
-  .edit-banner .eb-title{font-size:14px;font-weight:800;color:#6E571A;}
-  .edit-banner .eb-sub{font-size:12px;font-weight:600;color:#8A6D1F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .edit-banner .eb-cancel{
-    flex-shrink:0;padding:9px 14px;
-    border-radius:var(--r-chip);border:none;
-    background:var(--text-dark);color:var(--lime);
-    font-size:13px;font-weight:700;cursor:pointer;
+  .amount-card .amt-label{
+    display:flex;justify-content:space-between;align-items:center;
+    width:100%;
+  }
+  .amt-label label{font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.1px;}
+  .amt-label .pill-inr{
+    font-size:11px;
+    background:var(--inset);
+    padding:4px 9px;
+    border-radius:var(--radius-pill);
+    font-weight:700;color:var(--text-muted);
+  }
+  .amt-display-wrap{
+    position:relative;
+    display:flex;align-items:baseline;justify-content:center;
+    width:100%;
+    padding:4px 0 10px;
+  }
+  .amt-display-wrap .rupee{font-size:30px;font-weight:600;color:var(--green);margin-right:6px;}
+  #amountInput{
+    flex:0 1 auto;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    border:none;background:transparent;
+    box-shadow:none;
+    outline:none;
+    font-family:var(--font);
+    font-size:48px;font-weight:700;
+    letter-spacing:-1.2px;
+    color:var(--text-dark);
+    text-align:left;
+    padding:0;
+  }
+  #amountInput::placeholder{color:#CFCBC0;font-weight:700;opacity:1;}
+
+  .amt-note{
+    margin-top:-6px;
+    padding:5px 12px;
+    border-radius:var(--radius-pill);
+    background:var(--amber);
+    color:#8A6D1F;
+    font-size:13px;font-weight:700;
+  }
+
+  .kind-toggle{width:100%;}
+  .kind-btn.locked{opacity:0.85;cursor:default;}
+
+  /* CTA save button */
+  .cta-save{
+    width:100%;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:var(--green);
+    color:var(--white);
+    border:none;
+    border-radius:16px;
+    height:58px;
+    margin-top:4px;
+    font-family:var(--font);font-size:17px;font-weight:800;
+    letter-spacing:-.1px;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(14,121,85,.3), 0 10px 22px -10px rgba(14,121,85,.6);
+  }
+  @media (hover:hover){ .cta-save:not(:disabled):hover{background:var(--green-deep);} }
+  .cta-save:disabled{opacity:0.7;}
+  .cta-dot{width:20px;height:20px;border-radius:50%;background:var(--lime);flex-shrink:0;}
+  .cta-caption{
+    text-align:center;
+    font-size:12px;font-weight:600;
+    color:var(--text-muted);
+    margin-top:-4px;
   }
 
   /* ---------- HISTORY / STATS ---------- */
-  .stats-screen{padding:4px 20px 24px;display:flex;flex-direction:column;gap:16px;}
-  .pane{display:flex;flex-direction:column;gap:20px;}
+  .stats-screen{padding:6px var(--gutter) 32px;display:flex;flex-direction:column;gap:14px;}
+  #recentPane, #duesPane, #statsPane{display:flex;flex-direction:column;gap:14px;}
 
-  /* MONTH HEADER — a heading, not a box. The month is the biggest text on
-     the screen after the totals; the sync status rides underneath it. */
-  .month-toggle{display:flex;align-items:center;gap:6px;padding-top:6px;}
-  .mt-center{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
-  .mt-label{font-size:20px;font-weight:800;letter-spacing:-0.4px;}
-  .mt-sub{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .mt-sub.warn{color:#8A6D1F;}
-  .mt-sub.warn::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#E0A800;margin-right:6px;vertical-align:1px;}
-  .mt-arrow,.mt-read{
-    width:40px;height:40px;flex-shrink:0;
-    border-radius:var(--r-control);
-    border:1px solid var(--border);
-    background:var(--white);
-    display:flex;align-items:center;justify-content:center;
+  /* MONTH SWITCHER — not a box. The month is the screen's title, the
+     arrows sit beside it. Next is disabled at the current month because
+     there is no such thing as a future entry. */
+  .month-toggle{
+    display:flex;align-items:center;gap:8px;
+    padding:2px 2px 0;
+  }
+  .mt-center{order:-1;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
+  .mt-label{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--text-dark);line-height:1.15;}
+  .mt-sub{font-size:12px;font-weight:600;color:var(--text-muted);}
+  .mt-sub b{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .mt-sub b.out{color:var(--text-dark);}
+  .mt-sub b.in{color:var(--green);}
+  .mt-arrow{
+    width:44px;height:44px;
+    border-radius:var(--radius-input);
+    border:none;background:var(--white);
+    box-shadow:var(--shadow-1);
+    font-family:var(--font);font-size:20px;font-weight:700;line-height:1;
     color:var(--text-dark);cursor:pointer;
-    transition:background .15s;
+    flex-shrink:0;
   }
-  .mt-read{border-color:transparent;background:transparent;color:var(--text-muted);}
-  .mt-arrow svg,.mt-read svg{width:18px;height:18px;stroke:currentColor;}
-  .mt-arrow:disabled{opacity:.35;cursor:default;}
-  .mt-read:disabled{cursor:default;}
-  .mt-read.spin svg{animation:spin .9s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
+  @media (hover:hover){ .mt-arrow:not(:disabled):hover{background:var(--text-dark);color:var(--lime);} }
+  .mt-arrow:disabled{opacity:.35;cursor:default;box-shadow:none;background:transparent;}
 
-  .sub-tabs{
-    display:flex;gap:4px;padding:4px;
-    background:var(--track);
-    border-radius:var(--r-control);
-  }
+  /* Sub-tabs share the segmented-control language, on white so they sit
+     a step below the dark top nav. */
+  .sub-tabs{background:#E9E5DB;}
   .sub-tab{
     flex:1;
     display:flex;align-items:center;justify-content:center;gap:7px;
     min-height:40px;
     border:none;background:transparent;
-    border-radius:var(--r-chip);
-    font-size:14px;font-weight:700;
+    border-radius:var(--radius-ctl);
+    font-family:var(--font);font-size:13px;font-weight:700;
     color:var(--text-muted);cursor:pointer;
-    transition:background .15s,color .15s;
   }
-  .sub-tab.active{background:var(--white);color:var(--text-dark);box-shadow:0 1px 3px rgba(24,28,26,.12);}
-  .sub-tab .badge,.sub-tab .count{
-    min-width:22px;padding:0 6px;
-    border-radius:var(--r-tag);
-    font-size:12px;font-weight:800;line-height:20px;
+  @media (hover:hover){ .sub-tab:not(.active):hover{color:var(--text-dark);background:rgba(255,255,255,.5);} }
+  .sub-tab.active{background:var(--white);color:var(--text-dark);box-shadow:0 1px 2px rgba(24,28,26,.12), 0 2px 6px -2px rgba(24,28,26,.12);}
+  .sub-tab .badge, .sub-tab .count{
+    min-width:20px;padding:0 6px;
+    border-radius:var(--radius-pill);
+    font-size:11px;font-weight:800;line-height:19px;
   }
   .sub-tab .badge{background:var(--amber);color:var(--text-dark);}
-  .sub-tab .count{background:rgba(24,28,26,.07);color:var(--text-muted);}
+  .sub-tab .count{background:rgba(255,255,255,.6);color:var(--text-muted);}
+  .sub-tab.active .count{background:var(--inset);color:var(--text-muted);}
 
-  /* MONTH SUMMARY — the one number History opens on. */
-  .summary{
-    display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
-    padding:18px 20px;
-    background:var(--canvas-dark);
-    border-radius:var(--r-card);
+  /* DAYS — the date is a label above the card, not a black bar inside
+     it, and it sticks while that day's rows scroll past. */
+  .day-list{display:flex;flex-direction:column;gap:16px;}
+  .day-group{display:flex;flex-direction:column;gap:6px;}
+  .day-head{
+    position:sticky;top:0;z-index:2;
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:8px 4px 4px;
+    background:var(--canvas-light);
   }
-  .sum-main,.sum-side{display:flex;flex-direction:column;gap:4px;min-width:0;}
-  .sum-side{align-items:flex-end;text-align:right;}
-  .sum-k{font-size:12px;font-weight:700;color:var(--sage);}
-  .sum-v{font-size:30px;font-weight:800;letter-spacing:-1px;color:var(--lime);line-height:1.1;}
-  .sum-v2{font-size:16px;font-weight:800;color:var(--white);}
-  .sum-v2.in{color:#8FE3B8;}
-
-  /* DAY GROUPS — the label sits on the page, the rows sit in the card.
-     Big gap between days, hairlines between rows. */
-  .day-list{display:flex;flex-direction:column;gap:20px;}
-  .day-group{display:flex;flex-direction:column;gap:8px;}
-  .day-head{display:flex;align-items:baseline;justify-content:space-between;padding:0 4px;}
-  .day-head .day{font-size:13px;font-weight:800;color:var(--text-dark);}
-  .day-head .net{font-size:13px;font-weight:700;color:var(--text-muted);}
+  .day-head .day{
+    font-size:12px;font-weight:800;
+    letter-spacing:0.6px;text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .day-head .net{font-size:13px;font-weight:800;color:var(--text-muted);}
   .day-head .net.out{color:var(--red);}
   .day-head .net.in{color:var(--green);}
+
   .ledger-card{
     background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--r-card);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-1);
     overflow:hidden;
   }
 
-  /* TRANSACTION ROW */
+  /* TRANSACTION ROW
+     Name and amount share the top line; the line below is quiet metadata,
+     and only states that need attention get a coloured tag. */
   .txn{
-    display:flex;align-items:center;gap:12px;
-    padding:12px 14px;
     position:relative;
-    transition:background .12s;
+    display:flex;align-items:flex-start;gap:12px;
+    padding:13px 14px;
+    transition:background-color var(--fast) var(--ease);
   }
+  /* Dividers are inset past the icon, so a day reads as one list. */
   .txn + .txn::before{
-    content:"";position:absolute;top:0;left:66px;right:0;
+    content:"";position:absolute;top:0;left:62px;right:0;
     border-top:1px solid var(--border);
   }
   .txn .tile{
-    width:40px;height:40px;flex-shrink:0;
-    border-radius:var(--r-control);
+    width:36px;height:36px;flex-shrink:0;
+    border-radius:var(--radius-ctl);
     background:var(--mint);
     display:flex;align-items:center;justify-content:center;
-    font-size:15px;font-weight:800;color:#14614A;
+    font-size:14px;font-weight:800;color:#14614A;
   }
-  .txn .tile.acct-International{background:var(--amber);color:#6E571A;}
-  .txn .tile.acct-Cash{background:#EAE5D8;color:#6B6045;}
-  .txn .tile.transfer{background:var(--canvas-light);color:var(--text-muted);border:1px solid var(--border);}
-  .txn .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+  .txn .tile.acct-International{background:#FFF1BF;color:#6E571A;}
+  .txn .tile.acct-Cash{background:#EEE9DD;color:#6B6045;}
+  .txn .tile.transfer{background:var(--white);border:1.5px solid var(--border-strong);color:var(--text-muted);}
+  .txn .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
   .txn .line1{display:flex;align-items:baseline;gap:10px;}
   .txn .name{
     flex:1;min-width:0;
     font-size:15px;font-weight:700;line-height:1.3;
+    color:var(--text-dark);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
     overflow:hidden;overflow-wrap:anywhere;
   }
-  .txn .amt{font-size:15px;font-weight:800;flex-shrink:0;white-space:nowrap;line-height:1.3;}
+  .txn .amt{
+    font-size:15px;font-weight:800;flex-shrink:0;
+    text-align:right;white-space:nowrap;
+    line-height:1.3;
+  }
   .txn .amt.out{color:var(--text-dark);}
   .txn .amt.in{color:var(--green);}
   .txn .amt.flat{color:var(--text-muted);}
-  .txn .meta{
-    display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;
-    font-size:12.5px;font-weight:500;color:var(--text-muted);line-height:1.4;
-  }
-  .txn .note{font-size:12.5px;font-weight:500;color:var(--text-muted);font-style:italic;line-height:1.35;overflow-wrap:anywhere;}
+
+  .txn .tags{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;}
+  .txn .meta{font-size:12px;font-weight:600;color:var(--text-muted);line-height:1.4;}
   .tag{
-    padding:1px 7px;
-    border-radius:var(--r-tag);
-    font-size:11px;font-weight:700;
+    padding:2px 8px;
+    border-radius:var(--radius-pill);
+    background:var(--inset);
+    font-size:11px;font-weight:700;line-height:16px;
+    color:var(--text-muted);
     white-space:nowrap;
-    background:var(--canvas-light);color:var(--text-muted);
   }
   .tag.owed{background:var(--mint);color:#14614A;}
-  .tag.held{background:var(--amber);color:#6E571A;}
+  .tag.held{background:#FFF1BF;color:#6E571A;}
   .tag.edited{background:#FFE9C9;color:#8A5A0F;}
-  .txn.tappable{cursor:pointer;}
-  .txn.tappable::after{
-    content:"";width:7px;height:7px;flex-shrink:0;margin-left:2px;
-    border-right:2px solid #C9C5BA;border-top:2px solid #C9C5BA;
-    transform:rotate(45deg);
-  }
-  @media (hover:hover){ .txn.tappable:hover{background:#FAF8F3;} }
-  .txn.tappable:active{background:var(--canvas-light);}
-  .txn.due.closed{opacity:.55;}
-  .txn.due.closed .tile{background:var(--canvas-light) !important;color:var(--text-muted);}
+  .tag.settled{background:var(--inset);color:var(--text-muted);}
 
-  /* EDITS WAITING */
+  /* Owed to me: closed items sit in their own section, grayed out rather
+     than removed — same shape as an open row so nothing has to be relearned. */
+  .txn.due.closed{opacity:0.55;}
+  .txn.due.closed .tile{background:var(--inset) !important;color:var(--text-muted);}
+  .txn .note{
+    font-size:12.5px;font-weight:500;color:var(--text-muted);
+    line-height:1.4;overflow-wrap:anywhere;
+    padding-left:8px;border-left:2px solid var(--border);
+  }
+
+  .txn.tappable{cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  @media (hover:hover){ .txn.tappable:hover{background:#FAF8F3;} }
+  .txn.tappable:active{background:var(--inset);}
+  .txn.tappable:focus-visible{outline:2px solid var(--green);outline-offset:-2px;border-radius:var(--radius-card);}
+
+  /* EDIT MODE */
+  .edit-banner{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 10px 10px 16px;
+    border-radius:16px;
+    background:var(--amber);
+  }
+  .edit-banner .eb-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .edit-banner .eb-title{font-size:14px;font-weight:800;color:#6E571A;}
+  .edit-banner .eb-sub{
+    font-size:12px;font-weight:600;color:#8A6D1F;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .edit-banner .eb-cancel{
+    flex-shrink:0;
+    height:36px;padding:0 14px;
+    border-radius:var(--radius-ctl);
+    border:none;background:var(--text-dark);color:var(--lime);
+    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
+  }
+
   .edits-bar{
     display:flex;align-items:center;gap:12px;
-    padding:12px 12px 12px 16px;
-    border-radius:var(--r-control);
-    background:#FFF4D1;
+    padding:10px 10px 10px 14px;
+    border-radius:16px;
+    background:#FFF6D6;
+    border:1px solid #F3E2A6;
   }
-  .edits-bar .eb-label{flex:1;min-width:0;font-size:13px;font-weight:700;}
-  .edits-bar .eb-hint{display:block;font-size:12px;font-weight:500;color:var(--text-muted);margin-top:2px;}
+  .edits-bar .eb-label{flex:1;min-width:0;font-size:13px;font-weight:700;color:#5A4708;}
+  .edits-bar .eb-hint{display:block;font-size:12px;font-weight:500;color:#8A6D1F;margin-top:2px;}
   .edits-bar .eb-push{
-    flex-shrink:0;padding:9px 14px;
-    border-radius:var(--r-chip);border:none;
-    background:var(--text-dark);color:var(--lime);
-    font-size:13px;font-weight:700;cursor:pointer;
+    flex-shrink:0;height:36px;padding:0 16px;
+    border-radius:var(--radius-ctl);
+    border:none;background:var(--text-dark);color:var(--lime);
+    font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
   }
   .edits-bar .eb-push:disabled{opacity:.6;}
 
-  .stats-empty{padding:36px 24px;text-align:center;}
-  .stats-empty h2{font-size:17px;font-weight:700;margin:0 0 6px;}
-  .stats-empty p{font-size:14px;margin:0;font-weight:500;color:var(--text-muted);line-height:1.5;}
+  .due .body .name{font-weight:700;}
+  .due .amt{color:var(--text-dark);}
+
+  .stats-empty{
+    padding:36px 24px;text-align:center;
+  }
+  .stats-empty h2{font-size:17px;font-weight:800;margin:0 0 6px;color:var(--text-dark);letter-spacing:-.2px;}
+  .stats-empty p{font-size:14px;margin:0 auto;max-width:300px;font-weight:500;color:var(--text-muted);line-height:1.5;}
   .stats-empty .why{
     display:inline-block;margin-top:12px;
-    padding:5px 10px;border-radius:var(--r-tag);
+    padding:6px 12px;border-radius:var(--radius-pill);
     background:var(--amber);color:#6E571A;
     font-size:12px;font-weight:700;
   }
+
   .show-more{
-    width:100%;min-height:48px;
+    width:100%;
+    height:48px;
     border:1px solid var(--border-strong);
-    background:var(--white);
-    border-radius:var(--r-control);
-    font-size:14px;font-weight:700;
+    background:transparent;
+    border-radius:var(--radius-input);
+    font-family:var(--font);font-size:14px;font-weight:700;
     color:var(--text-dark);cursor:pointer;
   }
+  @media (hover:hover){ .show-more:not(:disabled):hover{background:var(--white);} }
   .show-more:disabled{opacity:.6;}
-  .scope-note{font-size:11.5px;font-weight:500;color:var(--text-muted);text-align:center;padding:0 8px;line-height:1.5;margin-top:-8px;}
 
-  /* STATS — HERO: what you have, split by account. */
+  /* STATS HERO — what you have, big, with the three accounts it is made
+     of underneath. The one dark card on the screen. */
   .hero{
     background:var(--canvas-dark);
-    border-radius:var(--r-card);
-    padding:20px;
-    display:flex;flex-direction:column;gap:16px;
+    border-radius:var(--radius-card);
+    padding:20px 18px 16px;
+    color:var(--white);
+    box-shadow:var(--shadow-2);
   }
-  .hero-k{font-size:13px;font-weight:700;color:var(--sage);}
-  .hero-v{font-size:36px;font-weight:800;letter-spacing:-1.2px;color:var(--lime);line-height:1.1;margin-top:4px;}
-  .hero-v.out{color:#FF9B9B;}
-  .hero-bar{display:flex;gap:3px;height:8px;}
-  .hero-bar span{border-radius:var(--r-pill);min-width:4px;}
-  .hero-accts{display:flex;flex-direction:column;gap:10px;}
-  .hero-acct{display:flex;align-items:center;gap:10px;font-size:14px;}
-  .hero-acct .nm{flex:1;color:#C9D3C7;font-weight:600;}
-  .hero-acct .v{font-weight:800;color:var(--white);}
-  .hero-acct .v.out{color:#FF9B9B;}
-  .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;background:var(--mint);}
-  .dot.acct-International{background:var(--amber);}
-  .dot.acct-Cash{background:#EAE5D8;}
+  .hero-key{font-size:12px;font-weight:700;color:var(--sage);letter-spacing:.2px;}
+  .hero-val{
+    font-size:40px;font-weight:800;letter-spacing:-1.2px;line-height:1.1;
+    margin-top:6px;color:var(--lime);
+  }
+  .hero-val.out{color:var(--red-soft);}
+  .hero-accts{
+    display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;
+    margin-top:18px;padding-top:14px;
+    border-top:1px solid rgba(255,255,255,.1);
+  }
+  .hero-acct{min-width:0;}
+  .hero-acct .k{
+    display:flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:700;color:var(--sage);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .hero-acct .v{font-size:15px;font-weight:800;color:var(--white);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hero-acct .v.out{color:var(--red-soft);}
+  .st-dot{width:8px;height:8px;border-radius:50%;background:#7FD3A4;flex-shrink:0;}
+  .st-dot.acct-International{background:var(--amber);}
+  .st-dot.acct-Cash{background:#D9D2BF;}
 
-  /* STATS — SPENT */
-  .spent-card{
+  /* IN / OUT — the month's two flows side by side, one step below the hero. */
+  .duo{
+    display:grid;grid-template-columns:1fr 1fr;
     background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--r-card);
-    overflow:hidden;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-1);
   }
-  .spent-top{padding:18px 20px 16px;}
-  .spent-k{font-size:13px;font-weight:700;color:var(--text-muted);}
-  .spent-v{font-size:30px;font-weight:800;letter-spacing:-1px;margin-top:4px;line-height:1.1;}
-  .spent-sub{font-size:12.5px;font-weight:600;color:var(--text-muted);margin-top:6px;}
-  .spent-split{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border);}
-  .spent-split > div{padding:14px 20px;display:flex;flex-direction:column;gap:3px;}
-  .spent-split > div + div{border-left:1px solid var(--border);}
-  .spent-split .k{font-size:12px;font-weight:700;color:var(--text-muted);}
-  .spent-split .v{font-size:16px;font-weight:800;}
-  .spent-split .v.in{color:var(--green);}
+  .duo > div{padding:14px 16px;min-width:0;}
+  .duo > div + div{border-left:1px solid var(--border);}
+  .duo .k{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text-muted);}
+  .duo .k i{width:18px;height:18px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:800;}
+  .duo .k i.o{background:#FBE3E3;color:var(--red);}
+  .duo .k i.n{background:var(--mint);color:var(--green);}
+  .duo .v{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-top:6px;color:var(--text-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .duo .s{font-size:11px;font-weight:600;color:var(--text-muted);margin-top:2px;}
 
-  /* BREAKDOWN */
+  /* BREAKDOWN — one card, three ways of cutting the same spending. */
   .panel{
     background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--r-card);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-1);
     overflow:hidden;
   }
-  .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:18px 20px 12px;}
-  .panel-title{font-size:16px;font-weight:800;letter-spacing:-0.2px;}
+  .panel-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+    padding:16px 16px 12px;
+  }
+  .panel-title{font-size:15px;font-weight:800;letter-spacing:-0.2px;color:var(--text-dark);}
   .panel-note{font-size:12px;font-weight:600;color:var(--text-muted);}
-  .seg{
-    display:flex;gap:4px;margin:0 20px 16px;
-    background:var(--canvas-light);
-    border-radius:var(--r-control);
-    padding:4px;
+  .seg{margin:0 16px 14px;}
+  .seg button{min-height:34px;font-size:12px;}
+
+  .brk{padding:0 16px 14px;display:flex;flex-direction:column;gap:14px;}
+  .brk-row{display:grid;grid-template-columns:22px 1fr;column-gap:8px;row-gap:6px;align-items:baseline;}
+  .brk-rank{grid-row:1 / span 3;font-size:12px;font-weight:800;color:var(--text-faint);}
+  .brk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0;}
+  .brk-name{
+    font-size:14px;font-weight:700;color:var(--text-dark);
+    min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  .seg button{
-    flex:1;border:none;background:transparent;
-    min-height:34px;border-radius:var(--r-chip);
-    font-size:12px;font-weight:700;
-    color:var(--text-muted);cursor:pointer;
+  .brk-val{font-size:14px;font-weight:800;color:var(--text-dark);flex-shrink:0;}
+  .brk-meta{font-size:11px;font-weight:600;color:var(--text-muted);}
+  .brk-bar{height:6px;border-radius:var(--radius-pill);background:var(--inset);overflow:hidden;}
+  .brk-fill{height:100%;border-radius:var(--radius-pill);background:#8CCBA9;transform-origin:left;animation:grow .5s var(--ease);}
+  .brk-row:nth-child(1) .brk-fill{background:var(--green);}
+  .brk-row:nth-child(1) .brk-rank{color:var(--green);}
+  @keyframes grow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+  .panel-foot{
+    border-top:1px solid var(--border);
+    display:flex;justify-content:center;
   }
-  .seg button.on{background:var(--text-dark);color:var(--lime);}
-  .brk{padding:0 20px 18px;display:flex;flex-direction:column;gap:14px;}
-  .brk-row{display:flex;flex-direction:column;gap:6px;}
-  .brk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
-  .brk-name{font-size:14px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .brk-val{font-size:14px;font-weight:800;flex-shrink:0;}
-  .brk-meta{font-size:11.5px;font-weight:600;color:var(--text-muted);}
-  .brk-bar{height:6px;border-radius:var(--r-pill);background:var(--canvas-light);overflow:hidden;}
-  .brk-fill{height:100%;border-radius:var(--r-pill);background:var(--green);opacity:.55;}
-  .brk-row:nth-child(1) .brk-fill{background:var(--green);opacity:1;}
-  .panel-foot{border-top:1px solid var(--border);display:flex;}
   .panel-foot button{
-    flex:1;min-height:48px;border:none;background:transparent;
-    font-size:13px;font-weight:700;color:var(--green);cursor:pointer;
+    width:100%;height:46px;
+    border:none;background:transparent;
+    font-family:var(--font);font-size:13px;font-weight:700;
+    color:var(--green);cursor:pointer;
   }
+  @media (hover:hover){ .panel-foot button:hover{background:#FAF8F3;} }
 
-  /* FACTS */
-  .facts{background:var(--white);border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;}
-  .fact{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:14px 20px;}
+  /* FACTS — the small derived numbers that do not deserve a tile each. */
+  .facts{
+    background:var(--white);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-1);
+    overflow:hidden;
+  }
+  .facts .panel-head{padding-bottom:4px;}
+  .fact{
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+    padding:12px 16px;
+  }
   .fact + .fact{border-top:1px solid var(--border);}
-  .fact .k{font-size:13px;font-weight:600;color:var(--text-muted);flex-shrink:0;}
-  .fact .v{font-size:14px;font-weight:800;text-align:right;overflow-wrap:anywhere;}
+  .fact .k{font-size:13px;font-weight:600;color:var(--text-muted);}
+  .fact .v{font-size:14px;font-weight:800;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
 
-  /* ACCOUNT SCREEN */
-  .account-screen{padding:12px 20px 24px;display:flex;flex-direction:column;gap:12px;}
-  .acct-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;}
+  /* Where this month's numbers came from, and the button to refresh them —
+     a quiet line, not another box. */
+  .month-read-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px;}
+  .month-read-row .mr-text{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .month-read-row .mr-text::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .month-read-row .mr-text.warn{color:#8A6D1F;}
+  .month-read-row .mr-text.warn::before{background:#E0B43A;}
+  .month-read-row .mini-btn{height:32px;padding:0 12px;font-size:12px;background:var(--white);border-color:var(--border);}
+  .scope-note{font-size:11.5px;font-weight:600;color:var(--text-muted);text-align:center;padding:0 12px;line-height:1.5;}
+
+  .gear-btn.active .gear-inner{background:var(--lime);}
+  .gear-btn.active svg{stroke:var(--text-dark);}
+
+  /* ACCOUNT SCREEN — one line per thing, and everything that is only ever
+     touched when something has gone wrong folded away behind a summary. */
+  .acct-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:14px 16px;
+  }
   .acct-row + .acct-row{border-top:1px solid var(--border);}
-  .acct-row .k{font-size:14px;font-weight:600;}
-  .acct-row .s{font-size:12px;font-weight:500;color:var(--text-muted);margin-top:2px;}
+  .acct-row .k{font-size:14px;font-weight:700;color:var(--text-dark);}
+  .acct-row .s{font-size:12px;font-weight:500;color:var(--text-muted);margin-top:2px;line-height:1.45;}
   .acct-row .grow{flex:1;min-width:0;}
   .mini-btn{
-    flex-shrink:0;padding:9px 14px;
-    border-radius:var(--r-chip);
+    flex-shrink:0;
+    height:36px;
+    padding:0 14px;
+    border-radius:var(--radius-ctl);
     border:1px solid var(--border-strong);
     background:var(--white);
-    font-size:13px;font-weight:700;
+    font-family:var(--font);font-size:13px;font-weight:700;
     color:var(--text-dark);cursor:pointer;
   }
+  @media (hover:hover){ .mini-btn:not(:disabled):not(.primary):hover{background:var(--inset);} .mini-btn.primary:not(:disabled):hover{background:#000;} }
   .mini-btn.primary{background:var(--text-dark);border-color:var(--text-dark);color:var(--lime);}
-  .mini-btn:disabled{opacity:.55;}
-  .mini-btn.primary:disabled{background:var(--canvas-light);border-color:var(--border);color:var(--text-muted);}
-  details.fold{background:var(--white);border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;}
+  .mini-btn:disabled{opacity:.55;cursor:default;}
+  .mini-btn.primary:disabled{background:var(--inset);border-color:var(--border);color:var(--text-muted);}
+  details.fold{
+    background:var(--white);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-1);
+    overflow:hidden;
+  }
   details.fold > summary{
     list-style:none;cursor:pointer;
-    padding:15px 16px;font-size:14px;font-weight:700;
+    padding:15px 16px;
+    font-size:14px;font-weight:700;color:var(--text-dark);
     display:flex;align-items:center;justify-content:space-between;
   }
   details.fold > summary::-webkit-details-marker{display:none;}
-  details.fold > summary::after{content:"⌄";color:var(--text-muted);font-weight:800;}
-  details.fold[open] > summary::after{content:"⌃";}
+  details.fold > summary::after{
+    content:"";width:8px;height:8px;
+    border-right:2px solid var(--text-muted);border-bottom:2px solid var(--text-muted);
+    transform:translateY(-2px) rotate(45deg);
+    transition:transform var(--med) var(--ease);
+  }
+  details.fold[open] > summary::after{transform:translateY(2px) rotate(-135deg);}
   details.fold[open] > summary{border-bottom:1px solid var(--border);}
   .fold-body{padding:4px 0;}
-  .seg-chips{
-    display:flex;gap:4px;padding:4px;
-    background:var(--canvas-light);border-radius:var(--r-control);
-  }
-  .seg-chips button{
-    flex:1;min-height:38px;
-    border-radius:var(--r-chip);border:none;background:transparent;
-    font-size:12px;font-weight:700;
-    color:var(--text-muted);cursor:pointer;
-  }
-  .seg-chips button.on{background:var(--text-dark);color:var(--lime);}
+  .seg-chips{padding:4px;}
+  .seg-chips button{min-height:38px;font-size:12px;}
 
-  /* SHEETS */
+  /* modal */
   .modal-overlay{
     position:fixed;inset:0;background:rgba(18,22,20,.5);
     display:none;align-items:flex-end;justify-content:center;
     z-index:50;
   }
-  .modal-overlay.open{display:flex;}
+  .modal-overlay.open{display:flex;animation:fade .2s var(--ease);}
+  .modal-overlay.open .modal{animation:sheet-up .28s var(--ease);}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}
+  @keyframes sheet-up{from{transform:translateY(24px);opacity:.6;}to{transform:none;opacity:1;}}
   .modal{
     position:relative;
     background:var(--canvas-light);
     width:100%;max-width:480px;
-    border-radius:var(--r-sheet) var(--r-sheet) 0 0;
-    padding:24px 20px calc(24px + env(safe-area-inset-bottom));
+    border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
+    padding:28px var(--gutter) calc(20px + env(safe-area-inset-bottom));
     display:flex;flex-direction:column;gap:14px;
     max-height:calc(85vh / var(--ui-scale));overflow-y:auto;
   }
+  /* Grabber — says "this is a sheet" at a glance. */
   .modal::before{
-    content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);
-    width:36px;height:4px;border-radius:var(--r-pill);background:var(--border-strong);
+    content:"";position:absolute;top:9px;left:50%;
+    width:38px;height:4px;margin-left:-19px;
+    border-radius:var(--radius-pill);background:var(--border-strong);
   }
-  .btn-outline{background:var(--white);border:1px solid var(--border);color:var(--text-dark);}
+  .modal h2{margin:0 0 4px;font-size:18px;}
+  .modal .close{align-self:flex-end;font-size:13px;color:var(--text-muted);font-weight:700;cursor:pointer;}
+
+  /* Shown only on the detail sheet for a Y id that has both legs — lets you
+     flip between editing/deleting the open (loan-out) leg and the close
+     (repayment) leg without leaving the popup. */
   .leg-toggle{
-    position:absolute;top:18px;right:58px;
-    display:flex;background:var(--track);
-    border-radius:var(--r-chip);padding:3px;gap:2px;
+    position:absolute;top:24px;right:62px;
+    display:flex;background:var(--white);
+    border-radius:var(--radius-ctl);padding:3px;gap:2px;
+    box-shadow:var(--shadow-1);
   }
   .leg-btn{
     border:none;background:transparent;
-    font-size:11px;font-weight:700;color:var(--text-muted);
-    padding:5px 10px;border-radius:8px;cursor:pointer;
+    font-family:var(--font);font-size:11px;font-weight:700;
+    color:var(--text-muted);
+    padding:6px 10px;border-radius:8px;
+    cursor:pointer;
   }
   .leg-btn.on{background:var(--text-dark);color:var(--lime);}
+
   .sheet-close{
-    position:absolute;top:18px;right:18px;
-    width:32px;height:32px;border-radius:50%;
-    border:none;background:var(--track);
+    position:absolute;top:22px;right:var(--gutter);
+    width:36px;height:36px;
+    border-radius:50%;
+    border:none;
+    background:var(--white);
+    box-shadow:var(--shadow-1);
     color:var(--text-muted);
-    font-size:14px;font-weight:700;line-height:1;
+    font-family:var(--font);font-size:14px;font-weight:700;line-height:1;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
   }
-  .sheet-title{font-size:20px;font-weight:800;letter-spacing:-0.3px;padding-right:44px;}
+  @media (hover:hover){ .sheet-close:hover{color:var(--text-dark);} }
+  .sheet-close::after{content:"";position:absolute;inset:-4px;}
+  .sheet-title{font-size:21px;font-weight:800;letter-spacing:-.4px;color:var(--text-dark);padding-right:48px;line-height:1.25;}
   .sheet-title.has-legs{padding-right:150px;}
   .sheet-line{margin:0;font-size:14px;font-weight:500;line-height:1.55;color:var(--text-muted);}
   .sheet-note{
     align-self:flex-start;
-    padding:6px 10px;border-radius:var(--r-tag);
-    background:var(--amber);color:#6E571A;
-    font-size:12.5px;font-weight:700;
+    padding:6px 12px;
+    border-radius:var(--radius-pill);
+    background:var(--amber);color:#8A6D1F;
+    font-size:12px;font-weight:700;
   }
-  .sheet-props{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
-  .sheet-prop{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:12px 16px;}
+  .sheet-props{
+    background:var(--white);
+    border-radius:16px;
+    box-shadow:var(--shadow-1);
+    overflow:hidden;
+  }
+  .sheet-prop{
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+    padding:11px 16px;
+  }
   .sheet-prop + .sheet-prop{border-top:1px solid var(--border);}
   .sheet-prop .k{font-size:13px;font-weight:600;color:var(--text-muted);flex-shrink:0;}
-  .sheet-prop .v{font-size:14px;font-weight:700;text-align:right;overflow-wrap:anywhere;}
+  .sheet-prop .v{font-size:14px;font-weight:700;color:var(--text-dark);text-align:right;overflow-wrap:anywhere;}
   .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px;}
-  .btn{min-height:52px;border-radius:var(--r-pill);border:none;font-size:16px;font-weight:700;cursor:pointer;}
+  .btn{
+    height:54px;
+    border-radius:14px;
+    border:none;
+    font-family:var(--font);font-size:16px;font-weight:700;
+    cursor:pointer;
+  }
   .btn-save{background:var(--green);color:var(--white);}
-  .btn-danger{background:var(--white);border:1px solid var(--red);color:var(--red);}
+  .btn-danger{background:var(--white);border:1px solid #F0C4C4;color:var(--red);}
+  @media (hover:hover){
+    .btn-save:hover{background:var(--green-deep);}
+    .btn-danger:hover{background:#FDF0F0;}
+    .btn-outline:hover{border-color:var(--text-muted);}
+  }
   .toast{
-    position:fixed;bottom:calc(92px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    position:fixed;bottom:calc(32px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%, 8px);
     background:var(--text-dark);color:var(--white);
-    padding:12px 18px;border-radius:var(--r-control);
+    padding:12px 18px;border-radius:14px;
+    box-shadow:0 12px 28px -10px rgba(0,0,0,.45);
     font-size:14px;font-weight:600;
-    opacity:0;transition:opacity .25s;
+    opacity:0;transition:opacity .2s var(--ease), transform .2s var(--ease);
     z-index:60;pointer-events:none;
-    max-width:min(90vw, 420px);text-align:center;white-space:normal;
+    max-width:min(90vw, 420px);
+    text-align:center;
+    white-space:normal;
   }
-  .toast.show{opacity:1;}
-
-  @media (prefers-reduced-motion: reduce){
-    *{transition:none !important;}
-    .mt-read.spin svg{animation:none;}
-  }
+  .toast.show{opacity:1;transform:translate(-50%, 0);}
 </style>
 </head>
 <body>
@@ -790,10 +1096,12 @@
     </div>
     <div class="gear-wrap">
       <button type="button" class="gear-btn" id="openSettings" aria-label="Settings and sync">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-          <circle cx="12" cy="8" r="4"/>
-          <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
-        </svg>
+        <span class="gear-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+          </svg>
+        </span>
       </button>
       <span class="pending-count" id="pendingCount" style="display:none;" aria-label="entries waiting to be sent">0</span>
     </div>
@@ -815,6 +1123,14 @@
     <button type="button" class="update-btn" id="updateBtn">Reload</button>
   </div>
 
+  <div class="top-tabs-wrap">
+    <div class="top-tabs" role="tablist" aria-label="Screens">
+      <button type="button" class="top-tab active" data-tab="add" role="tab" aria-selected="true">Add Payment</button>
+      <button type="button" class="top-tab" data-tab="history" role="tab" aria-selected="false">History</button>
+      <button type="button" class="top-tab" data-tab="stats" role="tab" aria-selected="false">Stats</button>
+    </div>
+  </div>
+
   <div class="sync-bar" id="syncBar" style="display:none;">
     <span class="sync-dot"></span>
     <span class="sync-label" id="syncLabel">—</span>
@@ -834,15 +1150,15 @@
 
     <!-- 1 · AMOUNT -->
     <div class="amount-card">
-      <div class="amt-label"><label for="amountInput">Amount</label></div>
+      <div class="amt-label"><label for="amountInput">Amount</label><span class="pill-inr">₹ INR</span></div>
       <div class="amt-display-wrap">
         <span class="rupee" id="rupeeSymbol" aria-hidden="true">₹</span>
-        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="0.00">
+        <input type="text" id="amountInput" inputmode="decimal" autocomplete="off" placeholder="00.00">
       </div>
       <div class="amt-note" id="amountNote" style="display:none;" role="status"></div>
-      <div class="kind-toggle" role="group" aria-label="Money in or out">
-        <button type="button" class="kind-btn credit" id="creditBtn">Credit · in</button>
-        <button type="button" class="kind-btn debit" id="debitBtn">Debit · out</button>
+      <div class="kind-toggle">
+        <button type="button" class="kind-btn credit" id="creditBtn">Credit</button>
+        <button type="button" class="kind-btn debit" id="debitBtn">Debit</button>
       </div>
     </div>
 
@@ -881,6 +1197,9 @@
     <div class="group">
     <div class="group-title">What it was</div>
 
+    <!-- The name is picked, not typed. Free text is what splits "Rapido"
+         from "rapido" and makes spend-by-name meaningless, so the list is
+         the field and adding to it is a deliberate, one-time act. -->
     <div class="field">
       <label for="expenseName">Transaction name</label>
       <div class="combo-wrap" id="expenseNameWrap">
@@ -905,6 +1224,7 @@
     </div>
 
     <div id="txnTypeSection">
+      <!-- single mode (default) -->
       <div class="field" id="singleTypeField">
         <label for="txnType">Category</label>
         <div class="combo-wrap" id="txnTypeWrap">
@@ -922,6 +1242,7 @@
         </div>
       </div>
 
+      <!-- self-transfer mode: the category splits into the two legs -->
       <div class="row-2" id="splitTypeFields" style="display:none;">
         <div class="field">
           <label for="txnTypeFrom">Sent leg category</label>
@@ -997,21 +1318,8 @@
 
   <!-- HISTORY -->
   <div class="stats-screen" id="historyScreen" style="display:none;">
-    <div class="month-toggle" role="group" aria-label="Month">
-      <span class="mt-center">
-        <span class="mt-label" id="monthToggleLabel">—</span>
-        <span class="mt-sub" id="monthToggleSub"></span>
-      </span>
-      <button type="button" class="mt-read" id="monthReadBtn" aria-label="Read this month from the sheet">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
-      </button>
-      <button type="button" class="mt-arrow" id="monthPrevBtn" aria-label="Previous month">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <button type="button" class="mt-arrow" id="monthNextBtn" aria-label="Next month">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
-    </div>
+    <!-- What you're looking at comes first; the month only applies to
+         Recent, so it hides when Owed to me (all-time) is showing. -->
     <div class="sub-tabs" role="tablist" aria-label="History">
       <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
         <span>Recent</span><span class="count" id="recentCount" style="display:none;">0</span>
@@ -1020,31 +1328,34 @@
         <span>Owed to me</span><span class="badge" id="duesBadge" style="display:none;">0</span>
       </button>
     </div>
-    <div id="recentPane" class="pane"></div>
-    <div id="duesPane" class="pane" style="display:none;"></div>
+    <div class="month-toggle" id="historyMonthToggle" role="group" aria-label="Month">
+      <button type="button" class="mt-arrow" id="monthPrevBtn" aria-label="Previous month">‹</button>
+      <span class="mt-center">
+        <span class="mt-label" id="monthToggleLabel">—</span>
+        <span class="mt-sub" id="monthToggleSub"></span>
+      </span>
+      <button type="button" class="mt-arrow" id="monthNextBtn" aria-label="Next month">›</button>
+    </div>
+    <div id="recentPane"></div>
+    <div id="duesPane" style="display:none;"></div>
   </div>
 
-  <!-- STATS — same month selector as History. -->
+  <!-- STATS — the same month selector as History, so the two screens are
+       always talking about the same period. -->
   <div class="stats-screen" id="statsScreen" style="display:none;">
     <div class="month-toggle" role="group" aria-label="Month">
+      <button type="button" class="mt-arrow" id="statsPrevBtn" aria-label="Previous month">‹</button>
       <span class="mt-center">
         <span class="mt-label" id="statsMonthLabel">—</span>
         <span class="mt-sub" id="statsMonthSub"></span>
       </span>
-      <button type="button" class="mt-read" id="statsReadBtn" aria-label="Read this month from the sheet">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
-      </button>
-      <button type="button" class="mt-arrow" id="statsPrevBtn" aria-label="Previous month">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <button type="button" class="mt-arrow" id="statsNextBtn" aria-label="Next month">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
+      <button type="button" class="mt-arrow" id="statsNextBtn" aria-label="Next month">›</button>
     </div>
-    <div id="statsPane" class="pane"></div>
+    <div id="statsPane"></div>
   </div>
 
-  <!-- ACCOUNT / SYNC SCREEN -->
+  <!-- ACCOUNT / SYNC SCREEN — one line per thing. Anything only touched
+       when something has gone wrong is folded away. -->
   <div class="account-screen" id="accountScreen" style="display:none;">
 
     <div class="panel">
@@ -1088,7 +1399,7 @@
     <details class="fold">
       <summary>If something went wrong</summary>
       <div class="fold-body">
-        <div class="switch-row">
+        <div class="switch-row" style="border:none;border-radius:0;background:transparent;">
           <div class="label-block grow">
             <div class="title" id="confirmTitle">Wait for the sheet to confirm</div>
             <div class="desc">Needs the Make scenario to reply LEDGER_OK. Off until it does.</div>
@@ -1109,18 +1420,6 @@
     </details>
   </div>
 </div>
-
-<nav class="tabbar" role="tablist" aria-label="Screens">
-  <button type="button" class="top-tab active" data-tab="add" role="tab" aria-selected="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Add</span>
-  </button>
-  <button type="button" class="top-tab" data-tab="history" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>History</span>
-  </button>
-  <button type="button" class="top-tab" data-tab="stats" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 20V11M12 20V5M18 20v-6"/></svg><span>Stats</span>
-  </button>
-</nav>
 
 <div class="modal-overlay" id="confirmSheet" role="dialog" aria-modal="true" aria-labelledby="confirmTitleText">
   <div class="modal">
@@ -1253,7 +1552,7 @@
   // ---------- HEADER DATE ----------
   function initHeaderDate(){
     const now = new Date();
-    $('dateSub').textContent = now.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'short'});
+    $('dateSub').textContent = now.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
   }
   initHeaderDate();
 
@@ -1302,7 +1601,7 @@
     return monthDateFor(off).toLocaleDateString('en-GB', { month:'long', year:'numeric' });
   }
   function monthSubFor(off){
-    if(off === 0) return 'This month';
+    if(off === 0) return 'Current month';
     if(off === -1) return 'Last month';
     return `${-off} months ago`;
   }
@@ -1324,40 +1623,26 @@
     renderStats();
   }
 
-  // Where the selected month stands against the sheet, said in one line
-  // under the month name — this used to be a whole row of its own.
-  function readStatus(off){
-    const ms = monthState(off);
-    if(state.monthLoading === ms.sheet) return { ms, busy:true,  warn:false, text:'Reading from the sheet…' };
-    if(ms.problem)                      return { ms, busy:false, warn:true,  text:'Could not read the sheet' };
-    if(ms.pulled) return { ms, busy:false, warn:false,
-      text:'Read ' + new Date(ms.pulledAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) };
-    return { ms, busy:false, warn:true, text:'Not read from the sheet' };
-  }
-
-  // The two headers are the same control drawn twice; this keeps them in
+  // The two toggles are the same control drawn twice; this keeps them in
   // step without either screen owning the state.
   function renderMonthToggles(){
     const off = state.monthOffset;
-    const rs = readStatus(off);
-    [['monthToggleLabel','monthToggleSub','monthPrevBtn','monthNextBtn','monthReadBtn'],
-     ['statsMonthLabel','statsMonthSub','statsPrevBtn','statsNextBtn','statsReadBtn']].forEach(ids => {
+    [['monthToggleLabel','monthToggleSub','monthPrevBtn','monthNextBtn'],
+     ['statsMonthLabel','statsMonthSub','statsPrevBtn','statsNextBtn']].forEach(ids => {
       $(ids[0]).textContent = monthLabelFor(off);
-      $(ids[1]).textContent = `${monthSubFor(off)} · ${rs.text}`;
-      $(ids[1]).classList.toggle('warn', rs.warn);
+      $(ids[1]).textContent = monthSubFor(off);
       $(ids[2]).disabled = off <= -MONTHS_BACK_MAX;
       $(ids[3]).disabled = off >= 0;
-      $(ids[4]).disabled = rs.busy;
-      $(ids[4]).classList.toggle('spin', rs.busy);
-      $(ids[4]).setAttribute('aria-label', `Read ${rs.ms.sheet} from the sheet`);
     });
+    // History's month title carries the month's headline numbers, so the
+    // list has something to sit under; Stats keeps its own figures below.
+    const t = monthTotals(off);
+    $('monthToggleSub').innerHTML = t.count
+      ? `<b class="out">₹${money(t.spent)}</b> spent · <b class="in">₹${money(t.income)}</b> in`
+      : esc(monthSubFor(off));
   }
   ['monthPrevBtn','statsPrevBtn'].forEach(id => $(id).addEventListener('click', () => shiftMonth(-1)));
   ['monthNextBtn','statsNextBtn'].forEach(id => $(id).addEventListener('click', () => shiftMonth(1)));
-  ['monthReadBtn','statsReadBtn'].forEach(id => $(id).addEventListener('click', () => {
-    const ms = monthState(state.monthOffset);
-    readMonth(ms.sheet, ms.table);
-  }));
 
   // ---------- DATE PARSING ----------
   const SEPARATORS = /[.\-\/\s]+/;
@@ -1865,7 +2150,6 @@
   const AMOUNT_MAX_INT_DIGITS = 7;
   const AMOUNT_MAX = Math.pow(10, AMOUNT_MAX_INT_DIGITS) - 1;
   const AMOUNT_CONFIRM_FROM = 100000;
-  const AMOUNT_PLACEHOLDER = '0.00';
 
   const amountInput = $('amountInput');
 
@@ -1914,10 +2198,9 @@
   function updateAmountWidth(){
     const cs = getComputedStyle(amountInput);
     amountMeasureCanvas.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    if('letterSpacing' in amountMeasureCanvas) amountMeasureCanvas.letterSpacing = cs.letterSpacing;
     const text = amountInput.value || amountInput.placeholder;
-    // letter-spacing is not in measureText, so it is added per character.
-    const ls = parseFloat(cs.letterSpacing) || 0;
-    const width = amountMeasureCanvas.measureText(text).width + ls * text.length;
+    const width = amountMeasureCanvas.measureText(text).width;
     amountInput.style.width = Math.ceil(width) + 3 + 'px';
   }
 
@@ -1979,7 +2262,7 @@
   });
 
   amountInput.addEventListener('focus', (e) => {
-    e.target.dataset.placeholderBackup = e.target.placeholder || AMOUNT_PLACEHOLDER;
+    e.target.dataset.placeholderBackup = e.target.placeholder || '00.00';
     e.target.placeholder = '';
     updateAmountWidth();
   });
@@ -1987,7 +2270,7 @@
   amountInput.addEventListener('blur', (e) => {
     let val = e.target.value.replace(/,/g, '');
     if(val === ''){
-      e.target.placeholder = e.target.dataset.placeholderBackup || AMOUNT_PLACEHOLDER;
+      e.target.placeholder = e.target.dataset.placeholderBackup || '00.00';
       updateAmountWidth();
       return;
     }
@@ -2137,7 +2420,7 @@
     selectChip('accountChips', 'Domestic');
     state.account = 'Domestic';
     $('splitCustomFields').style.display = 'none';
-    amountInput.placeholder = amountInput.dataset.placeholderBackup || AMOUNT_PLACEHOLDER;
+    amountInput.placeholder = amountInput.dataset.placeholderBackup || '00.00';
     state.confirmAmount = null;
     updateAmountWidth();
     updateCTA();
@@ -2692,8 +2975,10 @@
     return state.edits.some(e => e.uid === row.uid);
   }
 
-  // Name and amount on top. Underneath, account and category as plain text —
-  // only states that need noticing (owed, not sent, edited) get a tag.
+  // Two lines rather than one. The amount sits beside the name on the top
+  // line, and everything that used to be crushed into a single ellipsised
+  // strip — account, category, whether it is owed, whether the sheet has it
+  // — becomes tags on the line below, which wrap instead of being cut off.
   function txnRow(r){
     const acct = esc(r.account || '');
     const members = r.members || [r];
@@ -2704,18 +2989,20 @@
       ? `<div class="amt flat">₹${money(r.amount)}</div>`
       : `<div class="amt ${r.isOut ? 'out' : 'in'}">${r.isOut ? '−' : '+'} ₹${money(r.amount)}</div>`;
 
+    // Account and category are quiet text; only states that need a second
+    // look (owed, not sent, edited) are drawn as coloured tags.
     const meta = [r.transfer ? `${acct} → ${esc(r.toAccount || '')}` : acct];
     if(r.txnType) meta.push(esc(r.txnType));
-    const flags = [];
-    if(!r.transfer && String(r.id || '').startsWith('Y')) flags.push('<span class="tag owed">Owed</span>');
-    if(members.some(m => !m.sent)) flags.push('<span class="tag held">On this device</span>');
-    if(members.some(hasPendingEdit)) flags.push('<span class="tag edited">Edited</span>');
+    const tags = [`<span class="meta">${meta.join(' · ')}</span>`];
+    if(!r.transfer && String(r.id || '').startsWith('Y')) tags.push('<span class="tag owed">Owed</span>');
+    if(members.some(m => !m.sent)) tags.push('<span class="tag held">on this device</span>');
+    if(members.some(hasPendingEdit)) tags.push('<span class="tag edited">edited</span>');
 
     return `<div class="txn tappable" data-key="${esc(r.uid)}" role="button" tabindex="0">
       <div class="${tile}">${mark}</div>
       <div class="body">
         <div class="line1"><div class="name">${name}</div>${amt}</div>
-        <div class="meta"><span>${meta.join(' · ')}</span>${flags.join('')}</div>
+        <div class="tags">${tags.join('')}</div>
         ${r.moreInfo ? `<div class="note">${esc(r.moreInfo)}</div>` : ''}
       </div>
     </div>`;
@@ -2751,8 +3038,8 @@
     };
   }
 
-  // The full-width read button, only used inside an empty month — the
-  // header's refresh icon covers every other case.
+  // The one button that fills a month in, wherever it is needed. It is the
+  // same read for History and Stats, so pulling once fixes both.
   function importButton(ms, labelWhenPulled){
     const busy = state.monthLoading === ms.sheet;
     const label = busy ? `Reading ${ms.sheet}…`
@@ -2762,28 +3049,33 @@
       <div class="scope-note">One read · 3 Make operations</div>`;
   }
 
-  // One read, whichever button started it. It fills both screens.
-  async function readMonth(sheet, table){
-    if(state.monthLoading) return;
-    state.monthLoading = sheet;
-    renderMonthToggles();
-    const r = await importMonth(sheet, table);
-    state.monthLoading = null;
-    state.monthStatus[sheet] = r.ok ? null : r.why;
-    renderHistory();
-    renderStats();
-    showToast(r.ok
-      ? (r.count === 0 ? `${sheet} is empty` : `${sheet} read · ${r.count} entries`)
-      : r.why, r.ok ? 2200 : 4000);
+  // Top-of-screen status + read button. Same read as importButton, but
+  // reachable without scrolling.
+  function monthReadRow(ms){
+    const busy = state.monthLoading === ms.sheet;
+    const when = ms.pulled ? new Date(ms.pulledAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+    const text = ms.pulled ? `Read from sheet ${when}` : `${ms.sheet} not read yet`;
+    const label = busy ? 'Reading…' : ms.pulled ? 'Read again' : 'Get from sheet';
+    return `<div class="month-read-row"><span class="mr-text${ms.pulled ? '' : ' warn'}">${esc(text)}</span>
+      <button type="button" class="mini-btn import-month-btn" data-sheet="${ms.sheet}" data-table="${ms.table}" ${busy ? 'disabled' : ''}>${label}</button></div>`;
   }
 
   function wireImportButton(pane){
     const btn = pane.querySelector('.import-month-btn');
     if(!btn) return;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      const { sheet, table } = btn.dataset;
+      state.monthLoading = sheet;
       btn.disabled = true;
       btn.textContent = 'Reading…';
-      readMonth(btn.dataset.sheet, btn.dataset.table);
+      const r = await importMonth(sheet, table);
+      state.monthLoading = null;
+      state.monthStatus[sheet] = r.ok ? null : r.why;
+      renderHistory();
+      renderStats();
+      showToast(r.ok
+        ? (r.count === 0 ? `${sheet} is empty` : `${sheet} added · ${r.count} entries`)
+        : r.why, r.ok ? 2200 : 4000);
     });
   }
 
@@ -2810,24 +3102,6 @@
       <p>${esc(p)}</p>
       ${why ? `<span class="why">${esc(why)}</span>` : ''}
     </div></div>` + importButton(ms);
-  }
-
-  // Same total Stats shows, so the two screens never disagree: the sheet's
-  // own J5 when it has been read, plus anything only this device holds.
-  function monthSpent(sheet, rows){
-    const snap = loadStatsSnap()[sheet];
-    return snap
-      ? snap.spent + sum(spendRows(rows.filter(r => r.src !== 'sheet')))
-      : sum(spendRows(rows));
-  }
-
-  function monthSummary(ms, rows){
-    const income = sum(incomeRows(rows));
-    return `<div class="summary">
-      <div class="sum-main"><span class="sum-k">Spent in ${esc(monthDateFor(state.monthOffset).toLocaleDateString('en-GB', { month:'long' }))}</span>
-        <span class="sum-v">₹${money(monthSpent(ms.sheet, rows))}</span></div>
-      <div class="sum-side"><span class="sum-k">Came in</span><span class="sum-v2 in">+ ₹${money(income)}</span></div>
-    </div>`;
   }
 
   function renderRecent(){
@@ -2870,12 +3144,16 @@
       </section>`;
     });
 
-    let html = monthSummary(ms, all) + editsBar() + `<div class="day-list">${cards}</div>`;
+    // The read status leads only while the month still needs reading; once
+    // it has been read it drops to the foot of the list as fine print.
+    let html = (ms.pulled ? '' : monthReadRow(ms)) + editsBar() + `<div class="day-list">${cards}</div>`;
     if(all.length > state.historyShown) html += `<button type="button" class="show-more" id="showMoreBtn">Show earlier in ${ms.sheet}</button>`;
+    if(ms.pulled) html += monthReadRow(ms);
 
     pane.innerHTML = html;
     const more = pane.querySelector('#showMoreBtn');
     if(more) more.addEventListener('click', () => { state.historyShown += 40; renderRecent(); });
+    wireImportButton(pane);
     wireRows(pane);
     wireEditsBar(pane);
   }
@@ -3094,7 +3372,7 @@
     saveSheetCache(cache);
     pruneOpenYIds();
 
-    renderHistory();
+    renderRecent();
     showToast('Deleted');
   }
 
@@ -3159,7 +3437,7 @@
     $('moreInfo').value = row.moreInfo || '';
 
     amountInput.value = formatAmountString(String(Number(row.amount)));
-    amountInput.placeholder = amountInput.dataset.placeholderBackup || AMOUNT_PLACEHOLDER;
+    amountInput.placeholder = amountInput.dataset.placeholderBackup || '00.00';
     state.confirmAmount = null;
     updateAmountWidth();
 
@@ -3380,7 +3658,7 @@
     const cls = 'txn due' + (closed ? ' closed' : '') + (targetRow ? ' tappable' : '');
     const attrs = targetRow ? ` data-key="${esc(targetRow.uid)}" role="button" tabindex="0"` : '';
     if(!it.openDateISO) return `<div class="${cls}"${attrs}>
-      <div class="tile transfer">?</div>
+      <div class="tile transfer"></div>
       <div class="body"><div class="line1"><div class="name">${esc(it.name)}</div></div>
       <div class="note">Opened before this device had a record of it</div></div>
     </div>`;
@@ -3390,8 +3668,8 @@
     return `<div class="${cls}"${attrs}>
       <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
       <div class="body">
-        <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt${closed ? ' flat' : ''}">₹${money(it.amount || 0)}</div></div>
-        <div class="meta"><span>${acct} · ${dates}</span></div>
+        <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
+        <div class="tags"><span class="meta">${acct} · ${dates}</span></div>
       </div>
     </div>`;
   }
@@ -3402,7 +3680,8 @@
     state.rowIndex[norm.uid] = norm;
   }
 
-  // One list, one place to look — open items on top, closed below, grayed.
+  // One list, one place to look — open items on top in their own card,
+  // closed ones below in theirs, grayed out. Never two tabs to check.
   function duesSection(label, list, closed){
     if(!list.length) return '';
     return `<section class="day-group">
@@ -3436,14 +3715,7 @@
 
     items.forEach(it => { registerDueRow(it.openRow); registerDueRow(it.closeRow); });
 
-    const owed = openList.reduce((n, it) => n + (it.amount || 0), 0);
-    const summary = `<div class="summary">
-      <div class="sum-main"><span class="sum-k">Still owed to you</span><span class="sum-v">₹${money(owed)}</span></div>
-      <div class="sum-side"><span class="sum-k">Open</span><span class="sum-v2">${openList.length}</span></div>
-    </div>`;
-
-    pane.innerHTML = summary
-      + `<div class="day-list">${duesSection('Open', openList, false)}${duesSection('Settled', closedList, true)}</div>`
+    pane.innerHTML = `<div class="day-list">${duesSection('Open', openList, false)}${duesSection('Closed', closedList, true)}</div>`
       + `<div class="scope-note">${esc(scope)}</div>`;
     wireRows(pane);
   }
@@ -3452,6 +3724,7 @@
     const recent = state.subTab === 'recent';
     $('recentPane').style.display = recent ? 'flex' : 'none';
     $('duesPane').style.display = recent ? 'none' : 'flex';
+    $('historyMonthToggle').style.display = recent ? 'flex' : 'none';
     document.querySelectorAll('.sub-tab').forEach(t => {
       const on = t.dataset.sub === state.subTab;
       t.classList.toggle('active', on);
@@ -3471,7 +3744,6 @@
   // list is drawn from, for the same month. Nothing is cached separately,
   // so the two screens can never disagree.
   const ACCOUNTS = ['Domestic', 'International', 'Cash'];
-  const ACCOUNT_COLOR = { Domestic:'#DDF3E4', International:'#FFDE73', Cash:'#EAE5D8' };
   // Rows the sheet uses to carry a balance forward. They are real money but
   // they are not income, so they are kept out of anything that counts what
   // came in or went out.
@@ -3515,70 +3787,48 @@
     return Object.values(g).sort((a,b) => b.total - a.total);
   }
 
-  function signed(v){ return `${v < 0 ? '−' : ''}₹${money(Math.abs(v))}`; }
-
-  // HERO — the one answer to "what do I have", then how it is split.
-  function heroCard(bal){
-    const names = ACCOUNTS.concat(Object.keys(bal).filter(k => !ACCOUNTS.includes(k)));
-    const have = names.reduce((n, k) => n + (bal[k] || 0), 0);
-    const pos = names.reduce((n, k) => n + Math.max(0, bal[k] || 0), 0);
-    const bar = pos > 0
-      ? `<div class="hero-bar" aria-hidden="true">${names.filter(k => (bal[k] || 0) > 0).map(k =>
-          `<span style="flex:${bal[k]};background:${ACCOUNT_COLOR[k] || '#9EAD9C'};"></span>`).join('')}</div>`
-      : '';
-    return `<div class="hero">
-      <div>
-        <div class="hero-k">Total you have</div>
-        <div class="hero-v${have < 0 ? ' out' : ''}">${signed(have)}</div>
-      </div>
-      ${bar}
-      <div class="hero-accts">${names.map(k => `<div class="hero-acct">
-        <span class="dot acct-${esc(k)}"></span><span class="nm">${esc(k)}</span>
-        <span class="v${(bal[k] || 0) < 0 ? ' out' : ''}">${signed(bal[k] || 0)}</span>
-      </div>`).join('')}</div>
-    </div>`;
+  // What a month spent and took in. History's headline and the Stats
+  // In/Out pair both read this, so the two screens can never disagree.
+  function monthTotals(off){
+    const rows = rowsForMonth(off);
+    const statsSnap = loadStatsSnap()[monthState(off).sheet];
+    // Rows already synced to the sheet are already inside J5; only what this
+    // device holds that isn't in the sheet yet needs adding on top.
+    const spent = statsSnap
+      ? statsSnap.spent + sum(spendRows(rows.filter(r => r.src !== 'sheet')))
+      : sum(spendRows(rows));
+    return { spent, income: sum(incomeRows(rows)), count: rows.length };
   }
 
-  // SPENT — the second answer, with the two numbers that explain it.
-  function spentCard(rows, spent){
-    const spend = spendRows(rows);
-    const d = monthDateFor(state.monthOffset);
-    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    const elapsed = state.monthOffset === 0 ? new Date().getDate() : daysInMonth;
-    const perDay = elapsed ? spent / elapsed : 0;
-    const spendDays = new Set(spend.map(r => r.dateISO)).size;
-    const owed = openItems().reduce((n, i) => n + (i.amount || 0), 0);
-    return `<div class="spent-card">
-      <div class="spent-top">
-        <div class="spent-k">Spent in ${esc(d.toLocaleDateString('en-GB', { month:'long' }))}</div>
-        <div class="spent-v">₹${money(spent)}</div>
-        <div class="spent-sub">₹${money(Math.round(perDay))} a day · spent on ${spendDays} of ${elapsed} ${elapsed === 1 ? 'day' : 'days'}</div>
-      </div>
-      <div class="spent-split">
-        <div><span class="k">Came in</span><span class="v in">+ ₹${money(sum(incomeRows(rows)))}</span></div>
-        <div><span class="k">Owed to me</span><span class="v">${owed ? '₹' + money(owed) : '—'}</span></div>
-      </div>
+  function signedMoney(v){ return `${v < 0 ? '−' : ''}₹${money(Math.abs(v))}`; }
+
+  // One account's balance, drawn small inside the hero card.
+  function heroAcct(name, value){
+    return `<div class="hero-acct">
+      <div class="k"><span class="st-dot acct-${esc(name)}"></span>${esc(name)}</div>
+      <div class="v${value < 0 ? ' out' : ''}">${signedMoney(value)}</div>
     </div>`;
   }
 
   const BREAKDOWN_KEYS = { name:'expenseName', category:'txnType', account:'account' };
-  const BREAKDOWN_LABEL = { name:'Name', category:'Category', account:'Account' };
+  const BREAKDOWN_LABEL = { name:'By name', category:'By category', account:'By account' };
 
   function breakdownPanel(rows){
     const key = BREAKDOWN_KEYS[state.breakdown] || 'expenseName';
     const groups = groupSpend(rows, key);
     const total = groups.reduce((n, g) => n + g.total, 0);
-    const limit = state.breakdownAll ? groups.length : 5;
+    const limit = state.breakdownAll ? groups.length : 6;
     const shown = groups.slice(0, limit);
     const top = shown.length ? shown[0].total : 1;
 
     const seg = Object.keys(BREAKDOWN_KEYS).map(k =>
-      `<button type="button" data-brk="${k}" class="${state.breakdown === k ? 'on' : ''}" aria-pressed="${state.breakdown === k}">${BREAKDOWN_LABEL[k]}</button>`).join('');
+      `<button type="button" data-brk="${k}" class="${state.breakdown === k ? 'on' : ''}">${BREAKDOWN_LABEL[k]}</button>`).join('');
 
     const body = shown.length
-      ? shown.map(g => {
+      ? shown.map((g, i) => {
           const pct = total ? Math.round(g.total / total * 100) : 0;
           return `<div class="brk-row">
+            <span class="brk-rank">${i + 1}</span>
             <div class="brk-top">
               <span class="brk-name">${esc(g.name)}</span>
               <span class="brk-val">₹${money(g.total)}</span>
@@ -3587,9 +3837,9 @@
             <div class="brk-meta">${pct}% · ${g.count === 1 ? '1 entry' : g.count + ' entries'}</div>
           </div>`;
         }).join('')
-      : `<div class="brk-meta" style="padding:4px 0;">Nothing spent in this month yet.</div>`;
+      : `<div class="brk-meta" style="padding:8px 0 14px;">Nothing spent in this month yet.</div>`;
 
-    const foot = groups.length > 5
+    const foot = groups.length > 6
       ? `<div class="panel-foot"><button type="button" id="brkMoreBtn">${state.breakdownAll ? 'Show less' : `Show all ${groups.length}`}</button></div>`
       : '';
 
@@ -3598,20 +3848,30 @@
         <span class="panel-title">Where it went</span>
         <span class="panel-note">${groups.length} ${groups.length === 1 ? 'group' : 'groups'}</span>
       </div>
-      <div class="seg" id="brkSeg" role="group" aria-label="Group spending by">${seg}</div>
+      <div class="seg" id="brkSeg">${seg}</div>
       <div class="brk">${body}</div>
       ${foot}
     </div>`;
   }
 
-  // The small leftovers that are not worth a card of their own.
   function factsPanel(rows){
-    const biggest = spendRows(rows).slice().sort((a,b) => b.amount - a.amount)[0];
+    const spend = spendRows(rows);
+    const biggest = spend.slice().sort((a,b) => b.amount - a.amount)[0];
+    const d = monthDateFor(state.monthOffset);
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const elapsed = state.monthOffset === 0 ? new Date().getDate() : daysInMonth;
+    const perDay = elapsed ? sum(spend) / elapsed : 0;
+    const owed = openItems().reduce((n, i) => n + (i.amount || 0), 0);
+    const spendDays = new Set(spend.map(r => r.dateISO)).size;
+
     const facts = [
+      ['Entries', `${rows.length}`],
       ['Biggest expense', biggest ? `${biggest.expenseName} · ₹${money(biggest.amount)}` : '—'],
-      ['Entries', `${rows.length}`]
+      ['Average a day', `₹${money(Math.round(perDay))} over ${elapsed} ${elapsed === 1 ? 'day' : 'days'}`],
+      ['Days with spending', `${spendDays} of ${elapsed}`],
+      ['Owed to me', owed ? `₹${money(owed)}` : 'Nothing open']
     ];
-    return `<div class="facts">${facts.map(f =>
+    return `<div class="facts"><div class="panel-head"><span class="panel-title">The month in numbers</span></div>${facts.map(f =>
       `<div class="fact"><span class="k">${esc(f[0])}</span><span class="v">${esc(f[1])}</span></div>`).join('')}</div>`;
   }
 
@@ -3628,18 +3888,47 @@
       return;
     }
 
+    const bal = balancesFor(rows);
+    const { spent, income } = monthTotals(off);
+    const have = Object.keys(bal).reduce((n, k) => n + bal[k], 0);
+
+    const names = ACCOUNTS.concat(Object.keys(bal).filter(k => !ACCOUNTS.includes(k)));
+    const accts = names.map(n => heroAcct(n, bal[n] || 0)).join('');
+
     // Rollover rows only exist in the sheet, so a month that has never been
     // pulled back has balances that start from zero rather than from what
     // was carried in. Say so rather than showing a confidently wrong number.
     const scope = ms.pulled
-      ? `Sheet figures plus anything added here since it was read.`
+      ? `${ms.sheet} read from the sheet ${new Date(ms.pulledAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}, plus anything added here since.`
       : `Added up from this device only — ${ms.sheet} has not been read, so last month's rollover is not counted yet.`;
 
-    pane.innerHTML = heroCard(balancesFor(rows))
-      + spentCard(rows, monthSpent(ms.sheet, rows))
-      + breakdownPanel(rows)
-      + factsPanel(rows)
-      + `<div class="scope-note">${esc(scope)}</div>`;
+    // Hierarchy, top down: what you have (hero), how the month moved it
+    // (in / out), where the spending went, then the small facts. Where the
+    // numbers came from is fine print: it only goes on top while the month
+    // still needs reading.
+    pane.innerHTML = `
+      ${ms.pulled ? '' : monthReadRow(ms)}
+      <div class="hero">
+        <div class="hero-key">Total have</div>
+        <div class="hero-val${have < 0 ? ' out' : ''}">${signedMoney(have)}</div>
+        <div class="hero-accts">${accts}</div>
+      </div>
+      <div class="duo">
+        <div>
+          <div class="k"><i class="o" aria-hidden="true">−</i>Spent</div>
+          <div class="v">₹${money(spent)}</div>
+          <div class="s">this month</div>
+        </div>
+        <div>
+          <div class="k"><i class="n" aria-hidden="true">+</i>Money in</div>
+          <div class="v">₹${money(income)}</div>
+          <div class="s">transfers left out</div>
+        </div>
+      </div>
+      ${breakdownPanel(rows)}
+      ${factsPanel(rows)}
+      ${ms.pulled ? monthReadRow(ms) : ''}
+      <div class="scope-note">${esc(scope)}</div>`;
 
     pane.querySelectorAll('#brkSeg button').forEach(b => {
       b.addEventListener('click', () => {
@@ -3650,6 +3939,7 @@
     });
     const more = pane.querySelector('#brkMoreBtn');
     if(more) more.addEventListener('click', () => { state.breakdownAll = !state.breakdownAll; renderStats(); });
+    wireImportButton(pane);
   }
 
   // ---------- BACKUP ----------
@@ -3934,7 +4224,6 @@
       b.classList.toggle('active', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    window.scrollTo(0, 0);
   }
 
   document.querySelectorAll('.top-tab').forEach(btn => {
