@@ -1049,6 +1049,13 @@
     text-align:center;
     font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);line-height:var(--lh-body);
   }
+  /* A search spans months: one line up top says how much and over when. */
+  .search-sum{
+    padding:0 var(--sp-1);
+    font-size:var(--fs-sm);font-weight:var(--fw-bold);color:var(--text-2);font-variant-numeric:tabular-nums;
+  }
+  /* The month line steps back while a search covers every month. */
+  .month-nav.dim{opacity:.35;transition:opacity var(--t-fast) var(--ease);}
 
   /* =====================================================================
      STATS
@@ -3703,13 +3710,38 @@
     renderHistory();
   }
 
+  // A search looks through every month this phone holds, not just the one
+  // on screen: typing "Spotify" should show every Spotify payment, so a
+  // monthly or quarterly thing reads as its own history. It reads nothing
+  // new from the sheet, so it costs nothing.
+  const monthShort = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { month:'short' });
+  function searchSummary(groups){
+    const rows = groups.flatMap(g => g.rows);
+    const out = rows.reduce((n, r) => n + (!r.transfer && r.isOut ? r.amount : 0), 0);
+    const inn = rows.reduce((n, r) => n + (!r.transfer && !r.isOut ? r.amount : 0), 0);
+    const isos = groups.map(g => g.iso).sort();
+    const first = isos[0], last = isos[isos.length - 1];
+    const yr = last.slice(0, 4);
+    const span = monthNamesFor(first).sheet === monthNamesFor(last).sheet
+      ? `${monthShort(last)} ${yr}`
+      : `${monthShort(first)}${first.slice(0, 4) !== yr ? ' ' + first.slice(0, 4) : ''} – ${monthShort(last)} ${yr}`;
+    const parts = [`${rows.length} ${rows.length === 1 ? 'match' : 'matches'}`];
+    if(out) parts.push(`₹${money(out)} spent`);
+    if(inn) parts.push(`₹${money(inn)} in`);
+    parts.push(span);
+    return `<div class="search-sum">${parts.map(esc).join(' · ')}</div>`;
+  }
+
   function renderRecent(){
     const pane = $('recentPane');
     const off = state.monthOffset;
     const ms = monthState(off);
-    const everything = rowsForMonth(off);
+    const q = state.search.trim();
+    const searching = !!q;
+    $('historyMonthToggle').classList.toggle('dim', searching);
+    const everything = searching ? allRows().filter(r => r.dateISO) : rowsForMonth(off);
 
-    if(!everything.length){
+    if(!searching && !everything.length){
       pane.innerHTML = emptyMonthCard(ms, off);
       wireImportButton(pane);
       return;
@@ -3731,12 +3763,11 @@
     const total = groups.reduce((n, g) => n + g.rows.length, 0);
 
     if(!total){
-      const q = state.search.trim();
       const what = q ? `matches “${esc(q)}”${state.filter !== 'all' ? ' under ' + FILTER_LABEL[state.filter] : ''}`
                      : `is under ${FILTER_LABEL[state.filter]}`;
       pane.innerHTML = `<div class="ledger-card"><div class="stats-empty">
         <h2>Nothing to show</h2>
-        <p>Nothing in ${esc(monthLabelFor(off))} ${what}.</p>
+        <p>Nothing ${searching ? 'on this phone' : 'in ' + esc(monthLabelFor(off))} ${what}.</p>
         <div class="empty-action"><button type="button" class="show-more" id="clearFiltersBtn">Clear filters</button></div>
       </div></div>`;
       pane.querySelector('#clearFiltersBtn').addEventListener('click', clearHistoryFilters);
@@ -3767,9 +3798,17 @@
 
     // The read status leads only while the month still needs reading; once
     // it has been read it drops to the foot of the list as fine print.
-    let html = (ms.pulled ? '' : monthReadRow(ms)) + `<div class="day-list">${cards}</div>`;
-    if(total > state.historyShown) html += `<button type="button" class="show-more" id="showMoreBtn">Show earlier in ${ms.sheet}</button>`;
-    if(ms.pulled) html += monthReadRow(ms);
+    let html;
+    if(searching){
+      const months = new Set(everything.map(r => monthNamesFor(r.dateISO).sheet)).size;
+      html = searchSummary(groups) + `<div class="day-list">${cards}</div>`;
+      if(total > state.historyShown) html += `<button type="button" class="show-more" id="showMoreBtn">Show more</button>`;
+      html += `<div class="scope-note">Searched all ${months} ${months === 1 ? 'month' : 'months'} on this phone. A month that has never been read here isn't included.</div>`;
+    } else {
+      html = (ms.pulled ? '' : monthReadRow(ms)) + `<div class="day-list">${cards}</div>`;
+      if(total > state.historyShown) html += `<button type="button" class="show-more" id="showMoreBtn">Show earlier in ${ms.sheet}</button>`;
+      if(ms.pulled) html += monthReadRow(ms);
+    }
 
     pane.innerHTML = html;
     const more = pane.querySelector('#showMoreBtn');
