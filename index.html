@@ -908,12 +908,13 @@
   /* The cross at the end puts search back to how it started. */
   .fs-clear{
     flex:0 0 28px;height:28px;margin-right:3px;padding:0;border:none;border-radius:50%;
-    background:var(--inset);color:var(--text-muted);cursor:pointer;
+    background:transparent;color:var(--text-faint);cursor:pointer;
     display:none;align-items:center;justify-content:center;
   }
   .fsearch.open .fs-clear{display:flex;}
   .fs-clear .icon{width:14px;height:14px;stroke-width:2.6;}
-  @media (hover:hover){ .fs-clear:hover{background:var(--line-strong);color:var(--text);} }
+  @media (hover:hover){ .fs-clear:hover{color:var(--text);} }
+  .fs-clear:active{color:var(--text);}
   @media (hover:hover){ .fchip:not(.on):hover{color:var(--text);} }
   /* Today's header gets a small green marker so the top of the list is
      unmistakably "now". */
