@@ -1822,6 +1822,7 @@
   const LS_BACKUP = 'ledger.lastBackup.v1';
   const LS_MONTHACK = 'ledger.monthAck.v1';
   const LS_CONFIRM = 'ledger.requireConfirm.v1';
+  const LS_LOCK = 'ledger.sendLock.v1';
   const CONFIRM_TOKEN = 'LEDGER_OK';
   const HIST_MAX = 2000;
   const SENT_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
@@ -2795,8 +2796,11 @@
     const body = new URLSearchParams();
     Object.entries(payload).forEach(([k, v]) => body.append(k, v == null ? '' : String(v)));
 
+    // A request that never answers would leave the app "sending" forever.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 45000);
     try{
-      const res = await fetch(LEDGER_URL, { method:'POST', body });
+      const res = await fetch(LEDGER_URL, { method:'POST', body, signal: ctrl.signal });
       if(!res.ok){
         console.error('Ledger webhook returned an error status:', res.status);
         return { ok:false, reason:'http-' + res.status };
@@ -2805,6 +2809,8 @@
     }catch(e){
       console.error('Ledger webhook request failed:', e);
       return { ok:false, reason:'network', error:e };
+    }finally{
+      clearTimeout(timer);
     }
   }
 
@@ -2815,6 +2821,13 @@
     let patched = false;
     state.queue.forEach(e => { if(!e.at){ e.at = 0; patched = true; } });
     if(patched) lsSet(LS_QUEUE, state.queue);
+  }
+  // Change the queue as stored now, not as this copy of the app last saw it —
+  // another copy may have added to it in the meantime.
+  function patchQueue(fn){
+    loadQueue();
+    state.queue = fn(state.queue) || state.queue;
+    lsSet(LS_QUEUE, state.queue);
   }
   function saveQueue(){
     lsSet(LS_QUEUE, state.queue);
@@ -2902,7 +2915,7 @@
   function archiveSent(entries){
     const cutoff = Date.now() - SENT_KEEP_MS;
     let archive = loadSent().filter(b => b.at > cutoff);
-    archive.push({ at: Date.now(), entries });
+    archive.push({ at: Date.now(), entries: entries.map(({ unsure, sentAs, ...e }) => e) });
     let total = archive.reduce((n, b) => n + b.entries.length, 0);
     while(archive.length > 1 && total > SENT_KEEP_MAX){
       total -= archive[0].entries.length;
@@ -2967,9 +2980,86 @@
     return Object.values(groups);
   }
 
+  // ---------- NEVER THE SAME ROW TWICE ----------
+  // A send whose answer never came back (no signal, the phone froze the page,
+  // the app was closed mid-send) may still have reached the sheet. Those
+  // entries are marked "unsure" and, before they go again, the month is read
+  // once to see whether they already landed. Sends that answer cleanly cost
+  // nothing extra; only an unsure resend costs one read.
+  const WRITE_SETTLE_MS = 2 * 60 * 1000;   // Excel writes land a little after Make answers
+  const LOCK_MS = 2 * 60 * 1000;
+  const sendKey = (id, serial, time, type, debit, credit) =>
+    [String(id).trim(), Number(serial) || 0, Math.round((Number(time) || 0) * 86400),
+     String(type || '').trim(), Number(debit) || 0, Number(credit) || 0].join('|');
+  const entryKey = (e) => sendKey(e.id, e.dateSerial, e.timeFraction, e.txnType, e.debit, e.credit);
+
+  // Two copies of the app open (the installed one and a browser tab) must not
+  // both send the same queue: only one holds the lock at a time.
+  function takeSendLock(){
+    const held = Number(lsGet(LS_LOCK, 0)) || 0;
+    if(held && Date.now() - held < LOCK_MS && held !== state.lockAt) return false;
+    state.lockAt = Date.now();
+    lsSet(LS_LOCK, state.lockAt);
+    return true;
+  }
+  function dropSendLock(){
+    if(Number(lsGet(LS_LOCK, 0)) === state.lockAt) lsSet(LS_LOCK, 0);
+    state.lockAt = 0;
+  }
+
+  // Returns the part of the group that still needs sending, or a failure if
+  // the sheet could not be checked yet.
+  async function dropLanded(group){
+    const unsure = group.filter(e => e.unsure);
+    if(!unsure.length) return { ok:true, rest:group, landed:0 };
+
+    const since = Math.max(...unsure.map(e => e.unsure));
+    if(Date.now() < since + WRITE_SETTLE_MS) return { ok:false, reason:'settling' };
+
+    const { sheet, table } = group[0];
+    const cached = loadSheetCache()[sheet];
+    let rows;
+    if(cached && cached.at > since + WRITE_SETTLE_MS){
+      rows = cached.rows;                       // read after the unsure send: free
+    } else {
+      const r = await readTable(sheet, table);
+      if(!r.ok) return { ok:false, reason:'check', why:r.why };
+      const cache = loadSheetCache();
+      cache[sheet] = { at: Date.now(), rows: r.rows };
+      saveSheetCache(cache);
+      rows = r.rows;
+    }
+
+    const have = new Map();
+    rows.forEach(r => { const k = entryKey(r); have.set(k, (have.get(k) || 0) + 1); });
+    const landed = [];
+    unsure.forEach(e => {
+      const k = entryKey(e.sentAs || e);
+      if(have.get(k) > 0){ have.set(k, have.get(k) - 1); landed.push(e); }
+    });
+    // Landed as it was before an edit: the edit goes out as a change to
+    // that row, not as a second row.
+    const edited = landed.filter(e => e.sentAs && entryKey(e.sentAs) !== entryKey(e));
+    if(edited.length){
+      edited.forEach(e => stageEdit(e.sentAs, e));
+      saveEdits();
+    }
+    if(landed.length){
+      const ids = new Set(landed.map(e => e.uid));
+      markHistorySent([...ids], true);
+      archiveSent(landed);
+      patchQueue(q => q.filter(e => !ids.has(e.uid)));
+    }
+    const gone = new Set(landed.map(e => e.uid));
+    return { ok:true, rest: group.filter(e => !gone.has(e.uid)), landed: landed.length };
+  }
+
   async function syncQueue({ silent = false } = {}){
     if(state.syncing) return { ok:true, sent:0 };
-    if(state.queue.length === 0) return { ok:true, sent:0 };
+    // Another copy of the app may have sent or added since this one loaded.
+    loadQueue();
+    if(state.queue.length === 0){ renderSyncState(); return { ok:true, sent:0 }; }
+    if(!takeSendLock()) return { ok:true, sent:0 };
 
     state.syncing = true;
     renderSyncState();
@@ -2978,7 +3068,20 @@
     let sent = 0;
     let failure = null;
 
-    for(const group of groups){
+    for(const whole of groups){
+      lsSet(LS_LOCK, state.lockAt = Date.now());
+      const check = await dropLanded(whole);
+      if(!check.ok){ failure = check; break; }
+      sent += check.landed;
+      const group = check.rest;
+      if(!group.length) continue;
+
+      // Mark the group unsure before it leaves; a clean answer clears it,
+      // and if the page dies mid-send the mark survives in storage.
+      const before = new Map(group.map(e => [e.uid, e.unsure]));
+      const now = Date.now();
+      patchQueue(q => { q.forEach(e => { if(before.has(e.uid)) e.unsure = now; }); });
+
       const batchId = 'b_' + Date.now().toString(36) + '_' + randomSuffix(6);
       const res = await callLedger({
         MODE: 'add',
@@ -2998,15 +3101,26 @@
         const ids = new Set(group.map(e => e.uid));
         markHistorySent([...ids], true);
         archiveSent(group);
-        state.queue = state.queue.filter(e => !ids.has(e.uid));
+        patchQueue(q => q.filter(e => !ids.has(e.uid)));
         saveQueue();
         sent += group.length;
       } else {
+        // A clear "no" from Make (an error status) means nothing was taken,
+        // so the entries are only as unsure as they were before this try.
+        // No answer at all leaves them unsure.
+        if(String(res.reason || '').startsWith('http-')){
+          patchQueue(q => { q.forEach(e => {
+            if(!before.has(e.uid)) return;
+            const b = before.get(e.uid);
+            if(b) e.unsure = b; else delete e.unsure;
+          }); });
+        }
         failure = res;
         break;
       }
     }
 
+    dropSendLock();
     state.syncing = false;
     renderSyncState();
 
@@ -3027,6 +3141,8 @@
 
   function failureText(res){
     if(res && res.reason === 'unconfirmed') return 'The sheet did not confirm — nothing was cleared';
+    if(res && res.reason === 'settling') return 'Checking the sheet before resending';
+    if(res && res.reason === 'check') return 'Could not check the sheet before resending';
     return res && res.reason && res.reason.startsWith('http-')
       ? `Sync failed (${res.reason.replace('http-','status ')})`
       : 'No connection';
@@ -3961,7 +4077,14 @@
 
       const qi = state.queue.findIndex(q => q.uid === o.uid);
       if(qi > -1){
-        state.queue[qi] = { ...e, uid: o.uid, at: state.queue[qi].at };
+        // An unsure entry may already be in the sheet as it was before this
+        // edit; remember that version so the check can find it there.
+        const q = state.queue[qi];
+        const unsure = q.unsure ? { unsure: q.unsure, sentAs: q.sentAs || {
+          uid: q.uid, sheet: q.sheet, table: q.table, id: q.id, dateISO: q.dateISO,
+          dateSerial: q.dateSerial, timeFraction: q.timeFraction, txnType: q.txnType,
+          account: q.account, debit: q.debit, credit: q.credit } } : {};
+        state.queue[qi] = { ...e, uid: o.uid, at: q.at, ...unsure };
         queued++;
       } else {
         stageEdit(o, e);
@@ -4688,9 +4811,14 @@
     state.history.sort((a,b) => (a.at||0) - (b.at||0));
     saveHistory();
 
+    // Anything this phone already knows went to the sheet stays out of the
+    // queue; the rest may have been sent since the backup, so each is checked
+    // against the sheet before it goes.
     const seenQ = new Set(state.queue.map(e => e.uid));
+    state.history.forEach(h => { if(h.sent) seenQ.add(h.uid); });
+    const restoredAt = Date.now() - WRITE_SETTLE_MS;
     let addedQ = 0;
-    (data.queue || []).forEach(e => { if(e.uid && !seenQ.has(e.uid)){ state.queue.push(e); seenQ.add(e.uid); addedQ++; } });
+    (data.queue || []).forEach(e => { if(e.uid && !seenQ.has(e.uid)){ state.queue.push({ ...e, unsure: restoredAt }); seenQ.add(e.uid); addedQ++; } });
     saveQueue();
 
     const seenE = new Set(state.edits.map(e => e.uid));
@@ -5034,7 +5162,9 @@
     if(!last) return;
     lsSet(LS_SENT, archive);
     const at = Date.now();
-    last.entries.forEach(e => state.queue.push({ ...e, at }));
+    // These went once already: each is checked against the sheet before it
+    // goes again, so only the ones that really are missing get resent.
+    last.entries.forEach(e => state.queue.push({ ...e, at, unsure: last.at }));
     markHistorySent(last.entries.map(e => e.uid), false);
     saveQueue();
     renderAccountScreen();
@@ -5138,10 +5268,16 @@
     if(overdue() || state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
   }
 
-  document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState !== 'hidden') return;
-    if(!state.queue.length || !navigator.onLine || state.syncMode === 'manual') return;
-    if(overdue() || state.queue.length >= BATCH_FULL) syncQueue({ silent:true });
+  // Nothing is sent as the app goes to the background: that is the moment a
+  // phone freezes the page, so the send lands but its answer is lost. The
+  // queue is kept on the phone and goes the next time the app is open.
+
+  // Another copy of the app changed the queue: pick it up rather than
+  // writing an old copy back over it.
+  window.addEventListener('storage', (e) => {
+    if(e.key !== LS_QUEUE || state.syncing) return;
+    loadQueue();
+    renderSyncState();
   });
 
   window.addEventListener('online', () => {
