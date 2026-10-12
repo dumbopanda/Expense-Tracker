@@ -178,7 +178,9 @@
   }
 
   @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-  #entryForm, .stats-screen, .account-screen{animation:rise var(--t-slow) var(--ease);}
+  /* Stats and History keep the month line still between them; only what
+     sits below it rises in. */
+  #entryForm, .account-screen, #statsPane, #recentPane, #duesPane, .hist-bar > :not(.month-nav):not(.month-static){animation:rise var(--t-slow) var(--ease);}
 
   /* =====================================================================
      BUTTONS — four kinds, used the same way everywhere
@@ -734,29 +736,26 @@
 
   /* MONTH — the screen's title. Tap it to jump to any month. */
   .month-toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-1) var(--sp-1) 0;}
-  /* MONTH — only the month you're on shows, centred. The months before and
-     after wait below the line, out of sight; a swipe drops the current one
-     away to the side as the next rises into its place. Tap it for the full
-     list. It sits close under the header, using the space between the two. */
-  .month-car{
-    position:relative;height:40px;margin-top:calc(-1 * var(--sp-2));
-    overflow:hidden;
-    touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab;
+  /* MONTH — the month's name, centred close under the header, with an arrow
+     right beside it on each side. Same place on Stats and on History. */
+  .month-nav{
+    height:40px;margin-top:calc(-1 * var(--sp-2));
+    display:flex;align-items:center;justify-content:center;gap:var(--sp-1);
   }
-  .month-car.dragging{cursor:grabbing;}
-  .mc-track{position:absolute;inset:0;}
-  .mc-item{
-    position:absolute;left:50%;top:0;height:100%;
-    display:flex;align-items:center;
-    padding:0 var(--sp-2);border:none;background:transparent;white-space:nowrap;
-    font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);
-    color:var(--text);
-    transform-origin:50% 50%;will-change:transform, opacity;
-    pointer-events:none;
+  .mn-label{
+    padding:0 var(--sp-1);white-space:nowrap;
+    font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);color:var(--text);
   }
-  .mc-item.on{pointer-events:auto;cursor:pointer;}
-  .month-car.dragging .mc-item{cursor:grabbing;}
-  .mc-item:focus-visible{outline:2px solid var(--green);outline-offset:-4px;border-radius:var(--r-ctl);}
+  .mn-arrow{
+    width:36px;height:36px;flex-shrink:0;padding:0;
+    display:flex;align-items:center;justify-content:center;
+    border:none;border-radius:50%;background:transparent;color:var(--text);cursor:pointer;
+    transition:background-color var(--t-fast) var(--ease);
+  }
+  .mn-arrow .icon{width:20px;height:20px;stroke-width:2.4;}
+  .mn-arrow:active{background:var(--inset);}
+  @media (hover:hover){ .mn-arrow:hover{background:var(--hover);} }
+  .mn-arrow:focus-visible{outline:2px solid var(--green);outline-offset:-2px;}
   /* On Owed to me the list isn't one month: the same line says so. */
   .month-static{
     height:40px;margin-top:calc(-1 * var(--sp-2));
@@ -764,11 +763,9 @@
     font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);color:var(--text);
   }
   .month-static[hidden]{display:none;}
-  .month-anim{animation:monthIn var(--t-base, .2s) var(--ease);}
-  .month-anim.from-left{animation-name:monthInLeft;}
-  @keyframes monthIn{from{opacity:0;transform:translateX(18px);}to{opacity:1;transform:none;}}
-  @keyframes monthInLeft{from{opacity:0;transform:translateX(-18px);}to{opacity:1;transform:none;}}
-  @media (prefers-reduced-motion:reduce){ .month-anim{animation:none;} }
+  /* History's bar adds its own top padding; pull the line up by that much
+     so the month sits exactly where it does on Stats. */
+  .hist-bar > .month-nav, .hist-bar > .month-static{margin-top:calc(-2 * var(--sp-2));}
   .month-title{
     display:inline-flex;align-items:center;gap:var(--sp-2);
     margin:0 0 0 calc(-1 * var(--sp-1));padding:var(--sp-1);
@@ -1378,7 +1375,7 @@
          filter. It stays with you as you scroll up and steps aside as you
          scroll down. -->
     <div class="hist-bar" id="histBar">
-      <div class="month-car" id="historyMonthToggle" data-month-car role="group" aria-label="Month"><div class="mc-track"></div></div>
+      <div class="month-nav" id="historyMonthToggle" data-month-nav role="group" aria-label="Month"><button type="button" class="mn-arrow" data-step="-1" aria-label="Previous month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chev-left"/></svg></button><span class="mn-label">—</span><button type="button" class="mn-arrow" data-step="1" aria-label="Next month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chev-right"/></svg></button></div>
       <div class="month-static" id="duesMonthLabel" hidden>All months</div>
       <div class="sub-tabs" role="tablist" aria-label="History">
         <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
@@ -1409,7 +1406,7 @@
   <!-- STATS — the same month selector as History, so the two screens are
        always talking about the same period. -->
   <div class="stats-screen" id="statsScreen" style="display:none;">
-    <div class="month-car" data-month-car role="group" aria-label="Month"><div class="mc-track"></div></div>
+    <div class="month-nav" data-month-nav role="group" aria-label="Month"><button type="button" class="mn-arrow" data-step="-1" aria-label="Previous month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chev-left"/></svg></button><span class="mn-label">—</span><button type="button" class="mn-arrow" data-step="1" aria-label="Next month"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chev-right"/></svg></button></div>
     <div id="statsPane"></div>
   </div>
 
@@ -1967,154 +1964,24 @@
     renderStats();
   }
 
-  // The month is the same control on Stats and on History; this keeps the
-  // two in step without either screen owning the state. Totals live on
-  // Stats only — History is the list.
-  //
-  // Only the month you're on is visible. The month before and the month
-  // after wait out of sight, below and to either side. Swiping moves
-  // everything along one path: the current month drops away to the side and
-  // fades out while the next one rises from the other side into the middle.
-  // `p` is how far along that path the drag is: 0 at rest, -1 when the next
-  // month has fully arrived, +1 for the previous one.
+  // The month is the same line on Stats and on History; this keeps the two
+  // in step without either screen owning the state. Totals live on Stats
+  // only — History is the list. An arrow either side of the name steps one
+  // month; there is no month after the current one, so that arrow simply
+  // does nothing there.
   const validOff = (off) => off <= 0 && off >= -MONTHS_BACK_MAX;
-  const MC_DROP = 22;                       // how far below the line the hidden months wait
-  function carMetrics(car){
-    const cw = car.clientWidth || 340;
-    return { reach: cw * 0.42, travel: cw * 0.55 };   // finger travel for a full swipe; how far a month moves
-  }
-  function placeCar(car, p){
-    const { travel } = carMetrics(car);
-    car.querySelectorAll('.mc-item').forEach(el => {
-      const t = Number(el.dataset.d) + p;   // where this month sits on the path
-      const a = Math.min(1, Math.abs(t));
-      el.style.transform = `translate(calc(-50% + ${(t * travel).toFixed(1)}px), ${(a * MC_DROP).toFixed(1)}px) scale(${(1 - a * 0.22).toFixed(3)})`;
-      // Gone before it's halfway, so the two never sit on top of each other.
-      el.style.opacity = Math.max(0, 1 - a * 1.6).toFixed(3);
-      el.classList.toggle('on', a < 0.5);
-    });
-  }
-  function renderCar(car){
-    const track = car.querySelector('.mc-track');
-    track.innerHTML = [-1, 0, 1].map(d => {
-      const off = state.monthOffset + d;
-      const label = off >= -MONTHS_BACK_MAX ? monthLabelFor(off) : '';
-      return d === 0
-        ? `<button type="button" class="mc-item" data-d="0" aria-label="${esc(label)}, choose another month">${esc(label)}</button>`
-        : `<span class="mc-item" data-d="${d}" aria-hidden="true">${esc(label)}</span>`;
-    }).join('');
-    car._gen = (car._gen || 0) + 1;
-    placeCar(car, 0);
-  }
   function renderMonthToggles(){
-    document.querySelectorAll('[data-month-car]').forEach(renderCar);
+    document.querySelectorAll('[data-month-nav] .mn-label').forEach(el => {
+      el.textContent = monthLabelFor(state.monthOffset);
+    });
   }
-  window.addEventListener('resize', renderMonthToggles);
-
-  // A redraw (the month changed, or a new drag began) cancels any glide
-  // still under way, so a late frame can never move the new month.
-  function glideCar(car, from, to, ms){
-    const gen = car._gen = (car._gen || 0) + 1;
-    const t0 = performance.now();
-    const ease = (x) => 1 - Math.pow(1 - x, 3);
-    const tick = (now) => {
-      if(car._gen !== gen) return;
-      const k = Math.min(1, (now - t0) / ms);
-      placeCar(car, from + (to - from) * ease(k));
-      if(k < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }
-
-  let carBusy = false;
-  function stepMonth(dir, from = 0){
+  function stepMonth(dir){
     const to = state.monthOffset + dir;
-    if(carBusy || !validOff(to)) return;
-    const cars = [...document.querySelectorAll('[data-month-car]')].filter(c => c.offsetParent);
-    const done = () => {
-      carBusy = false;
-      setMonth(to);
-      ['statsPane', 'recentPane', 'duesPane'].forEach(id => {
-        const el = $(id);
-        el.classList.remove('month-anim', 'from-left');
-        void el.offsetWidth;
-        el.classList.add('month-anim');
-        if(dir < 0) el.classList.add('from-left');
-      });
-    };
-    if(!cars.length || matchMedia('(prefers-reduced-motion: reduce)').matches){ done(); return; }
-    carBusy = true;
-    cars.forEach(car => glideCar(car, from, -dir, 320));
-    // On a timer, not on the last frame: frames pause in a hidden tab, and
-    // the month must change regardless.
-    setTimeout(done, 330);
+    if(validOff(to)) setMonth(to);
   }
-
-  // Drag: the months follow your finger along the path. Let go past a third
-  // of the way and the next month settles in; otherwise everything glides
-  // back. There is no month after this one, so that way only gives a little.
-  function wireCar(car){
-    let x0 = null, p = 0, moved = false;
-    car.addEventListener('pointerdown', (e) => {
-      if(carBusy || (e.pointerType === 'mouse' && e.button !== 0)) return;
-      x0 = e.clientX; p = 0; moved = false;
-      car._gen = (car._gen || 0) + 1;       // a new touch stops any glide
-    });
-    car.addEventListener('pointermove', (e) => {
-      if(x0 === null) return;
-      const dx = e.clientX - x0;
-      if(!moved && Math.abs(dx) > 6){
-        moved = true; car.classList.add('dragging');
-        try{ car.setPointerCapture(e.pointerId); }catch(err){}
-      }
-      if(!moved) return;
-      const { reach } = carMetrics(car);
-      p = Math.max(-1, Math.min(1, dx / reach));
-      if(!validOff(state.monthOffset + (p < 0 ? 1 : -1))) p *= 0.2;
-      placeCar(car, p);
-    });
-    const end = () => {
-      if(x0 === null) return;
-      x0 = null;
-      car.classList.remove('dragging');
-      if(!moved) return;
-      const dir = p < 0 ? 1 : -1;
-      if(Math.abs(p) > 0.33 && validOff(state.monthOffset + dir)) stepMonth(dir, p);
-      else glideCar(car, p, 0, 220);
-    };
-    car.addEventListener('pointerup', end);
-    car.addEventListener('pointercancel', end);
-    // A drag is not a tap: swallow the click that follows one. A tap on the
-    // month opens the full list.
-    car.addEventListener('click', (e) => {
-      if(moved){ moved = false; e.stopPropagation(); e.preventDefault(); return; }
-      if(e.target.closest('.mc-item[data-d="0"]')) openMonthList();
-    }, true);
-  }
-  document.querySelectorAll('[data-month-car]').forEach(wireCar);
-
-  // Swipes that start on something that already moves sideways (the day
-  // chart, the sliding switch, the filter chips, a text box) are left alone.
-  const SWIPE_SKIP = '.month-car, #whenChart, .seg, .filter-chips, .chip-group, input, textarea, select';
-  function wireMonthSwipe(el){
-    let x0 = null, y0 = 0, t0 = 0;
-    el.addEventListener('touchstart', (e) => {
-      if(e.touches.length !== 1 || e.target.closest(SWIPE_SKIP)){ x0 = null; return; }
-      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
-      // The phone's own back gesture starts at the very edge.
-      if(x0 < 24 || x0 > window.innerWidth - 24) x0 = null;
-    }, { passive:true });
-    el.addEventListener('touchend', (e) => {
-      if(x0 === null) return;
-      const t = e.changedTouches[0];
-      const dx = t.clientX - x0, dy = t.clientY - y0;
-      x0 = null;
-      if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.8 || Date.now() - t0 > 700) return;
-      stepMonth(dx < 0 ? 1 : -1);
-    }, { passive:true });
-  }
-  wireMonthSwipe($('statsScreen'));
-  wireMonthSwipe($('historyScreen'));
+  document.querySelectorAll('[data-month-nav] .mn-arrow').forEach(b => {
+    b.addEventListener('click', () => stepMonth(Number(b.dataset.step)));
+  });
 
   // Every month in one list, the chosen one ticked.
   function renderMonthList(){
@@ -4502,7 +4369,7 @@
     const recent = state.subTab === 'recent';
     $('recentPane').style.display = recent ? 'flex' : 'none';
     $('duesPane').style.display = recent ? 'none' : 'flex';
-    $('historyMonthToggle').style.display = recent ? 'block' : 'none';
+    $('historyMonthToggle').style.display = recent ? 'flex' : 'none';
     $('duesMonthLabel').hidden = recent;
     $('searchBox').classList.toggle('open', recent && state.searchOpen);
     $('historySearch').tabIndex = state.searchOpen ? 0 : -1;
