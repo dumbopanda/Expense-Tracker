@@ -873,22 +873,24 @@
   }
   .fchip::after{content:"";position:absolute;inset:-7px 0;}
   .fchip.on{background:var(--ink);color:var(--lime);box-shadow:none;}
-  /* Search leads the filters: both narrow the same list. */
-  /* Search leads the filters: tap the icon and it opens into a box right
-     where it is, nudging the filters along to the right. */
+  /* Search is a tool, not one of the filters beside it: an outline with no
+     fill, and a thin rule between it and the chips. The border is drawn on
+     the box itself (not a shadow, which the scrolling row clips top and
+     bottom), so it is the same weight all the way round, open or shut. */
   .fsearch{
     position:relative;flex-shrink:0;
     display:flex;align-items:center;
     width:var(--h-xs);height:var(--h-xs);
-    border-radius:var(--r-pill);
-    background:var(--surface);color:var(--text-muted);box-shadow:var(--shadow-1);
+    border:1.5px solid var(--line-strong);border-radius:var(--r-pill);
+    background:transparent;color:var(--text-2);
     overflow:hidden;
-    transition:width .28s var(--ease), box-shadow var(--t-fast) var(--ease);
+    transition:width .28s var(--ease), border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease);
   }
-  .fsearch.open{width:min(230px, 62vw);color:var(--text);}
-  .fsearch.open:focus-within{box-shadow:var(--shadow-1), var(--ring);}
+  .fsearch.open{width:min(230px, 62vw);background:var(--surface);color:var(--text);}
+  .fsearch.open:focus-within{border-color:var(--green);}
+  .fs-div{flex-shrink:0;align-self:center;width:1px;height:18px;background:var(--line-strong);}
   .fs-btn{
-    flex:0 0 var(--h-xs);height:100%;padding:0;border:none;background:transparent;color:inherit;
+    flex:0 0 calc(var(--h-xs) - 3px);height:100%;padding:0;border:none;background:transparent;color:inherit;
     display:flex;align-items:center;justify-content:center;cursor:pointer;
   }
   .fs-btn .icon{width:16px;height:16px;stroke-width:2.4;}
@@ -899,7 +901,9 @@
     opacity:0;transition:opacity .18s var(--ease);
   }
   .fsearch.open input{opacity:1;transition-delay:.1s;}
-  .fsearch input::placeholder{color:var(--text-faint);font-weight:var(--fw-regular);}
+  /* The hint is smaller and paler than anything you type, so an empty box
+     never looks filled in. */
+  .fsearch input::placeholder{font-size:var(--fs-sm);font-weight:var(--fw-regular);color:var(--text-faint);opacity:.8;}
   .fsearch input::-webkit-search-cancel-button{display:none;}
   @media (hover:hover){ .fchip:not(.on):hover{color:var(--text);} }
   /* Today's header gets a small green marker so the top of the list is
@@ -1390,8 +1394,9 @@
           <button type="button" class="fs-btn" id="searchToggle" aria-label="Search this month" aria-expanded="false">
             <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
           </button>
-          <input type="search" id="historySearch" placeholder="Name, note, amount" autocomplete="off" aria-label="Search this month" tabindex="-1">
+          <input type="search" id="historySearch" placeholder="Search this month" autocomplete="off" aria-label="Search this month" tabindex="-1">
         </div>
+        <span class="fs-div" aria-hidden="true"></span>
         <button type="button" class="fchip on" data-filter="all" aria-pressed="true">All</button>
         <button type="button" class="fchip" data-filter="out" aria-pressed="false">Money out</button>
         <button type="button" class="fchip" data-filter="in" aria-pressed="false">Money in</button>
