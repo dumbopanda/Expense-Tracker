@@ -733,7 +733,42 @@
   .sub-tab .badge{background:var(--amber);color:var(--text);}
 
   /* MONTH — the screen's title. Tap it to jump to any month. */
-  .month-toggle{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:var(--sp-1) var(--sp-1) 0;}
+  .month-toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-1) var(--sp-1) 0;}
+  /* MONTH — only the month you're on shows, centred. The months before and
+     after wait below the line, out of sight; a swipe drops the current one
+     away to the side as the next rises into its place. Tap it for the full
+     list. It sits close under the header, using the space between the two. */
+  .month-car{
+    position:relative;height:40px;margin-top:calc(-1 * var(--sp-2));
+    overflow:hidden;
+    touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab;
+  }
+  .month-car.dragging{cursor:grabbing;}
+  .mc-track{position:absolute;inset:0;}
+  .mc-item{
+    position:absolute;left:50%;top:0;height:100%;
+    display:flex;align-items:center;
+    padding:0 var(--sp-2);border:none;background:transparent;white-space:nowrap;
+    font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);
+    color:var(--text);
+    transform-origin:50% 50%;will-change:transform, opacity;
+    pointer-events:none;
+  }
+  .mc-item.on{pointer-events:auto;cursor:pointer;}
+  .month-car.dragging .mc-item{cursor:grabbing;}
+  .mc-item:focus-visible{outline:2px solid var(--green);outline-offset:-4px;border-radius:var(--r-ctl);}
+  /* On Owed to me the list isn't one month: the same line says so. */
+  .month-static{
+    height:40px;margin-top:calc(-1 * var(--sp-2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:var(--fs-xl);font-weight:var(--fw-heavy);letter-spacing:var(--ls-title);color:var(--text);
+  }
+  .month-static[hidden]{display:none;}
+  .month-anim{animation:monthIn var(--t-base, .2s) var(--ease);}
+  .month-anim.from-left{animation-name:monthInLeft;}
+  @keyframes monthIn{from{opacity:0;transform:translateX(18px);}to{opacity:1;transform:none;}}
+  @keyframes monthInLeft{from{opacity:0;transform:translateX(-18px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .month-anim{animation:none;} }
   .month-title{
     display:inline-flex;align-items:center;gap:var(--sp-2);
     margin:0 0 0 calc(-1 * var(--sp-1));padding:var(--sp-1);
@@ -841,6 +876,34 @@
   }
   .fchip::after{content:"";position:absolute;inset:-7px 0;}
   .fchip.on{background:var(--ink);color:var(--lime);box-shadow:none;}
+  /* Search leads the filters: both narrow the same list. */
+  /* Search leads the filters: tap the icon and it opens into a box right
+     where it is, nudging the filters along to the right. */
+  .fsearch{
+    position:relative;flex-shrink:0;
+    display:flex;align-items:center;
+    width:var(--h-xs);height:var(--h-xs);
+    border-radius:var(--r-pill);
+    background:var(--surface);color:var(--text-muted);box-shadow:var(--shadow-1);
+    overflow:hidden;
+    transition:width .28s var(--ease), box-shadow var(--t-fast) var(--ease);
+  }
+  .fsearch.open{width:min(230px, 62vw);color:var(--text);}
+  .fsearch.open:focus-within{box-shadow:var(--shadow-1), var(--ring);}
+  .fs-btn{
+    flex:0 0 var(--h-xs);height:100%;padding:0;border:none;background:transparent;color:inherit;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .fs-btn .icon{width:16px;height:16px;stroke-width:2.4;}
+  .fsearch input{
+    flex:1;min-width:0;height:100%;padding:0 var(--sp-3) 0 0;
+    border:none;background:transparent;outline:none;appearance:none;-webkit-appearance:none;
+    font-size:var(--fs-input);font-weight:var(--fw-medium);color:var(--text);
+    opacity:0;transition:opacity .18s var(--ease);
+  }
+  .fsearch.open input{opacity:1;transition-delay:.1s;}
+  .fsearch input::placeholder{color:var(--text-faint);font-weight:var(--fw-regular);}
+  .fsearch input::-webkit-search-cancel-button{display:none;}
   @media (hover:hover){ .fchip:not(.on):hover{color:var(--text);} }
   /* Today's header gets a small green marker so the top of the list is
      unmistakably "now". */
@@ -909,6 +972,8 @@
   .txn .meta{font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);line-height:var(--lh-snug);}
   .txn .line2{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);}
   .txn .line2 .meta{flex:1;min-width:0;}
+  .txn .line2 .tag{flex-shrink:0;}
+  .txn .note-in{font-weight:var(--fw-regular);color:var(--text-2);overflow-wrap:anywhere;}
   .txn .when{flex-shrink:0;font-size:var(--fs-xs);font-weight:var(--fw-medium);color:var(--text-muted);font-variant-numeric:tabular-nums;}
   .txn .note{
     margin-top:2px;
@@ -1274,6 +1339,8 @@
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
   <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
   <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
   <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
@@ -1311,6 +1378,8 @@
          filter. It stays with you as you scroll up and steps aside as you
          scroll down. -->
     <div class="hist-bar" id="histBar">
+      <div class="month-car" id="historyMonthToggle" data-month-car role="group" aria-label="Month"><div class="mc-track"></div></div>
+      <div class="month-static" id="duesMonthLabel" hidden>All months</div>
       <div class="sub-tabs" role="tablist" aria-label="History">
         <button type="button" class="sub-tab active" id="tabRecent" data-sub="recent" role="tab" aria-selected="true">
           <span>Activity</span>
@@ -1319,21 +1388,13 @@
           <span>Owed to me</span><span class="badge" id="duesBadge" style="display:none;">0</span>
         </button>
       </div>
-      <div class="month-row" id="historyMonthToggle">
-        <button type="button" class="month-chip" data-month-picker aria-haspopup="dialog">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-calendar"/></svg>
-          <span id="monthToggleLabel">—</span>
-          <svg class="icon chev" aria-hidden="true" focusable="false"><use href="#i-chev-down"/></svg>
-        </button>
-        <button type="button" class="icon-btn" id="searchToggle" aria-label="Search this month" aria-expanded="false">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
-        </button>
-      </div>
-      <div class="search-row" id="searchRow" hidden>
-        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
-        <input type="search" id="historySearch" placeholder="Name, note, category or account" autocomplete="off" aria-label="Search this month">
-      </div>
       <div class="filter-chips" id="filterRow" role="group" aria-label="Show">
+        <div class="fsearch" id="searchBox">
+          <button type="button" class="fs-btn" id="searchToggle" aria-label="Search this month" aria-expanded="false">
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
+          </button>
+          <input type="search" id="historySearch" placeholder="Name, note, amount" autocomplete="off" aria-label="Search this month" tabindex="-1">
+        </div>
         <button type="button" class="fchip on" data-filter="all" aria-pressed="true">All</button>
         <button type="button" class="fchip" data-filter="out" aria-pressed="false">Money out</button>
         <button type="button" class="fchip" data-filter="in" aria-pressed="false">Money in</button>
@@ -1348,12 +1409,7 @@
   <!-- STATS — the same month selector as History, so the two screens are
        always talking about the same period. -->
   <div class="stats-screen" id="statsScreen" style="display:none;">
-    <div class="month-toggle">
-      <button type="button" class="month-title" data-month-picker aria-haspopup="dialog">
-        <span id="statsMonthLabel">—</span>
-        <span class="chev" aria-hidden="true"><svg class="icon" focusable="false"><use href="#i-chev-down"/></svg></span>
-      </button>
-    </div>
+    <div class="month-car" data-month-car role="group" aria-label="Month"><div class="mc-track"></div></div>
     <div id="statsPane"></div>
   </div>
 
@@ -1911,14 +1967,154 @@
     renderStats();
   }
 
-  // The month is a title on Stats and a chip on History; this keeps the two
-  // in step without either screen owning the state. Totals live on Stats
-  // only — History is the list.
-  function renderMonthToggles(){
-    const off = state.monthOffset;
-    $('monthToggleLabel').textContent = monthLabelFor(off);
-    $('statsMonthLabel').textContent = monthLabelFor(off);
+  // The month is the same control on Stats and on History; this keeps the
+  // two in step without either screen owning the state. Totals live on
+  // Stats only — History is the list.
+  //
+  // Only the month you're on is visible. The month before and the month
+  // after wait out of sight, below and to either side. Swiping moves
+  // everything along one path: the current month drops away to the side and
+  // fades out while the next one rises from the other side into the middle.
+  // `p` is how far along that path the drag is: 0 at rest, -1 when the next
+  // month has fully arrived, +1 for the previous one.
+  const validOff = (off) => off <= 0 && off >= -MONTHS_BACK_MAX;
+  const MC_DROP = 22;                       // how far below the line the hidden months wait
+  function carMetrics(car){
+    const cw = car.clientWidth || 340;
+    return { reach: cw * 0.42, travel: cw * 0.55 };   // finger travel for a full swipe; how far a month moves
   }
+  function placeCar(car, p){
+    const { travel } = carMetrics(car);
+    car.querySelectorAll('.mc-item').forEach(el => {
+      const t = Number(el.dataset.d) + p;   // where this month sits on the path
+      const a = Math.min(1, Math.abs(t));
+      el.style.transform = `translate(calc(-50% + ${(t * travel).toFixed(1)}px), ${(a * MC_DROP).toFixed(1)}px) scale(${(1 - a * 0.22).toFixed(3)})`;
+      // Gone before it's halfway, so the two never sit on top of each other.
+      el.style.opacity = Math.max(0, 1 - a * 1.6).toFixed(3);
+      el.classList.toggle('on', a < 0.5);
+    });
+  }
+  function renderCar(car){
+    const track = car.querySelector('.mc-track');
+    track.innerHTML = [-1, 0, 1].map(d => {
+      const off = state.monthOffset + d;
+      const label = off >= -MONTHS_BACK_MAX ? monthLabelFor(off) : '';
+      return d === 0
+        ? `<button type="button" class="mc-item" data-d="0" aria-label="${esc(label)}, choose another month">${esc(label)}</button>`
+        : `<span class="mc-item" data-d="${d}" aria-hidden="true">${esc(label)}</span>`;
+    }).join('');
+    car._gen = (car._gen || 0) + 1;
+    placeCar(car, 0);
+  }
+  function renderMonthToggles(){
+    document.querySelectorAll('[data-month-car]').forEach(renderCar);
+  }
+  window.addEventListener('resize', renderMonthToggles);
+
+  // A redraw (the month changed, or a new drag began) cancels any glide
+  // still under way, so a late frame can never move the new month.
+  function glideCar(car, from, to, ms){
+    const gen = car._gen = (car._gen || 0) + 1;
+    const t0 = performance.now();
+    const ease = (x) => 1 - Math.pow(1 - x, 3);
+    const tick = (now) => {
+      if(car._gen !== gen) return;
+      const k = Math.min(1, (now - t0) / ms);
+      placeCar(car, from + (to - from) * ease(k));
+      if(k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  let carBusy = false;
+  function stepMonth(dir, from = 0){
+    const to = state.monthOffset + dir;
+    if(carBusy || !validOff(to)) return;
+    const cars = [...document.querySelectorAll('[data-month-car]')].filter(c => c.offsetParent);
+    const done = () => {
+      carBusy = false;
+      setMonth(to);
+      ['statsPane', 'recentPane', 'duesPane'].forEach(id => {
+        const el = $(id);
+        el.classList.remove('month-anim', 'from-left');
+        void el.offsetWidth;
+        el.classList.add('month-anim');
+        if(dir < 0) el.classList.add('from-left');
+      });
+    };
+    if(!cars.length || matchMedia('(prefers-reduced-motion: reduce)').matches){ done(); return; }
+    carBusy = true;
+    cars.forEach(car => glideCar(car, from, -dir, 320));
+    // On a timer, not on the last frame: frames pause in a hidden tab, and
+    // the month must change regardless.
+    setTimeout(done, 330);
+  }
+
+  // Drag: the months follow your finger along the path. Let go past a third
+  // of the way and the next month settles in; otherwise everything glides
+  // back. There is no month after this one, so that way only gives a little.
+  function wireCar(car){
+    let x0 = null, p = 0, moved = false;
+    car.addEventListener('pointerdown', (e) => {
+      if(carBusy || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      x0 = e.clientX; p = 0; moved = false;
+      car._gen = (car._gen || 0) + 1;       // a new touch stops any glide
+    });
+    car.addEventListener('pointermove', (e) => {
+      if(x0 === null) return;
+      const dx = e.clientX - x0;
+      if(!moved && Math.abs(dx) > 6){
+        moved = true; car.classList.add('dragging');
+        try{ car.setPointerCapture(e.pointerId); }catch(err){}
+      }
+      if(!moved) return;
+      const { reach } = carMetrics(car);
+      p = Math.max(-1, Math.min(1, dx / reach));
+      if(!validOff(state.monthOffset + (p < 0 ? 1 : -1))) p *= 0.2;
+      placeCar(car, p);
+    });
+    const end = () => {
+      if(x0 === null) return;
+      x0 = null;
+      car.classList.remove('dragging');
+      if(!moved) return;
+      const dir = p < 0 ? 1 : -1;
+      if(Math.abs(p) > 0.33 && validOff(state.monthOffset + dir)) stepMonth(dir, p);
+      else glideCar(car, p, 0, 220);
+    };
+    car.addEventListener('pointerup', end);
+    car.addEventListener('pointercancel', end);
+    // A drag is not a tap: swallow the click that follows one. A tap on the
+    // month opens the full list.
+    car.addEventListener('click', (e) => {
+      if(moved){ moved = false; e.stopPropagation(); e.preventDefault(); return; }
+      if(e.target.closest('.mc-item[data-d="0"]')) openMonthList();
+    }, true);
+  }
+  document.querySelectorAll('[data-month-car]').forEach(wireCar);
+
+  // Swipes that start on something that already moves sideways (the day
+  // chart, the sliding switch, the filter chips, a text box) are left alone.
+  const SWIPE_SKIP = '.month-car, #whenChart, .seg, .filter-chips, .chip-group, input, textarea, select';
+  function wireMonthSwipe(el){
+    let x0 = null, y0 = 0, t0 = 0;
+    el.addEventListener('touchstart', (e) => {
+      if(e.touches.length !== 1 || e.target.closest(SWIPE_SKIP)){ x0 = null; return; }
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+      // The phone's own back gesture starts at the very edge.
+      if(x0 < 24 || x0 > window.innerWidth - 24) x0 = null;
+    }, { passive:true });
+    el.addEventListener('touchend', (e) => {
+      if(x0 === null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - x0, dy = t.clientY - y0;
+      x0 = null;
+      if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.8 || Date.now() - t0 > 700) return;
+      stepMonth(dx < 0 ? 1 : -1);
+    }, { passive:true });
+  }
+  wireMonthSwipe($('statsScreen'));
+  wireMonthSwipe($('historyScreen'));
 
   // Every month in one list, the chosen one ticked.
   function renderMonthList(){
@@ -1938,9 +2134,7 @@
     if(cur) cur.scrollIntoView({ block:'center' });
   }
   wireOverlay('monthSheet', null, 'monthCloseBtn');
-  document.querySelectorAll('[data-month-picker]').forEach(b => {
-    b.addEventListener('click', () => { renderMonthList(); $('monthSheet').classList.add('open'); });
-  });
+  function openMonthList(){ renderMonthList(); $('monthSheet').classList.add('open'); }
   $('monthList').addEventListener('click', (e) => {
     const b = e.target.closest('.month-opt');
     if(!b) return;
@@ -3481,8 +3675,6 @@
     return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
   }
 
-  let openYSet = null;
-  const isOpenY = (id) => (openYSet || (openYSet = new Set(computeOpenYIds()))).has(id);
 
   function txnRow(r){
     const acct = esc(r.account || '');
@@ -3494,19 +3686,16 @@
       ? `<div class="amt flat">₹${money(r.amount)}</div>`
       : `<div class="amt ${r.isOut ? 'out' : 'in'}">${r.isOut ? '−' : '+'} ₹${money(r.amount)}</div>`;
 
-    // Account and category are quiet text; only states that need a second
-    // look (loan standing, not sent, edited) are drawn as coloured tags.
+    // The tile's letter already says which account, so line two carries the
+    // type and your own note instead. Only states that need a second look
+    // (loan standing, not sent, edited) are drawn as coloured tags.
     const meta = r.transfer
       ? [`${acct} → ${esc(r.toAccount || '')}`]
-      : [acct].concat(r.txnType ? [esc(r.txnType)] : []);
+      : (r.txnType ? [esc(r.txnType)] : []);
+    if(r.moreInfo) meta.push(`<span class="note-in">${esc(r.moreInfo)}</span>`);
     const at = timeText(r.timeFraction);
+    // Where a loan stands is the Owed to me tab's job, not the list's.
     const tags = [];
-    if(!r.transfer && String(r.id || '').startsWith('Y')){
-      const open = isOpenY(r.id);
-      tags.push(r.isOut
-        ? (open ? '<span class="tag loan-open">Owed</span>' : '<span class="tag loan-done">Settled</span>')
-        : (open ? '<span class="tag loan-open">Borrowed</span>' : '<span class="tag loan-done">Paid back</span>'));
-    }
     if(members.some(m => !m.sent)) tags.push('<span class="tag held">on this device</span>');
     if(members.some(hasPendingEdit)) tags.push('<span class="tag edited">edited</span>');
 
@@ -3519,7 +3708,6 @@
         <div class="line1"><div class="name">${name}</div>${amt}</div>
         <div class="line2"><span class="meta">${meta.join(' · ')}</span>${at ? `<span class="when">${at}</span>` : ''}</div>
         ${tags.length ? `<div class="tags">${tags.join('')}</div>` : ''}
-        ${r.moreInfo ? `<div class="note">${esc(r.moreInfo)}</div>` : ''}
       </div>
     </div>`;
   }
@@ -3644,7 +3832,6 @@
   }
 
   function renderRecent(){
-    openYSet = null;
     const pane = $('recentPane');
     const off = state.monthOffset;
     const ms = monthState(off);
@@ -4249,7 +4436,7 @@
       <div class="tile acct-${acct}">${esc(String(it.account || '?').charAt(0).toUpperCase())}</div>
       <div class="body">
         <div class="line1"><div class="name">${esc(it.name)}</div><div class="amt">₹${money(it.amount || 0)}</div></div>
-        <div class="tags"><span class="meta">${acct} · ${when}</span>${closed ? '<span class="tag loan-done">Settled</span>' : ''}</div>
+        <div class="line2"><span class="meta">${when}</span>${closed ? '<span class="tag loan-done">Settled</span>' : ''}</div>
       </div>
     </div>`;
   }
@@ -4274,7 +4461,6 @@
   }
 
   function renderDues(){
-    openYSet = null;
     const pane = $('duesPane');
     const items = yGroups();
     const openList = items.filter(it => !it.closed)
@@ -4316,11 +4502,13 @@
     const recent = state.subTab === 'recent';
     $('recentPane').style.display = recent ? 'flex' : 'none';
     $('duesPane').style.display = recent ? 'none' : 'flex';
-    $('historyMonthToggle').style.display = recent ? 'flex' : 'none';
-    $('searchRow').hidden = !(recent && state.searchOpen);
+    $('historyMonthToggle').style.display = recent ? 'block' : 'none';
+    $('duesMonthLabel').hidden = recent;
+    $('searchBox').classList.toggle('open', recent && state.searchOpen);
+    $('historySearch').tabIndex = state.searchOpen ? 0 : -1;
     $('searchToggle').setAttribute('aria-expanded', state.searchOpen ? 'true' : 'false');
     $('filterRow').hidden = !recent;
-    document.querySelectorAll('.fchip').forEach(c => {
+    document.querySelectorAll('.fchip[data-filter]').forEach(c => {
       const on = c.dataset.filter === state.filter;
       c.classList.toggle('on', on);
       c.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -4346,7 +4534,7 @@
     $('historySearch').value = '';
     $('histBar').classList.remove('away');
   }
-  document.querySelectorAll('.fchip').forEach(c => {
+  document.querySelectorAll('.fchip[data-filter]').forEach(c => {
     c.addEventListener('click', () => {
       state.filter = c.dataset.filter;
       state.historyShown = 40;
@@ -4376,12 +4564,22 @@
       .join(' ').toLowerCase();
     return q.split(/\s+/).every(w => hay.includes(w));
   }
+  let searchFoldedAt = 0;
   $('searchToggle').addEventListener('click', () => {
+    // The box may have just folded itself as this tap took focus away.
+    if(Date.now() - searchFoldedAt < 400) return;
     state.searchOpen = !state.searchOpen;
     if(!state.searchOpen) state.search = '';
     $('historySearch').value = state.search;
     renderHistory();
-    if(state.searchOpen) $('historySearch').focus();
+    if(state.searchOpen){ $('filterRow').scrollLeft = 0; $('historySearch').focus(); }
+  });
+  // Leaving an empty box folds it back into the icon.
+  $('historySearch').addEventListener('blur', (e) => {
+    if(e.relatedTarget === $('searchToggle') || state.search.trim()) return;
+    state.searchOpen = false;
+    searchFoldedAt = Date.now();
+    renderHistory();
   });
   $('historySearch').addEventListener('input', (e) => {
     state.search = e.target.value;
@@ -4727,14 +4925,14 @@
       </div>
       <div class="duo">
         <div>
-          <div class="k"><i class="o" aria-hidden="true"><svg class="icon"><use href="#i-minus"/></svg></i>Spent</div>
-          <div class="v">₹${money(spent)}</div>
-          <div class="s">${lent ? `incl. ₹${money(lent)} not back yet` : 'this month'}</div>
-        </div>
-        <div>
           <div class="k"><i class="n" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></i>Money in</div>
           <div class="v">₹${money(income)}</div>
           <div class="s">one-way payments in</div>
+        </div>
+        <div>
+          <div class="k"><i class="o" aria-hidden="true"><svg class="icon"><use href="#i-minus"/></svg></i>Spent</div>
+          <div class="v">₹${money(spent)}</div>
+          <div class="s">${lent ? `incl. ₹${money(lent)} not back yet` : 'this month'}</div>
         </div>
       </div>
       ${breakdownPanel(rows)}
@@ -5041,6 +5239,7 @@
     $('accountScreen').style.display = name === 'account' ? 'flex' : 'none';
     $('openSettings').classList.toggle('active', name === 'account');
     if(name === 'account'){ renderAccountScreen(); renderBackupStatus(); }
+    if(name === 'stats' || name === 'history') renderMonthToggles();
     if(name === 'history'){
       state.historyShown = 40;
       // Opened from somewhere else: start clean. Redrawn in place (after
