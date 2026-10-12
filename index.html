@@ -905,6 +905,15 @@
      never looks filled in. */
   .fsearch input::placeholder{font-size:var(--fs-sm);font-weight:var(--fw-regular);color:var(--text-faint);opacity:.8;}
   .fsearch input::-webkit-search-cancel-button{display:none;}
+  /* The cross at the end puts search back to how it started. */
+  .fs-clear{
+    flex:0 0 28px;height:28px;margin-right:3px;padding:0;border:none;border-radius:50%;
+    background:var(--inset);color:var(--text-muted);cursor:pointer;
+    display:none;align-items:center;justify-content:center;
+  }
+  .fsearch.open .fs-clear{display:flex;}
+  .fs-clear .icon{width:14px;height:14px;stroke-width:2.6;}
+  @media (hover:hover){ .fs-clear:hover{background:var(--line-strong);color:var(--text);} }
   @media (hover:hover){ .fchip:not(.on):hover{color:var(--text);} }
   /* Today's header gets a small green marker so the top of the list is
      unmistakably "now". */
@@ -1402,6 +1411,7 @@
             <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
           </button>
           <input type="search" id="historySearch" placeholder="Search this month" autocomplete="off" aria-label="Search this month" tabindex="-1">
+          <button type="button" class="fs-clear" id="searchClear" aria-label="Clear search" tabindex="-1"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
         </div>
         <span class="fs-div" aria-hidden="true"></span>
         <button type="button" class="fchip on" data-filter="all" aria-pressed="true">All</button>
@@ -4417,6 +4427,7 @@
     $('duesMonthLabel').hidden = recent;
     $('searchBox').classList.toggle('open', recent && state.searchOpen);
     $('historySearch').tabIndex = state.searchOpen ? 0 : -1;
+    $('searchClear').tabIndex = state.searchOpen ? 0 : -1;
     $('searchToggle').setAttribute('aria-expanded', state.searchOpen ? 'true' : 'false');
     $('filterRow').hidden = !recent;
     document.querySelectorAll('.fchip[data-filter]').forEach(c => {
@@ -4487,9 +4498,20 @@
   });
   // Leaving an empty box folds it back into the icon.
   $('historySearch').addEventListener('blur', (e) => {
-    if(e.relatedTarget === $('searchToggle') || state.search.trim()) return;
+    if(e.relatedTarget === $('searchToggle') || e.relatedTarget === $('searchClear') || state.search.trim()) return;
     state.searchOpen = false;
     searchFoldedAt = Date.now();
+    renderHistory();
+  });
+  // The cross: clear what was typed and fold back to the plain icon, the
+  // way History opens. The month line comes back with it.
+  $('searchClear').addEventListener('click', () => {
+    state.search = '';
+    state.searchOpen = false;
+    state.historyShown = 40;
+    searchFoldedAt = Date.now();
+    $('historySearch').value = '';
+    $('historySearch').blur();
     renderHistory();
   });
   $('historySearch').addEventListener('input', (e) => {
