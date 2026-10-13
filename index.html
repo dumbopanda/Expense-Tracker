@@ -3493,7 +3493,10 @@
       maximumFractionDigits: 2
     });
   }
-  // A day is a name and a date: "Today / Wednesday, 7 Oct", "Monday / 5 Oct".
+  // A day's header leads with the date, since that is what entries are
+  // compared by. The weekday sits beside it, quieter, and Today / Yesterday /
+  // Tomorrow is only a hint in brackets after it, when it applies:
+  //   13 Oct · Tuesday (Today)      11 Oct · Sunday
   function dayParts(iso){
     const d = new Date(iso + 'T00:00:00');
     const sameYear = d.getFullYear() === new Date().getFullYear();
@@ -3501,9 +3504,8 @@
       ? { day:'numeric', month:'short' }
       : { day:'numeric', month:'short', year:'numeric' });
     const weekday = d.toLocaleDateString('en-GB', { weekday:'long' });
-    if(iso === isoToday(0)) return { main:'Today', sub:`${weekday}, ${date}` };
-    if(iso === isoToday(-1)) return { main:'Yesterday', sub:`${weekday}, ${date}` };
-    return { main:weekday, sub:date };
+    const rel = iso === isoToday(0) ? 'Today' : iso === isoToday(-1) ? 'Yesterday' : iso === isoToday(1) ? 'Tomorrow' : '';
+    return { main:date, sub:`· ${weekday}${rel ? ` (${rel})` : ''}` };
   }
   const esc = (t) => String(t == null ? '' : t)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
